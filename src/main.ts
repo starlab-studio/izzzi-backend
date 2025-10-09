@@ -3,6 +3,7 @@ import { ConsoleLogger } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module";
+import { HttpExceptionFilter } from "./core";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -11,6 +12,10 @@ async function bootstrap() {
     }),
   });
 
+  // Custom Exception filter for error handling
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Swagger Setup
   const config = new DocumentBuilder()
     .setTitle("IZZZI API Documentation")
     .setDescription("Documentation for IZZZI main backend API")

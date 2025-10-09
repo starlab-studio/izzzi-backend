@@ -22,11 +22,14 @@ export abstract class BaseService {
    */
   protected assert(
     condition: boolean,
-    message: string,
+    error: string | Error,
     context?: Record<string, any>
   ) {
     if (!condition) {
-      throw new DomainError(message, context);
+      if (typeof error === "string") {
+        new DomainError(error, context);
+      }
+      throw error;
     }
   }
 

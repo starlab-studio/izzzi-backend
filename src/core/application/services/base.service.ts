@@ -1,7 +1,7 @@
-import { LoggerService } from "src/core/infrastructure/services/logger.service";
 import { CustomError } from "src/core/domain/errors/custom.error";
 import { DomainError } from "src/core/domain/errors/domain.error";
 import { ApplicationError } from "src/core/domain/errors/application.error";
+import { ILoggerService } from "./logger.service";
 
 export interface Response<T> {
   success: boolean;
@@ -10,9 +10,9 @@ export interface Response<T> {
 }
 
 export abstract class BaseService {
-  public readonly logger: LoggerService;
+  public readonly logger: ILoggerService;
 
-  constructor(logger: LoggerService) {
+  constructor(logger: ILoggerService) {
     this.logger = logger;
   }
 

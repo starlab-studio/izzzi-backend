@@ -47,8 +47,14 @@ export abstract class BaseService {
       throw error;
     }
 
+    const errorInfo = {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    };
+
     const appError = new ApplicationError("Unexpected error", {
-      original: error,
+      error: errorInfo,
     });
     this.logger.error(
       appError.errors.map((e) => e.message).join(", "),

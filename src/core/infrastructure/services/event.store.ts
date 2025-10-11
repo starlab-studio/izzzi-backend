@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Queue, Worker } from "bullmq";
+import { InjectQueue } from "@nestjs/bullmq";
 
 import {
   IEventStore,
@@ -10,7 +11,7 @@ import {
 export class EventStore implements IEventStore {
   public readonly events: IDomainEvent[] = [];
 
-  constructor(private eventQueue: Queue) {}
+  constructor(@InjectQueue("event") private readonly eventQueue: Queue) {}
 
   async publish(event: IDomainEvent) {
     this.events.push(event);

@@ -1,0 +1,114 @@
+import * as crypto from "crypto";
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+
+import {
+  CognitoIdentityProviderClient,
+  SignUpCommand,
+  UsernameExistsException,
+} from "@aws-sdk/client-cognito-identity-provider";
+
+import {
+  IAuthStrategy,
+  SignInResponse,
+  SignUpData,
+  SignUpResponse,
+} from "../../domain/types";
+import { ApplicationError } from "src/core/domain/errors/application.error";
+import { AuthIdentityName } from "../../domain/types";
+import { DomainError } from "src/core/domain/errors/domain.error";
+
+@Injectable()
+export class CognitoAdapter implements IAuthStrategy {
+  readonly name: AuthIdentityName = "AWS_COGNITO";
+  private readonly cognito: CognitoIdentityProviderClient;
+  private readonly clientId: string;
+  private readonly clientSecret: string;
+
+  constructor(private readonly configService: ConfigService) {
+    const aws = this.configService.get("aws");
+    if (!aws) throw new ApplicationError("AWS configuration missing");
+
+    this.clientId = aws.cognito.clientId;
+    this.clientSecret = aws.cognito.clientSecret;
+    this.cognito = new CognitoIdentityProviderClient({
+      region: aws.region,
+      credentials: aws.credentials,
+    });
+  }
+
+  async signUp(data: SignUpData): Promise<SignUpResponse> {
+    const command = new SignUpCommand({
+      ClientId: this.clientId,
+      Username: data.email,
+      Password: data.password,
+      SecretHash: this.getSecretHash(data.email),
+      UserAttributes: [
+        { Name: "given_name", Value: data.firstName },
+        { Name: "family_name", Value: data.lastName },
+        { Name: "email", Value: data.email },
+        { Name: "custom:organization", Value: data.organization },
+      ],
+    });
+
+    try {
+      const response = await this.cognito.send(command);
+      if (!response.UserSub) {
+        throw new ApplicationError("AWS Cognito did not return a user sub.");
+      }
+
+      const { password, ...userData } = data;
+
+      return {
+        ...userData,
+        provider: this.name,
+        provider_user_id: response.UserSub,
+      };
+    } catch (error) {
+      if (error instanceof UsernameExistsException) {
+        throw new DomainError("User already exists", {
+          email: data.email,
+          errorCode: "USER_ALREADY_EXISTS",
+        });
+      }
+      throw error;
+    }
+  }
+
+  async signIn(data: {
+    email: string;
+    password: string;
+  }): Promise<SignInResponse> {
+    return {
+      accessToken: "string",
+      refreshToken: "string",
+    };
+  }
+
+  async confirmSignUp(data: { email: string; code: string }): Promise<Boolean> {
+    return true;
+  }
+
+  async resendConfirmationCode(data: { email: string }): Promise<void> {}
+
+  async forgotPassword(data: { email: string }): Promise<void> {}
+
+  async confirmForgotPassword(data: {
+    email: string;
+    code: string;
+    newPassword: string;
+  }): Promise<void> {}
+
+  async changePassword(data: {
+    accessToken: string;
+    oldPassword: string;
+    newPassword: string;
+  }): Promise<void> {}
+
+  private getSecretHash(username: string): string {
+    return crypto
+      .createHmac("SHA256", this.clientSecret)
+      .update(username + this.clientId)
+      .digest("base64");
+  }
+}

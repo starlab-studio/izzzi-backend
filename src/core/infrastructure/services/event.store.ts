@@ -5,7 +5,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import {
   IEventStore,
   IDomainEvent,
-} from "src/core/application/events/base.event";
+} from "src/core/application/events/core.event";
 
 @Injectable()
 export class EventStore implements IEventStore {

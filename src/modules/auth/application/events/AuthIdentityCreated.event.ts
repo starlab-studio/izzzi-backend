@@ -1,12 +1,13 @@
-import { IDomainEvent } from "src/core";
-import { SignUpResponse } from "../../domain/types";
+import { IDomainEvent, AuthIdentityCreatedPayload } from "src/core";
 
-export class AuthIdentityCreatedEvent implements IDomainEvent<SignUpResponse> {
+export class AuthIdentityCreatedEvent
+  implements IDomainEvent<AuthIdentityCreatedPayload>
+{
   readonly name: string = "auth_identity.created";
   readonly occurredOn: Date;
-  readonly payload: SignUpResponse;
+  readonly payload: AuthIdentityCreatedPayload;
 
-  constructor(playload: SignUpResponse) {
+  constructor(playload: AuthIdentityCreatedPayload) {
     this.occurredOn = new Date();
     this.payload = playload;
   }

@@ -6,7 +6,7 @@ import { ILoggerService } from "src/core/application/services/logger.service";
 export class LoggerService implements ILoggerService {
   private readonly logger = new Logger("AppLogger");
 
-  log(message: string) {
+  info(message: string) {
     this.logger.log(message);
   }
 

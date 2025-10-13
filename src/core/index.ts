@@ -6,6 +6,7 @@ export * from "./application/services/base.service";
 export * from "./application/services/logger.service";
 export * from "./application/events/core.event";
 export * from "./application/handlers/core.handler";
+export * from "./application/handlers/handler.registry";
 export * from "./application/events/event.contract";
 
 // Infrastrcuture layer

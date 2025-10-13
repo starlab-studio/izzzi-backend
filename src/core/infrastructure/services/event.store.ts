@@ -22,10 +22,15 @@ export class EventStore implements IEventStore {
     eventName: string,
     handler: (event: IDomainEvent) => void
   ): Promise<void> {
-    new Worker(this.eventQueue.name, async (job) => {
-      if (job.name === eventName) {
-        await handler(job.data as IDomainEvent);
-      }
-    });
+    const connection = this.eventQueue.opts.connection;
+    new Worker(
+      this.eventQueue.name,
+      async (job) => {
+        if (job.name === eventName) {
+          await handler(job.data as IDomainEvent);
+        }
+      },
+      { connection }
+    );
   }
 }

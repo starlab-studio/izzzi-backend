@@ -1,9 +1,8 @@
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
 
-import { LoggerService } from "./infrastructure/services/logger.service";
 import { EventStore } from "./infrastructure/services/event.store";
+import { EventHandlerRegistry } from "./application/handlers/handler.registry";
 
 @Module({
   imports: [
@@ -17,14 +16,7 @@ import { EventStore } from "./infrastructure/services/event.store";
       name: "event",
     }),
   ],
-  providers: [
-    { provide: "QUEUE", useFactory: () => new Queue("event") },
-    {
-      provide: EventStore,
-      useFactory: (queue: Queue) => new EventStore(queue),
-      inject: ["QUEUE"],
-    },
-  ],
-  exports: [EventStore],
+  providers: [EventStore, EventHandlerRegistry],
+  exports: [EventStore, EventHandlerRegistry],
 })
 export class CoreModule {}

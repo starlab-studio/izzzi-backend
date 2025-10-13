@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { Queue } from "bullmq";
 
 import { AuthController } from "./interface/controllers/auth.controller";
 import { AuthService } from "./application/services/auth.service";
@@ -19,14 +18,6 @@ import { CoreModule } from "src/core/core.module";
     LoggerService,
     AuthIdentityRepository,
     AuthIdentityFactory,
-    { provide: "LOGGER_SERVICE", useClass: LoggerService },
-    { provide: "QUEUE", useFactory: () => new Queue("event") },
-    {
-      provide: "EVENT_STORE",
-      useFactory: (queue: Queue) => new EventStore(queue),
-      inject: ["QUEUE"],
-    },
-    { provide: "AUTH_IDENTITY_REPOSITORY", useClass: AuthIdentityRepository },
     {
       provide: "AUTH_IDENTITY_PROVIDER",
       useFactory: (
@@ -47,9 +38,9 @@ import { CoreModule } from "src/core/core.module";
         authProvider: IAuthStrategy
       ) => new AuthService(logger, eventStore, repository, authProvider),
       inject: [
-        "LOGGER_SERVICE",
-        "EVENT_STORE",
-        "AUTH_IDENTITY_REPOSITORY",
+        LoggerService,
+        EventStore,
+        AuthIdentityRepository,
         "AUTH_IDENTITY_PROVIDER",
       ],
     },

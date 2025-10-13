@@ -10,6 +10,9 @@ import { EventHandlerRegistry } from "./application/handlers/handler.registry";
       connection: {
         host: "localhost",
         port: 6379,
+        keepAlive: 1,
+        maxRetriesPerRequest: null,
+        enableReadyCheck: true,
       },
     }),
     BullModule.registerQueue({

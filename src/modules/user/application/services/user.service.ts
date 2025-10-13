@@ -32,9 +32,7 @@ export class UserService extends BaseService {
       const user = await this.repository.create(data);
       this.assert(!!user, "User create operation fail");
 
-      this.eventStore.publish(new UserCreatedEvent(data));
-
-      console.log("USER IS SUCCESSFULLY CREATED : ", user);
+      this.eventStore.publish(new UserCreatedEvent({ id: user.id, ...data }));
 
       return user;
     } catch (error) {

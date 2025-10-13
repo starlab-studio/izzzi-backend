@@ -1,13 +1,14 @@
 import { IDomainEvent } from "src/core";
 import { IUserCreate } from "../../domain/types";
 
-export class UserCreatedEvent implements IDomainEvent<IUserCreate> {
+export type UserCreatedPayload = { id: string } & IUserCreate;
+export class UserCreatedEvent implements IDomainEvent<UserCreatedPayload> {
   readonly name: string = "user.created";
   readonly occurredOn: Date;
-  readonly payload: IUserCreate;
+  readonly payload: UserCreatedPayload;
 
-  constructor(playload: IUserCreate) {
+  constructor(payload: UserCreatedPayload) {
     this.occurredOn = new Date();
-    this.payload = playload;
+    this.payload = payload;
   }
 }

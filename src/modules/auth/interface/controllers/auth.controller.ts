@@ -4,7 +4,7 @@ import { BaseController } from "src/core/interfaces/controller/base.controller";
 import { AuthFacade } from "../../application/facades/auth.facade";
 import { SignUpDto } from "../dto/auth.dto";
 
-@Controller("auth")
+@Controller("v1/auth")
 export class AuthController extends BaseController {
   constructor(private readonly authFacade: AuthFacade) {
     super();

@@ -1,4 +1,5 @@
 import { CustomError } from "src/core/domain/errors/custom.error";
+import { ErrorCode } from "src/core/domain/errors/code.error";
 import { ApplicationError } from "src/core/domain/errors/application.error";
 import { ILoggerService } from "../services/logger.service";
 
@@ -32,9 +33,13 @@ export class BaseUseCase {
       stack: error instanceof Error ? error.stack : undefined,
     };
 
-    const appError = new ApplicationError("Unexpected error", {
-      error: errorInfo,
-    });
+    const appError = new ApplicationError(
+      ErrorCode.UNEXPECTED_ERROR,
+      "Unexpected error",
+      {
+        error: errorInfo,
+      }
+    );
     this.logger.error(
       appError.errors.map((e) => e.message).join(", "),
       JSON.stringify(appError.errors)

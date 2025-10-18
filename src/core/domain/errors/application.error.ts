@@ -5,8 +5,8 @@ export class ApplicationError extends CustomError {
   readonly logging = true;
   readonly errors: CustomErrorContent[];
 
-  constructor(message: string, context?: { [key: string]: any }) {
+  constructor(code: string, message: string, context?: { [key: string]: any }) {
     super(message);
-    this.errors = [{ message, context }];
+    this.errors = [{ code, message, context }];
   }
 }

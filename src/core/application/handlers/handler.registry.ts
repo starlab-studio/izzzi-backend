@@ -1,6 +1,7 @@
 import { IEventStore, IDomainEvent } from "../../domain/events/core.event";
 import { ILoggerService } from "../services/logger.service";
 import { DomainError } from "src/core/domain/errors/domain.error";
+import { ErrorCode } from "src/core/domain/errors/code.error";
 import { IEventHandler } from "./core.handler";
 
 export class EventHandlerRegistry {
@@ -42,9 +43,13 @@ export class EventHandlerRegistry {
         }
       } catch (error) {
         this.logger.warn(`Handler failed for event: ${event.name}`);
-        throw new DomainError(`Handler failed for event: ${event.name}`, {
-          eventName: event.name,
-        });
+        throw new DomainError(
+          ErrorCode.EVENT_HANDLER_FAILED,
+          `Handler failed for event: ${event.name}`,
+          {
+            eventName: event.name,
+          }
+        );
       }
     });
 

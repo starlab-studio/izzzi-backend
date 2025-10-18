@@ -14,9 +14,9 @@ import {
   SignUpData,
   SignUpResponse,
 } from "../../domain/types";
-import { ApplicationError } from "src/core/domain/errors/application.error";
+
 import { AuthIdentityName } from "../../domain/types";
-import { DomainError } from "src/core/domain/errors/domain.error";
+import { DomainError, ApplicationError, ErrorCode } from "src/core";
 
 @Injectable()
 export class CognitoAdapter implements IAuthStrategy {
@@ -27,7 +27,11 @@ export class CognitoAdapter implements IAuthStrategy {
 
   constructor(private readonly configService: ConfigService) {
     const aws = this.configService.get("aws");
-    if (!aws) throw new ApplicationError("AWS configuration missing");
+    if (!aws)
+      throw new ApplicationError(
+        ErrorCode.AWS_CONFIGURATIONS_ARE_MISSING,
+        "AWS configuration missing"
+      );
 
     this.clientId = aws.cognito.clientId;
     this.clientSecret = aws.cognito.clientSecret;
@@ -54,7 +58,10 @@ export class CognitoAdapter implements IAuthStrategy {
     try {
       const response = await this.cognito.send(command);
       if (!response.UserSub) {
-        throw new ApplicationError("AWS Cognito did not return a user sub.");
+        throw new ApplicationError(
+          ErrorCode.AWS_COGNITO_SIGNUP_FAILED,
+          "AWS Cognito failed to create user."
+        );
       }
 
       const { password, ...userData } = data;
@@ -66,10 +73,10 @@ export class CognitoAdapter implements IAuthStrategy {
       };
     } catch (error) {
       if (error instanceof UsernameExistsException) {
-        throw new DomainError("User already exists", {
-          email: data.email,
-          errorCode: "USER_ALREADY_EXISTS",
-        });
+        throw new DomainError(
+          ErrorCode.USER_ALREADY_EXISTS,
+          "User already exists"
+        );
       }
       throw error;
     }

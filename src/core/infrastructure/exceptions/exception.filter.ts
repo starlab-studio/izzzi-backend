@@ -25,8 +25,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
         statusCode: status,
         timestamp: new Date().toISOString(),
         path: request.url,
-        message: exception.errors?.map((e) => e.message).join(", "),
-        errors: exception.errors,
+        message: exception.errors
+          ?.map((e) =>
+            typeof e.message === "string"
+              ? e.message
+              : JSON.stringify(e.message)
+          )
+          .join(", "),
+        errors: exception.errors?.map((error) => ({
+          message: error.message,
+          code: error.code,
+          context: error.context,
+        })),
       });
     }
 

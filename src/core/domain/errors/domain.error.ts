@@ -5,8 +5,8 @@ export class DomainError extends CustomError {
   readonly logging = false;
   readonly errors: CustomErrorContent[];
 
-  constructor(message: string, context?: { [key: string]: any }) {
+  constructor(code: string, message: string, context?: { [key: string]: any }) {
     super(message);
-    this.errors = [{ message, context }];
+    this.errors = [{ code, message, context }];
   }
 }

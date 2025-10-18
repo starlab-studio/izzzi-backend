@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { CognitoAdapter } from "./cognito.adapter";
-import { DomainError } from "src/core/domain/errors/domain.error";
+import { DomainError, ErrorCode } from "src/core";
 import { IAuthStrategy, AuthIdentityName } from "../../domain/types";
 
 @Injectable()
@@ -13,7 +13,10 @@ export class AuthIdentityFactory {
       case "AWS_COGNITO":
         return new CognitoAdapter(this.configService);
       default:
-        throw new DomainError("Invalid authentication provider");
+        throw new DomainError(
+          ErrorCode.INVALID_AUTH_POVIDER_DATA,
+          "Invalid authentication provider"
+        );
     }
   }
 }

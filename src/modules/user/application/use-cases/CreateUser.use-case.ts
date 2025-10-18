@@ -4,6 +4,7 @@ import {
   ILoggerService,
   ApplicationError,
   EventStore,
+  ErrorCode,
 } from "src/core";
 import { IUser, IUserCreate } from "../../domain/types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
@@ -30,7 +31,10 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
 
       const user = await this.userRepository.create(data);
       if (!user)
-        throw new ApplicationError("Application failed to create user");
+        throw new ApplicationError(
+          ErrorCode.FAILED_TO_CREATE_USER_ACCOUNT,
+          "Failed to create user"
+        );
 
       const payload = { id: user.id, ...data } satisfies UserCreatedPayload;
       this.eventStore.publish(new UserCreatedEvent(payload));

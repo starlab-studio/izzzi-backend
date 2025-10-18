@@ -29,10 +29,11 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
   }
 
   async update(
-    entity: Pick<IAuthIdentity, "id" | "provider" | "provider_user_id">
+    id: string,
+    entity: Pick<IAuthIdentity, "provider" | "provider_user_id">
   ): Promise<IAuthIdentity> {
-    await this.ormRepository.update(entity.id, entity);
-    return (await this.findById(entity.id)) as IAuthIdentity;
+    await this.ormRepository.update(id, entity);
+    return (await this.findById(id)) as IAuthIdentity;
   }
 
   async delete(id: string): Promise<void> {

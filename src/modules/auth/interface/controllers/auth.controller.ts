@@ -1,15 +1,18 @@
 import { Controller, Post, Body } from "@nestjs/common";
 
-import { AuthService } from "../../application/services/auth.service";
+import { BaseController } from "src/core/interfaces/controller/base.controller";
+import { AuthFacade } from "../../application/facades/auth.facade";
 import { SignUpDto } from "../dto/auth.dto";
 
 @Controller("auth")
-export class AuthController {
-  constructor(private readonly service: AuthService) {}
+export class AuthController extends BaseController {
+  constructor(private readonly authFacade: AuthFacade) {
+    super();
+  }
 
   @Post("signUp")
   async signUp(@Body() dto: SignUpDto) {
-    const authIdentity = await this.service.signUp(dto);
-    return authIdentity;
+    const authIdentity = await this.authFacade.signUp(dto);
+    return this.success(authIdentity);
   }
 }

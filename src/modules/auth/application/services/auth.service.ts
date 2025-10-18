@@ -1,50 +1,21 @@
-import { BaseService, IEventStore, ILoggerService } from "src/core";
-import { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.repository";
-import {
-  IAuthIdentity,
-  IAuthStrategy,
-  SignUpData,
-  SignUpResponse,
-} from "../../domain/types";
-import { AuthIdentityCreatedEvent } from "../events/AuthIdentityCreated.event";
+import { SignUpData, SignUpResponse } from "../../domain/types";
 
-export class AuthService extends BaseService {
+import { ILoggerService } from "src/core";
+import { SignUpUseCase } from "../use-cases/SignUp.use-case";
+import { CreateAuthIdentityUseCase } from "../use-cases/CreateAuthIdentity.use-case";
+
+export class AuthService {
   constructor(
     readonly logger: ILoggerService,
-    readonly eventStore: IEventStore,
-    private readonly repository: IAuthIdentityRepository,
-    private readonly authProvider: IAuthStrategy
-  ) {
-    super(logger);
-  }
+    private readonly signUpUseCase: SignUpUseCase,
+    private readonly createAuthIdentityUseCase: CreateAuthIdentityUseCase
+  ) {}
 
   async signUp(data: SignUpData): Promise<SignUpResponse> {
-    try {
-      const response = await this.authProvider.signUp(data);
-      this.assert(!!response, "User resgistration fails");
+    const signUpResponse = await this.signUpUseCase.execute(data);
+    const authIdentityResponse =
+      await this.createAuthIdentityUseCase.execute(signUpResponse);
 
-      const { password, ...dataWithoutPassword } = data;
-      const userData = { ...dataWithoutPassword, ...response };
-
-      await this.createAuthIdentity(userData);
-      return userData;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async createAuthIdentity(data: SignUpResponse): Promise<IAuthIdentity> {
-    try {
-      const createdIdentity = await this.repository.create({
-        provider: data.provider,
-        provider_user_id: data.provider_user_id,
-      });
-      this.assert(!!createdIdentity, "User identity creation fails");
-
-      this.eventStore.publish(new AuthIdentityCreatedEvent(data));
-      return createdIdentity;
-    } catch (error) {
-      this.handleError(error);
-    }
+    return { ...signUpResponse, ...authIdentityResponse };
   }
 }

@@ -1,5 +1,5 @@
 export interface IAuthIdentity {
-  id: string;
+  id?: string;
   provider: string;
   provider_user_id: string;
   user_id: string | null;
@@ -35,6 +35,8 @@ export type AuthIdentityName =
   | "AWS_COGNITO"
   | "SUPABASE"
   | "FIREBASE";
+
+export type IAuthIdentityCreate = SignUpResponse;
 
 export interface IAuthStrategy {
   name: AuthIdentityName;

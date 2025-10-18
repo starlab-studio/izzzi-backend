@@ -2,22 +2,34 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
-import { AuthController } from "./interface/controllers/auth.controller";
-import { AuthService } from "./application/services/auth.service";
+import { CoreModule } from "src/core/core.module";
+import { UserFacade } from "../user/application/facades/user.facade";
 import { LoggerService, EventStore } from "src/core";
+import { IAuthStrategy } from "./domain/types";
+import { AuthDomainService } from "./domain/services/auth.domain.service";
+import { SignUpUseCase } from "./application/use-cases/SignUp.use-case";
+import { AuthService } from "./application/services/auth.service";
+import { CreateAuthIdentityUseCase } from "./application/use-cases/CreateAuthIdentity.use-case";
+import { AuthController } from "./interface/controllers/auth.controller";
 import { AuthIdentity } from "./infrastructure/models/authIdentity.model";
 import { AuthIdentityRepository } from "./infrastructure/repositories/authIdentity.repository";
 import { AuthIdentityFactory } from "./infrastructure/factories/auth.factory";
-import { IAuthStrategy } from "./domain/types";
-import { CoreModule } from "src/core/core.module";
+import { IAuthIdentityRepository } from "./domain/repositories/authIdentity.repository";
+import { AuthFacade } from "./application/facades/auth.facade";
 
 @Module({
-  imports: [ConfigModule, TypeOrmModule.forFeature([AuthIdentity]), CoreModule],
+  imports: [
+    ConfigModule,
+    TypeOrmModule.forFeature([AuthIdentity]),
+    CoreModule,
+    UserFacade,
+  ],
   controllers: [AuthController],
   providers: [
     LoggerService,
     AuthIdentityRepository,
     AuthIdentityFactory,
+    AuthDomainService,
     {
       provide: "AUTH_IDENTITY_PROVIDER",
       useFactory: (
@@ -30,19 +42,49 @@ import { CoreModule } from "src/core/core.module";
       inject: [AuthIdentityFactory, ConfigService],
     },
     {
+      provide: SignUpUseCase,
+      useFactory: (
+        logger: LoggerService,
+        authDomainService: AuthDomainService,
+        authProvider: IAuthStrategy
+      ) => new SignUpUseCase(logger, authDomainService, authProvider),
+      inject: [LoggerService, AuthDomainService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
+      provide: CreateAuthIdentityUseCase,
+      useFactory: (
+        logger: LoggerService,
+        authDomainService: AuthDomainService,
+        authIdentityRepository: IAuthIdentityRepository,
+        eventStore: EventStore
+      ) =>
+        new CreateAuthIdentityUseCase(
+          logger,
+          authDomainService,
+          authIdentityRepository,
+          eventStore
+        ),
+      inject: [LoggerService, AuthDomainService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
       provide: AuthService,
       useFactory: (
         logger: LoggerService,
-        eventStore: EventStore,
-        repository: AuthIdentityRepository,
-        authProvider: IAuthStrategy
-      ) => new AuthService(logger, eventStore, repository, authProvider),
+        signUpUseCase: SignUpUseCase,
+        createAuthIdentityUseCase: CreateAuthIdentityUseCase
+      ) => new AuthService(logger, signUpUseCase, createAuthIdentityUseCase),
       inject: [
         LoggerService,
         EventStore,
         AuthIdentityRepository,
         "AUTH_IDENTITY_PROVIDER",
       ],
+    },
+    {
+      provide: AuthFacade,
+      useFactory: (authService: AuthService, userFacade: UserFacade) =>
+        new AuthFacade(authService, userFacade),
+      inject: [AuthService, UserFacade],
     },
   ],
 })

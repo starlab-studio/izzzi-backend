@@ -5,13 +5,13 @@ import {
   AuthIdentityCreatedEvent,
 } from "src/core";
 
-import { UserService } from "../services/user.service";
+import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
 
 export class AuthIdentityCreatedHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
     readonly eventStore: EventStore,
-    readonly service: UserService
+    readonly userCreateUseCase: CreateUserUseCase
   ) {
     super(logger);
   }
@@ -20,7 +20,7 @@ export class AuthIdentityCreatedHandler extends BaseEventHandler {
     this.logEventHandling(event);
 
     try {
-      await this.service.createUser(event.payload);
+      await this.userCreateUseCase.execute(event.payload);
     } catch (error) {
       this.logEventHandlingError(event, error);
     }

@@ -28,9 +28,9 @@ export class UserRepository implements IUserRepository {
     return await this.ormRepository.find();
   }
 
-  async update(entity: IUser): Promise<IUser> {
-    await this.ormRepository.update(entity.id, entity);
-    return (await this.findById(entity.id)) as IUser;
+  async update(id: string, entity: IUser): Promise<IUser> {
+    await this.ormRepository.update(id, entity);
+    return (await this.findById(id)) as IUser;
   }
 
   async delete(id: string): Promise<void> {

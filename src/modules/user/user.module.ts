@@ -1,9 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { UserService } from "./application/services/user.service";
-import { User } from "./infrastructure/models/user.model";
-import { UserController } from "./interface/controllers/user.controller";
 import {
   IEventStore,
   ILoggerService,
@@ -12,24 +9,37 @@ import {
   EventHandlerRegistry,
 } from "src/core";
 import { CoreModule } from "src/core/core.module";
+import { User } from "./infrastructure/models/user.model";
+import { UserDomainService } from "./domain/services/user.domain.service";
+import { CreateUserUseCase } from "./application/use-cases/CreateUser.use-case";
+import { UserController } from "./interface/controllers/user.controller";
 import { AuthIdentityCreatedHandler } from "./application/handlers/AuthIdentityCreated.handler";
 import { IUserRepository } from "./domain/repositories/user.repository";
 import { UserRepository } from "./infrastructure/repositories/user.repository";
+import { UserFacade } from "./application/facades/user.facade";
 
 @Module({
   imports: [TypeOrmModule.forFeature([User]), CoreModule],
   controllers: [UserController],
   providers: [
     { provide: LoggerService, useClass: LoggerService },
+    { provide: UserDomainService, useClass: UserDomainService },
     { provide: UserRepository, useClass: UserRepository },
     {
-      provide: UserService,
+      provide: CreateUserUseCase,
       useFactory: (
-        logger: ILoggerService,
-        eventStore: IEventStore,
-        repository: IUserRepository
-      ) => new UserService(logger, eventStore, repository),
-      inject: [LoggerService, EventStore, UserRepository],
+        logger: LoggerService,
+        eventStore: EventStore,
+        userDomainService: UserDomainService,
+        userRepository: IUserRepository
+      ) =>
+        new CreateUserUseCase(
+          logger,
+          eventStore,
+          userDomainService,
+          userRepository
+        ),
+      inject: [LoggerService, EventStore, UserDomainService, UserRepository],
     },
     {
       provide: EventHandlerRegistry,
@@ -42,11 +52,19 @@ import { UserRepository } from "./infrastructure/repositories/user.repository";
       useFactory: (
         logger: ILoggerService,
         eventStore: EventStore,
-        service: UserService
-      ) => new AuthIdentityCreatedHandler(logger, eventStore, service),
-      inject: [LoggerService, EventStore, UserService],
+        createUserUseCase: CreateUserUseCase
+      ) =>
+        new AuthIdentityCreatedHandler(logger, eventStore, createUserUseCase),
+      inject: [LoggerService, EventStore, CreateUserUseCase],
+    },
+    {
+      provide: UserFacade,
+      useFactory: (createUserUseCase: CreateUserUseCase) =>
+        new UserFacade(createUserUseCase),
+      inject: [CreateUserUseCase],
     },
   ],
+  exports: [UserFacade],
 })
 export class UserModule {
   constructor(

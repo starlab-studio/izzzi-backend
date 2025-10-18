@@ -1,4 +1,4 @@
-import { Exact, IDomainEvent, AuthIdentityCreatedPayload } from "src/core";
+import { IDomainEvent, AuthIdentityCreatedPayload } from "src/core";
 
 export class AuthIdentityCreatedEvent
   implements IDomainEvent<AuthIdentityCreatedPayload>

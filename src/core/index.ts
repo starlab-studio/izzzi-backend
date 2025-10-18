@@ -1,5 +1,4 @@
 // Domain layer
-export * from "./domain/interfaces";
 export * from "./domain/errors/domain.error";
 export * from "./domain/errors/application.error";
 export * from "./domain/events/event.contract";

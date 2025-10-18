@@ -9,7 +9,7 @@ export class AuthFacade {
   ) {}
 
   async signUp(data: SignUpData) {
-    await this.authService.signUp(data);
-    await this.userFacade.createUser(data);
+    const response = await this.authService.signUp(data);
+    return await this.userFacade.createUser(response);
   }
 }

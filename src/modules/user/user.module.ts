@@ -67,14 +67,5 @@ import { UserFacade } from "./application/facades/user.facade";
   exports: [UserFacade],
 })
 export class UserModule {
-  constructor(
-    private readonly eventHandlerRegistry: EventHandlerRegistry,
-    private readonly authIdentityCreatedHandler: AuthIdentityCreatedHandler
-  ) {
-    this.eventHandlerRegistry.registerHandler(
-      "auth_identity.created",
-      this.authIdentityCreatedHandler
-    );
-    this.eventHandlerRegistry.listen();
-  }
+  constructor() {}
 }

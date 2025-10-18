@@ -2,6 +2,7 @@ import { IDomainEvent } from "src/core";
 import { IUserCreate } from "../../domain/types";
 
 export type UserCreatedPayload = { id: string } & IUserCreate;
+
 export class UserCreatedEvent implements IDomainEvent<UserCreatedPayload> {
   readonly name: string = "user.created";
   readonly occurredOn: Date;

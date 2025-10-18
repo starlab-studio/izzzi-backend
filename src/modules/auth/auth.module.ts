@@ -2,9 +2,10 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
-import { CoreModule } from "src/core/core.module";
-import { UserFacade } from "../user/application/facades/user.facade";
 import { LoggerService, EventStore } from "src/core";
+import { CoreModule } from "src/core/core.module";
+import { UserModule } from "../user";
+import { UserFacade } from "../user/application/facades/user.facade";
 import { IAuthStrategy } from "./domain/types";
 import { AuthDomainService } from "./domain/services/auth.domain.service";
 import { SignUpUseCase } from "./application/use-cases/SignUp.use-case";
@@ -22,7 +23,7 @@ import { AuthFacade } from "./application/facades/auth.facade";
     ConfigModule,
     TypeOrmModule.forFeature([AuthIdentity]),
     CoreModule,
-    UserFacade,
+    UserModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -64,7 +65,12 @@ import { AuthFacade } from "./application/facades/auth.facade";
           authIdentityRepository,
           eventStore
         ),
-      inject: [LoggerService, AuthDomainService, "AUTH_IDENTITY_PROVIDER"],
+      inject: [
+        LoggerService,
+        AuthDomainService,
+        AuthIdentityRepository,
+        EventStore,
+      ],
     },
     {
       provide: AuthService,
@@ -73,12 +79,7 @@ import { AuthFacade } from "./application/facades/auth.facade";
         signUpUseCase: SignUpUseCase,
         createAuthIdentityUseCase: CreateAuthIdentityUseCase
       ) => new AuthService(logger, signUpUseCase, createAuthIdentityUseCase),
-      inject: [
-        LoggerService,
-        EventStore,
-        AuthIdentityRepository,
-        "AUTH_IDENTITY_PROVIDER",
-      ],
+      inject: [LoggerService, SignUpUseCase, CreateAuthIdentityUseCase],
     },
     {
       provide: AuthFacade,

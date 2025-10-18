@@ -8,7 +8,10 @@ import {
 import { IUser, IUserCreate } from "../../domain/types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { UserDomainService } from "../../domain/services/user.domain.service";
-import { UserCreatedEvent } from "../../domain/events/userCreated.event";
+import {
+  UserCreatedEvent,
+  UserCreatedPayload,
+} from "../../domain/events/userCreated.event";
 
 export class CreateUserUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -29,7 +32,8 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
       if (!user)
         throw new ApplicationError("Application failed to create user");
 
-      this.eventStore.publish(new UserCreatedEvent({ id: user.id, ...data }));
+      const payload = { id: user.id, ...data } satisfies UserCreatedPayload;
+      this.eventStore.publish(new UserCreatedEvent(payload));
       return user;
     } catch (error) {
       this.handleError(error);

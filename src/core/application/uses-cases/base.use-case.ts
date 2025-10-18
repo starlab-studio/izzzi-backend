@@ -1,41 +1,20 @@
 import { CustomError } from "src/core/domain/errors/custom.error";
-import { DomainError } from "src/core/domain/errors/domain.error";
 import { ApplicationError } from "src/core/domain/errors/application.error";
-import { ILoggerService } from "./logger.service";
+import { ILoggerService } from "../services/logger.service";
 
-export interface Response<T> {
+interface Response<T> {
   success: boolean;
   data?: T;
   errors?: { message: string; context?: Record<string, any> }[];
 }
 
-export abstract class BaseService {
+export class BaseUseCase {
   public readonly logger: ILoggerService;
 
   constructor(logger: ILoggerService) {
     this.logger = logger;
   }
 
-  /**
-   * Assert condition for domain/business rules.
-   * Throws DomainError if the condition is false.
-   */
-  protected assert(
-    condition: boolean,
-    error: string | Error,
-    context?: Record<string, any>
-  ) {
-    if (!condition) {
-      if (typeof error === "string") {
-        new DomainError(error, context);
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Wrap unknown errors into ApplicationError and log if necessary
-   */
   protected handleError(error: unknown): never {
     if (error instanceof CustomError) {
       if (error.logging) {
@@ -63,16 +42,10 @@ export abstract class BaseService {
     throw appError;
   }
 
-  /**
-   * Standardize successful Response
-   */
   protected success<T>(data: T): Response<T> {
     return { success: true, data };
   }
 
-  /**
-   * Standardize failed Response
-   */
   protected failure<T>(
     message: string,
     context?: Record<string, any>

@@ -1,4 +1,4 @@
-import { IDomainEvent } from "../events/core.event";
+import { IDomainEvent } from "../../domain/events/core.event";
 import { ILoggerService } from "../services/logger.service";
 
 export interface IEventHandler<T = any> {

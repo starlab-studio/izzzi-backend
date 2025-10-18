@@ -2,10 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Queue, Worker } from "bullmq";
 import { InjectQueue } from "@nestjs/bullmq";
 
-import {
-  IEventStore,
-  IDomainEvent,
-} from "src/core/application/events/core.event";
+import { IEventStore, IDomainEvent } from "src/core/domain/events/core.event";
 
 @Injectable()
 export class EventStore implements IEventStore {

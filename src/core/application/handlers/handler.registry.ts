@@ -1,4 +1,4 @@
-import { IEventStore, IDomainEvent } from "../events/core.event";
+import { IEventStore, IDomainEvent } from "../../domain/events/core.event";
 import { ILoggerService } from "../services/logger.service";
 import { DomainError } from "src/core/domain/errors/domain.error";
 import { IEventHandler } from "./core.handler";

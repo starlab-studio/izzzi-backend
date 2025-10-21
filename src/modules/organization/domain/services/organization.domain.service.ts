@@ -11,7 +11,7 @@ export class OrganizationDomainService {
       .replace(/[\u00A0\u2000-\u200B\u2028\u2029\u3000]/g, " ");
   }
 
-  validateOrganizationUniqueness(organization: IOrganization): void {
+  validateOrganizationUniqueness(organization: IOrganization | null): void {
     if (organization) {
       throw new DomainError(
         ErrorCode.ORGANIZATION_ALREADY_EXIST,
@@ -29,7 +29,7 @@ export class OrganizationDomainService {
     }
   }
 
-  validateOrganizationConsistency(data: IOrganization): IOrganization {
+  validateOrganizationConsistency(data: IOrganization | null): void {
     const cleanSiren = data?.siren && data.siren.replace(/[\s\-]/g, "");
     const cleanSiret = data?.siret && data.siret.replace(/[\s\-]/g, "");
 
@@ -39,11 +39,6 @@ export class OrganizationDomainService {
         "SIRET must start with the SIREN"
       );
     }
-
-    data.siren = cleanSiren;
-    data.siret = cleanSiret;
-    data.name = this.cleanString(data.name);
-    return data;
   }
 
   async generateUniqueSlug(

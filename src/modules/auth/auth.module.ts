@@ -4,8 +4,8 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 
 import { LoggerService, EventStore } from "src/core";
 import { CoreModule } from "src/core/core.module";
-import { UserModule } from "../user";
-import { UserFacade } from "../user/application/facades/user.facade";
+import { OrganizationModule } from "../organization";
+import { OrganizationFacade } from "../organization/application/facades/organization.facade";
 import { IAuthStrategy } from "./domain/types";
 import { AuthDomainService } from "./domain/services/auth.domain.service";
 import { SignUpUseCase } from "./application/use-cases/SignUp.use-case";
@@ -23,7 +23,7 @@ import { AuthFacade } from "./application/facades/auth.facade";
     ConfigModule,
     TypeOrmModule.forFeature([AuthIdentity]),
     CoreModule,
-    UserModule,
+    OrganizationModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -83,9 +83,11 @@ import { AuthFacade } from "./application/facades/auth.facade";
     },
     {
       provide: AuthFacade,
-      useFactory: (authService: AuthService, userFacade: UserFacade) =>
-        new AuthFacade(authService, userFacade),
-      inject: [AuthService, UserFacade],
+      useFactory: (
+        authService: AuthService,
+        organizationFacade: OrganizationFacade
+      ) => new AuthFacade(authService, organizationFacade),
+      inject: [AuthService, OrganizationFacade],
     },
   ],
 })

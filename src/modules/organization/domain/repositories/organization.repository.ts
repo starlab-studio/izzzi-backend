@@ -1,7 +1,8 @@
 import { IRepository } from "src/core";
-import { IOrganization } from "../types";
+import { IOrganization, IOrganizationCreate } from "../types";
 
 export interface IOrganizationRepository extends IRepository<IOrganization> {
-  create(data: Pick<IOrganization, "name" | "owner">): Promise<IOrganization>;
+  create(data: IOrganizationCreate): Promise<IOrganization>;
+  findByName(name: string): Promise<IOrganization | null>;
   findByOwner(ownerId: string): Promise<IOrganization | null>;
 }

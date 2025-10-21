@@ -1,7 +1,7 @@
 import { IUserCreate } from "../../domain/types";
 import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
 
-export class UserFacade {
+export class OrganizationFacade {
   constructor(private readonly createUserUseCase: CreateUserUseCase) {}
 
   async createUser(data: IUserCreate) {

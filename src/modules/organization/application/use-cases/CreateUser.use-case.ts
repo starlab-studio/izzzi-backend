@@ -33,7 +33,7 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
       if (!user)
         throw new ApplicationError(
           ErrorCode.FAILED_TO_CREATE_USER_ACCOUNT,
-          "Failed to create user"
+          "Something went wrong. Please try again later."
         );
 
       const payload = { id: user.id, ...data } satisfies UserCreatedPayload;

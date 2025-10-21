@@ -1,15 +1,15 @@
 import { SignUpData } from "../../domain/types";
 import { AuthService } from "../services/auth.service";
-import { UserFacade } from "src/modules/user/application/facades/user.facade";
+import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 
 export class AuthFacade {
   constructor(
     private readonly authService: AuthService,
-    private readonly userFacade: UserFacade
+    private readonly organizationFacade: OrganizationFacade
   ) {}
 
   async signUp(data: SignUpData) {
     const response = await this.authService.signUp(data);
-    return await this.userFacade.createUser(response);
+    return await this.organizationFacade.createUser(response);
   }
 }

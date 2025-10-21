@@ -7,7 +7,7 @@ export class OrganizationEntity implements IOrganization {
   public siret: string | undefined;
   public vat_number: string | undefined;
   public slug: string;
-  public owner: IUser;
+  public owner: IUser | string;
   public createdAt?: Date | undefined;
   public updatedAt?: Date | undefined;
 

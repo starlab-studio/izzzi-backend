@@ -1,5 +1,5 @@
 import { IDomainEvent } from "src/core";
-import { IUserCreate } from "../../domain/types";
+import { IUserCreate } from "../types";
 
 export type UserCreatedPayload = { id: string } & IUserCreate;
 

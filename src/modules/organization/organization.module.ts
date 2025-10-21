@@ -16,7 +16,7 @@ import { UserController } from "./interface/controllers/user.controller";
 import { AuthIdentityCreatedHandler } from "./application/handlers/AuthIdentityCreated.handler";
 import { IUserRepository } from "./domain/repositories/user.repository";
 import { UserRepository } from "./infrastructure/repositories/user.repository";
-import { UserFacade } from "./application/facades/user.facade";
+import { OrganizationFacade } from "./application/facades/organization.facade";
 
 @Module({
   imports: [TypeOrmModule.forFeature([User]), CoreModule],
@@ -58,14 +58,14 @@ import { UserFacade } from "./application/facades/user.facade";
       inject: [LoggerService, EventStore, CreateUserUseCase],
     },
     {
-      provide: UserFacade,
+      provide: OrganizationFacade,
       useFactory: (createUserUseCase: CreateUserUseCase) =>
-        new UserFacade(createUserUseCase),
+        new OrganizationFacade(createUserUseCase),
       inject: [CreateUserUseCase],
     },
   ],
-  exports: [UserFacade],
+  exports: [OrganizationFacade],
 })
-export class UserModule {
+export class OrganizationModule {
   constructor() {}
 }

@@ -1,5 +1,5 @@
 import { IDomainEvent } from "src/core";
-import { IOrganization } from "../../domain/types";
+import { IOrganization } from "../types";
 
 export type OrganizationCreatedPayload = IOrganization;
 

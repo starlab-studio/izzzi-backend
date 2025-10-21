@@ -35,10 +35,15 @@ export interface IOrganization {
   siret?: string | undefined;
   vat_number?: string | undefined;
   slug: string;
-  owner: IUser;
+  owner: IUser | string;
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export type IOrganizationCreate = Pick<
+  IOrganization,
+  "name" | "slug" | "owner"
+>;
 
 export interface IUserOrganization {
   id: string;

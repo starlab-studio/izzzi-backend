@@ -18,6 +18,7 @@ export * from "./infrastructure/exceptions/exception.filter";
 export * from "./infrastructure/services/logger.service";
 export * from "./infrastructure/interceptors/request.interceptor";
 export * from "./infrastructure/services/event.store";
+export * from "./infrastructure/models/typeorm.model";
 
 // Interface layer
 export * from "./interfaces/controller/base.controller";

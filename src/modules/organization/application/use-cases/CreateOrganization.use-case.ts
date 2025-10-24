@@ -6,6 +6,7 @@ import {
   EventStore,
   ErrorCode,
 } from "src/core";
+
 import { IOrganization, IOrganizationCreate } from "../../domain/types";
 import { OrganizationCreatedEvent } from "../../domain/events/organizationCreated.event";
 import { OrganizationDomainService } from "../../domain/services/organization.domain.service";
@@ -22,7 +23,7 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
   }
 
   async execute(
-    data: Pick<IOrganizationCreate, "name" | "owner">
+    data: Pick<IOrganizationCreate, "name" | "ownerId">
   ): Promise<IOrganization> {
     try {
       const existingOrganization = await this.organizationRepository.findByName(
@@ -33,7 +34,7 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
       );
       const slug = await this.organizationDomainService.generateUniqueSlug(
         data.name,
-        this.organizationRepository.findByName
+        (slug) => this.organizationRepository.findBySlug(slug)
       );
 
       const createdOrganization = await this.organizationRepository.create({

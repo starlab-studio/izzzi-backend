@@ -1,42 +1,28 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from "typeorm";
+import { Entity, Column } from "typeorm";
 
+import { BaseModel } from "src/core";
 import { IUser, UserStatus } from "../../domain/types";
 
-@Entity()
-export class User implements IUser {
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
-
-  @Column()
+@Entity({ name: "users" })
+export class User extends BaseModel implements IUser {
+  @Column({ name: "first_name", type: "varchar", length: 50 })
   firstName: string;
 
-  @Column()
+  @Column({ name: "last_name", type: "varchar", length: 50 })
   lastName: string;
 
   @Column({ unique: true })
   email: string;
 
-  @Column({ nullable: true })
+  @Column({ name: "phone_number", type: "varchar", length: 25, nullable: true })
   phoneNumber?: string;
 
-  @Column({ type: "varchar", nullable: true })
+  @Column({ name: "avatar_url", type: "varchar", length: 255, nullable: true })
   avatarUrl?: string;
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ name: "last_login", type: "timestamp", nullable: true })
   lastLogin?: Date;
 
   @Column({ type: "enum", enum: UserStatus, default: UserStatus.PENDING })
   status: UserStatus;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

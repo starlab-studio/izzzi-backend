@@ -5,9 +5,9 @@ export class OrganizationEntity implements IOrganization {
   public name: string;
   public siren: string | undefined;
   public siret: string | undefined;
-  public vat_number: string | undefined;
+  public vatNumber: string | undefined;
   public slug: string;
-  public owner: IUser | string;
+  public ownerId: string;
   public createdAt?: Date | undefined;
   public updatedAt?: Date | undefined;
 
@@ -15,9 +15,9 @@ export class OrganizationEntity implements IOrganization {
     this.name = data.name;
     this.siren = data.siren;
     this.siret = data.siret;
-    this.vat_number = data.vat_number;
+    this.vatNumber = data.vatNumber;
     this.slug = data.slug;
-    this.owner = data.owner;
+    this.ownerId = data.ownerId;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
   }

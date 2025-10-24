@@ -1,5 +1,5 @@
-import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
 
 import { IUser, IUserCreate } from "../../domain/types";
 import { User } from "../models/user.model";

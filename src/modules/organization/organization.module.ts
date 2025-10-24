@@ -16,17 +16,28 @@ import { UserController } from "./interface/controllers/user.controller";
 import { AuthIdentityCreatedHandler } from "./application/handlers/AuthIdentityCreated.handler";
 import { IUserRepository } from "./domain/repositories/user.repository";
 import { UserRepository } from "./infrastructure/repositories/user.repository";
+import { OrganizationService } from "./application/services/organization.service";
 import { OrganizationFacade } from "./application/facades/organization.facade";
+import { CreateOrganizationUseCase } from "./application/use-cases/CreateOrganization.use-case";
+import { OrganizationDomainService } from "./domain/services/organization.domain.service";
+import { IOrganizationRepository } from "./domain/repositories/organization.repository";
+import { OrganizationRepository } from "./infrastructure/repositories/organization.repository";
+import { Organization } from "./infrastructure/models/organization.model";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), CoreModule],
+  imports: [TypeOrmModule.forFeature([User, Organization]), CoreModule],
   controllers: [UserController],
   providers: [
-    { provide: LoggerService, useClass: LoggerService },
-    { provide: UserDomainService, useClass: UserDomainService },
-    { provide: UserRepository, useClass: UserRepository },
+    { provide: "LOGGER_SERVICE", useClass: LoggerService },
+    { provide: "USER_DOMAIN_SERVICE", useClass: UserDomainService },
+    { provide: "USER_REPOSITORY", useClass: UserRepository },
     {
-      provide: CreateUserUseCase,
+      provide: "ORGANIZATION_DOMAIN_SERVICE",
+      useClass: OrganizationDomainService,
+    },
+    { provide: "ORGANIZATION_REPOSITORY", useClass: OrganizationRepository },
+    {
+      provide: "CREATE_USER_USE_CASE",
       useFactory: (
         logger: LoggerService,
         eventStore: EventStore,
@@ -39,13 +50,57 @@ import { OrganizationFacade } from "./application/facades/organization.facade";
           userDomainService,
           userRepository
         ),
-      inject: [LoggerService, EventStore, UserDomainService, UserRepository],
+      inject: [
+        "LOGGER_SERVICE",
+        EventStore,
+        "USER_DOMAIN_SERVICE",
+        "USER_REPOSITORY",
+      ],
+    },
+    {
+      provide: "CREATE_ORGANIZATION_USE_CASE",
+      useFactory: (
+        logger: LoggerService,
+        eventStore: EventStore,
+        organizationDomainService: OrganizationDomainService,
+        organizationRepository: IOrganizationRepository
+      ) =>
+        new CreateOrganizationUseCase(
+          logger,
+          eventStore,
+          organizationDomainService,
+          organizationRepository
+        ),
+      inject: [
+        "LOGGER_SERVICE",
+        EventStore,
+        "ORGANIZATION_DOMAIN_SERVICE",
+        "ORGANIZATION_REPOSITORY",
+      ],
+    },
+    {
+      provide: "ORGANIZATION_SERVICE",
+      useFactory: (
+        logger: ILoggerService,
+        createUserUseCase: CreateUserUseCase,
+        createOrganizationUseCase: CreateOrganizationUseCase
+      ) =>
+        new OrganizationService(
+          logger,
+          createUserUseCase,
+          createOrganizationUseCase
+        ),
+      inject: [
+        "LOGGER_SERVICE",
+        "CREATE_USER_USE_CASE",
+        "CREATE_ORGANIZATION_USE_CASE",
+      ],
     },
     {
       provide: EventHandlerRegistry,
       useFactory: (logger: ILoggerService, eventStore: IEventStore) =>
         new EventHandlerRegistry(eventStore, logger),
-      inject: [LoggerService, EventStore],
+      inject: ["LOGGER_SERVICE", EventStore],
     },
     {
       provide: AuthIdentityCreatedHandler,
@@ -55,13 +110,13 @@ import { OrganizationFacade } from "./application/facades/organization.facade";
         createUserUseCase: CreateUserUseCase
       ) =>
         new AuthIdentityCreatedHandler(logger, eventStore, createUserUseCase),
-      inject: [LoggerService, EventStore, CreateUserUseCase],
+      inject: ["LOGGER_SERVICE", EventStore, "CREATE_USER_USE_CASE"],
     },
     {
       provide: OrganizationFacade,
-      useFactory: (createUserUseCase: CreateUserUseCase) =>
-        new OrganizationFacade(createUserUseCase),
-      inject: [CreateUserUseCase],
+      useFactory: (organizationService: OrganizationService) =>
+        new OrganizationFacade(organizationService),
+      inject: ["ORGANIZATION_SERVICE"],
     },
   ],
   exports: [OrganizationFacade],

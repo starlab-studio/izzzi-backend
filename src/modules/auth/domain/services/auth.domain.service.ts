@@ -12,7 +12,7 @@ export class AuthDomainService {
   }
 
   validateSignUpResponse(response: SignUpResponse): void {
-    if (!response || !response.provider || !response.provider_user_id) {
+    if (!response || !response.provider || !response.providerUserId) {
       throw new DomainError(
         ErrorCode.INVALID_SIGNUP_RESPONSE,
         "Invalid signup response from provider"
@@ -22,12 +22,12 @@ export class AuthDomainService {
 
   canCreateAuthIdentity({
     provider,
-    provider_user_id,
+    providerUserId,
   }: {
     provider: string;
-    provider_user_id: string;
+    providerUserId: string;
   }): void {
-    if (!provider || !provider_user_id) {
+    if (!provider || !providerUserId) {
       throw new DomainError(
         ErrorCode.INVALID_AUTH_DATA,
         "Invalid data for creating auth identity"

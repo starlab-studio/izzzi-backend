@@ -20,7 +20,7 @@ export class CreateAuthIdentityUseCase extends BaseUseCase implements IUseCase {
       this.authDomainService.canCreateAuthIdentity(data);
       const authIdentity = await this.authIdentityRepository.create({
         provider: data.provider,
-        provider_user_id: data.provider_user_id,
+        providerUserId: data.providerUserId,
       });
 
       const payload = { ...data, ...authIdentity };

@@ -1,31 +1,16 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from "typeorm";
+import { Entity, Column } from "typeorm";
 
+import { BaseModel } from "src/core";
 import { IAuthIdentity } from "../../domain/types";
 
-@Entity()
-export class AuthIdentity implements IAuthIdentity {
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
-
-  @Column()
+@Entity({ name: "auth_identities" })
+export class AuthIdentity extends BaseModel implements IAuthIdentity {
+  @Column({ type: "varchar", length: 45 })
   provider: string;
 
-  @Column()
-  provider_user_id: string;
+  @Column({ name: "provider_user_id", type: "varchar", length: 65 })
+  providerUserId: string;
 
-  @Column({ type: "uuid", nullable: true })
-  user_id: string | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @Column({ name: "user_id", type: "uuid", nullable: true })
+  userId: string;
 }

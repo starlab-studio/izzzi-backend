@@ -14,7 +14,7 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
   async create(data: Partial<AuthIdentity>): Promise<IAuthIdentity> {
     const entity = this.ormRepository.create({
       provider: data.provider,
-      provider_user_id: data.provider_user_id,
+      providerUserId: data.providerUserId,
     });
 
     return await this.ormRepository.save(entity);
@@ -30,7 +30,7 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
 
   async update(
     id: string,
-    entity: Pick<IAuthIdentity, "provider" | "provider_user_id">
+    entity: Pick<IAuthIdentity, "provider" | "providerUserId">
   ): Promise<IAuthIdentity> {
     await this.ormRepository.update(id, entity);
     return (await this.findById(id)) as IAuthIdentity;

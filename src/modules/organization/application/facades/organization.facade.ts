@@ -1,10 +1,10 @@
 import { IUserCreate } from "../../domain/types";
-import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
+import { OrganizationService } from "../services/organization.service";
 
 export class OrganizationFacade {
-  constructor(private readonly createUserUseCase: CreateUserUseCase) {}
+  constructor(private readonly organizationService: OrganizationService) {}
 
-  async createUser(data: IUserCreate) {
-    return this.createUserUseCase.execute(data);
+  async createUserAndOrganization(data: IUserCreate) {
+    return await this.organizationService.createUserAndOrganization(data);
   }
 }

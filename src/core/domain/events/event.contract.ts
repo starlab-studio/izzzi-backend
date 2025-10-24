@@ -6,7 +6,7 @@ export interface AuthIdentityCreatedPayload {
   email: string;
   organization: string;
   provider: string;
-  provider_user_id: string;
+  providerUserId: string;
 }
 
 export interface UserCreatedPayload {

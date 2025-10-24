@@ -69,7 +69,7 @@ export class CognitoAdapter implements IAuthStrategy {
       return {
         ...userData,
         provider: this.name,
-        provider_user_id: response.UserSub,
+        providerUserId: response.UserSub,
       };
     } catch (error) {
       if (error instanceof UsernameExistsException) {

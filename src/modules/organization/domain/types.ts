@@ -33,16 +33,16 @@ export interface IOrganization {
   name: string;
   siren?: string | undefined;
   siret?: string | undefined;
-  vat_number?: string | undefined;
+  vatNumber?: string | undefined;
   slug: string;
-  owner: IUser | string;
+  ownerId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export type IOrganizationCreate = Pick<
   IOrganization,
-  "name" | "slug" | "owner"
+  "name" | "slug" | "ownerId"
 >;
 
 export interface IUserOrganization {

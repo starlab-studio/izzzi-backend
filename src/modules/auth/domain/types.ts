@@ -1,8 +1,8 @@
 export interface IAuthIdentity {
   id?: string;
   provider: string;
-  provider_user_id: string;
-  user_id: string | null;
+  providerUserId: string;
+  userId: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -17,7 +17,7 @@ export type SignUpData = {
 
 export type SignUpResponse = Omit<SignUpData, "password"> & {
   provider: string;
-  provider_user_id: string;
+  providerUserId: string;
 };
 
 export type SignInData = {

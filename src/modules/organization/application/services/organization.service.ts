@@ -14,7 +14,7 @@ export class OrganizationService {
     const user = await this.createUserUseCase.execute(data);
     await this.createOrganizationUseCase.execute({
       name: data.organization,
-      owner: user.id,
+      ownerId: user.id,
     });
     return user;
   }

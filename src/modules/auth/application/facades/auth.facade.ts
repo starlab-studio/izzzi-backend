@@ -10,6 +10,7 @@ export class AuthFacade {
 
   async signUp(data: SignUpData) {
     const response = await this.authService.signUp(data);
-    return await this.organizationFacade.createUser(response);
+    await this.organizationFacade.createUserAndOrganization(response);
+    return response;
   }
 }

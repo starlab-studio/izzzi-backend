@@ -6,7 +6,7 @@ export enum UserStatus {
 }
 
 export interface IUser {
-  id: string;
+  readonly id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -29,7 +29,7 @@ export enum Role {
 }
 
 export interface IOrganization {
-  id: string;
+  readonly id: string;
   name: string;
   siren?: string | undefined;
   siret?: string | undefined;
@@ -45,11 +45,17 @@ export type IOrganizationCreate = Pick<
   "name" | "slug" | "ownerId"
 >;
 
-export interface IUserOrganization {
-  id: string;
-  user: IUser;
-  organization: IOrganization;
+export interface IMembership {
+  readonly id: string;
+  userId: string;
+  organizationId: string;
   role: Role;
+  addedBy: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export type IMembershipCreate = Pick<
+  IMembership,
+  "userId" | "organizationId" | "role" | "addedBy"
+>;

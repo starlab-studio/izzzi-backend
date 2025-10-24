@@ -1,24 +1,19 @@
-import { IOrganization, IUser } from "../types";
+import { IOrganization, IOrganizationCreate } from "../types";
 
 export class OrganizationEntity implements IOrganization {
   public readonly id: string;
   public name: string;
-  public siren: string | undefined;
-  public siret: string | undefined;
-  public vatNumber: string | undefined;
+  public siren?: string;
+  public siret?: string;
+  public vatNumber?: string;
   public slug: string;
   public ownerId: string;
-  public createdAt?: Date | undefined;
-  public updatedAt?: Date | undefined;
+  public createdAt?: Date;
+  public updatedAt?: Date;
 
-  constructor(data: IOrganization) {
+  constructor(data: IOrganizationCreate) {
     this.name = data.name;
-    this.siren = data.siren;
-    this.siret = data.siret;
-    this.vatNumber = data.vatNumber;
     this.slug = data.slug;
     this.ownerId = data.ownerId;
-    this.createdAt = data.createdAt;
-    this.updatedAt = data.updatedAt;
   }
 }

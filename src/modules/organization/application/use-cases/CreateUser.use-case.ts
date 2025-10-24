@@ -6,6 +6,7 @@ import {
   EventStore,
   ErrorCode,
 } from "src/core";
+
 import { IUser, IUserCreate } from "../../domain/types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { UserDomainService } from "../../domain/services/user.domain.service";
@@ -13,6 +14,7 @@ import {
   UserCreatedEvent,
   UserCreatedPayload,
 } from "../../domain/events/userCreated.event";
+import { User } from "../../domain/entities/user.entity";
 
 export class CreateUserUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -29,16 +31,17 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
       const existingUser = await this.userRepository.findByEmail(data.email);
       this.userDomaineService.validateUserUniqueness(existingUser);
 
-      const user = await this.userRepository.create(data);
-      if (!user)
+      const user = new User(data);
+      const ormUser = await this.userRepository.create(user);
+      if (!ormUser)
         throw new ApplicationError(
-          ErrorCode.FAILED_TO_CREATE_USER_ACCOUNT,
-          "Something went wrong. Please try again later."
+          ErrorCode.APPLICATION_FAILED_TO_CREATE,
+          "Something went wrong during creation. Please try again later."
         );
 
-      const payload = { id: user.id, ...data } satisfies UserCreatedPayload;
+      const payload = { id: ormUser.id, ...data } satisfies UserCreatedPayload;
       this.eventStore.publish(new UserCreatedEvent(payload));
-      return user;
+      return ormUser;
     } catch (error) {
       this.handleError(error);
     }

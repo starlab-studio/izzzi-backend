@@ -11,6 +11,7 @@ import { IOrganization, IOrganizationCreate } from "../../domain/types";
 import { OrganizationCreatedEvent } from "../../domain/events/organizationCreated.event";
 import { OrganizationDomainService } from "../../domain/services/organization.domain.service";
 import { IOrganizationRepository } from "../../domain/repositories/organization.repository";
+import { OrganizationEntity } from "../../domain/entities/organization.entity";
 
 export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -37,10 +38,9 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
         (slug) => this.organizationRepository.findBySlug(slug)
       );
 
-      const createdOrganization = await this.organizationRepository.create({
-        ...data,
-        slug,
-      });
+      const organisation = new OrganizationEntity({ ...data, slug });
+      const createdOrganization =
+        await this.organizationRepository.create(organisation);
       if (!createdOrganization) {
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,

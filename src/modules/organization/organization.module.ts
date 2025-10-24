@@ -9,7 +9,7 @@ import {
   EventHandlerRegistry,
 } from "src/core";
 import { CoreModule } from "src/core/core.module";
-import { User } from "./infrastructure/models/user.model";
+import { UserModel } from "./infrastructure/models/user.model";
 import { UserDomainService } from "./domain/services/user.domain.service";
 import { CreateUserUseCase } from "./application/use-cases/CreateUser.use-case";
 import { UserController } from "./interface/controllers/user.controller";
@@ -22,10 +22,18 @@ import { CreateOrganizationUseCase } from "./application/use-cases/CreateOrganiz
 import { OrganizationDomainService } from "./domain/services/organization.domain.service";
 import { IOrganizationRepository } from "./domain/repositories/organization.repository";
 import { OrganizationRepository } from "./infrastructure/repositories/organization.repository";
-import { Organization } from "./infrastructure/models/organization.model";
+import { OrganizationModel } from "./infrastructure/models/organization.model";
+import { AddUserToOrganizationUseCase } from "./application/use-cases/AddUserToOrganization.use-case";
+import { MembershipDomainService } from "./domain/services/membership.domain.service";
+import { MembershipModel } from "./infrastructure/models/membership.model";
+import { MembershipRepository } from "./infrastructure/repositories/membership.repository";
+import { IMembershipRepository } from "./domain/repositories/membership.repository";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Organization]), CoreModule],
+  imports: [
+    TypeOrmModule.forFeature([UserModel, OrganizationModel, MembershipModel]),
+    CoreModule,
+  ],
   controllers: [UserController],
   providers: [
     { provide: "LOGGER_SERVICE", useClass: LoggerService },
@@ -36,6 +44,8 @@ import { Organization } from "./infrastructure/models/organization.model";
       useClass: OrganizationDomainService,
     },
     { provide: "ORGANIZATION_REPOSITORY", useClass: OrganizationRepository },
+    { provide: "MEMBERSHIP_DOMAIN_SERVICE", useClass: MembershipDomainService },
+    { provide: "MEMBERSHIP_REPOSITORY", useClass: MembershipRepository },
     {
       provide: "CREATE_USER_USE_CASE",
       useFactory: (
@@ -60,7 +70,7 @@ import { Organization } from "./infrastructure/models/organization.model";
     {
       provide: "CREATE_ORGANIZATION_USE_CASE",
       useFactory: (
-        logger: LoggerService,
+        logger: ILoggerService,
         eventStore: EventStore,
         organizationDomainService: OrganizationDomainService,
         organizationRepository: IOrganizationRepository
@@ -79,21 +89,42 @@ import { Organization } from "./infrastructure/models/organization.model";
       ],
     },
     {
+      provide: "ADD_USER_TO_ORGANIZATION_USE_CASE",
+      useFactory: (
+        logger: ILoggerService,
+        membershipDomainService: MembershipDomainService,
+        membershipRepository: IMembershipRepository
+      ) =>
+        new AddUserToOrganizationUseCase(
+          logger,
+          membershipDomainService,
+          membershipRepository
+        ),
+      inject: [
+        "LOGGER_SERVICE",
+        "MEMBERSHIP_DOMAIN_SERVICE",
+        "MEMBERSHIP_REPOSITORY",
+      ],
+    },
+    {
       provide: "ORGANIZATION_SERVICE",
       useFactory: (
         logger: ILoggerService,
         createUserUseCase: CreateUserUseCase,
-        createOrganizationUseCase: CreateOrganizationUseCase
+        createOrganizationUseCase: CreateOrganizationUseCase,
+        addUserToOrganizationUseCase: AddUserToOrganizationUseCase
       ) =>
         new OrganizationService(
           logger,
           createUserUseCase,
-          createOrganizationUseCase
+          createOrganizationUseCase,
+          addUserToOrganizationUseCase
         ),
       inject: [
         "LOGGER_SERVICE",
         "CREATE_USER_USE_CASE",
         "CREATE_ORGANIZATION_USE_CASE",
+        "ADD_USER_TO_ORGANIZATION_USE_CASE",
       ],
     },
     {

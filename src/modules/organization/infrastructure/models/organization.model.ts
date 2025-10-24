@@ -4,7 +4,7 @@ import { BaseModel } from "src/core";
 import { IOrganization } from "../../domain/types";
 
 @Entity({ name: "organizations" })
-export class Organization extends BaseModel implements IOrganization {
+export class OrganizationModel extends BaseModel implements IOrganization {
   @Column({ type: "varchar", length: 255 })
   name: string;
 

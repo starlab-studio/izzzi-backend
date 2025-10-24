@@ -2,13 +2,13 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { IOrganization, IOrganizationCreate } from "../../domain/types";
-import { Organization } from "../models/organization.model";
+import { OrganizationModel } from "../models/organization.model";
 import { IOrganizationRepository } from "../../domain/repositories/organization.repository";
 
 export class OrganizationRepository implements IOrganizationRepository {
   constructor(
-    @InjectRepository(Organization)
-    private ormRepository: Repository<Organization>
+    @InjectRepository(OrganizationModel)
+    private ormRepository: Repository<OrganizationModel>
   ) {}
 
   async create(data: IOrganizationCreate): Promise<IOrganization> {

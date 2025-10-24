@@ -1,17 +1,17 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
-import { IUser, IUserCreate } from "../../domain/types";
-import { User } from "../models/user.model";
+import { IUser } from "../../domain/types";
+import { UserModel } from "../models/user.model";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 
 export class UserRepository implements IUserRepository {
   constructor(
-    @InjectRepository(User)
-    private ormRepository: Repository<User>
+    @InjectRepository(UserModel)
+    private ormRepository: Repository<UserModel>
   ) {}
 
-  async create(data: IUserCreate): Promise<IUser> {
+  async create(data: IUser): Promise<IUser> {
     const entity = this.ormRepository.create(data);
     return await this.ormRepository.save(entity);
   }

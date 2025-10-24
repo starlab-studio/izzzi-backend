@@ -4,7 +4,7 @@ import { BaseModel } from "src/core";
 import { IUser, UserStatus } from "../../domain/types";
 
 @Entity({ name: "users" })
-export class User extends BaseModel implements IUser {
+export class UserModel extends BaseModel implements IUser {
   @Column({ name: "first_name", type: "varchar", length: 50 })
   firstName: string;
 

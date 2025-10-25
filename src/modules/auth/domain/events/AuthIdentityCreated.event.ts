@@ -1,4 +1,5 @@
-import { IDomainEvent, AuthIdentityCreatedPayload } from "src/core";
+import { IDomainEvent } from "src/core";
+import { AuthIdentityCreatedPayload } from "../types";
 
 export class AuthIdentityCreatedEvent
   implements IDomainEvent<AuthIdentityCreatedPayload>

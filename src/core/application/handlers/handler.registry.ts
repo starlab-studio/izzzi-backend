@@ -16,7 +16,6 @@ export class EventHandlerRegistry {
     if (!this.handlers.has(eventName)) {
       this.handlers.set(eventName, []);
     }
-    console.log("[Registry] subscribe to:", eventName);
     this.eventStore.subscribe(eventName, async (event: IDomainEvent) => {
       await this.handleEvent(event);
     });

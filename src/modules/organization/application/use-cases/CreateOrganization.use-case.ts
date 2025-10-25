@@ -56,4 +56,6 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
       this.handleError(error);
     }
   }
+
+  async withCompenstation(input: IOrganization): Promise<void> {}
 }

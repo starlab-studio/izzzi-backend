@@ -21,6 +21,7 @@ export default () => ({
     cognito: {
       clientId: process.env.AWS_COGNITO_USER_POOL_CLIENT_ID!,
       clientSecret: process.env.AWS_COGNITO_USER_POOL_CLIENT_SECRET!,
+      userPoolId: process.env.AWS_COGNITO_USER_POOL_ID!,
     },
   },
 });

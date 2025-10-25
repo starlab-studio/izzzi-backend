@@ -5,6 +5,7 @@ import { ConfigService } from "@nestjs/config";
 import {
   CognitoIdentityProviderClient,
   SignUpCommand,
+  AdminDeleteUserCommand,
   UsernameExistsException,
 } from "@aws-sdk/client-cognito-identity-provider";
 
@@ -23,6 +24,7 @@ export class CognitoAdapter implements IAuthStrategy {
   readonly name: AuthIdentityName = "AWS_COGNITO";
   private readonly cognito: CognitoIdentityProviderClient;
   private readonly clientId: string;
+  private readonly userPoolId: string;
   private readonly clientSecret: string;
 
   constructor(private readonly configService: ConfigService) {
@@ -34,6 +36,7 @@ export class CognitoAdapter implements IAuthStrategy {
       );
 
     this.clientId = aws.cognito.clientId;
+    this.userPoolId = aws.cognito.userPoolId;
     this.clientSecret = aws.cognito.clientSecret;
     this.cognito = new CognitoIdentityProviderClient({
       region: aws.region,
@@ -111,6 +114,19 @@ export class CognitoAdapter implements IAuthStrategy {
     oldPassword: string;
     newPassword: string;
   }): Promise<void> {}
+
+  async deleteIdentity(username: string): Promise<void> {
+    const command = new AdminDeleteUserCommand({
+      UserPoolId: this.userPoolId,
+      Username: username,
+    });
+
+    try {
+      await this.cognito.send(command);
+    } catch (error) {
+      console.error(`Something went wrong during cognito delete : ${error}`);
+    }
+  }
 
   private getSecretHash(username: string): string {
     return crypto

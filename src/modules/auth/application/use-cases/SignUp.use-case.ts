@@ -1,6 +1,11 @@
 import { IUseCase, ILoggerService, BaseUseCase } from "src/core";
 
-import { IAuthStrategy, SignUpData, SignUpResponse } from "../../domain/types";
+import {
+  SignUpData,
+  IAuthStrategy,
+  SignUpResponse,
+  AuthIdentityFailedPayload,
+} from "../../domain/types";
 import { AuthDomainService } from "../../domain/services/auth.domain.service";
 
 export class SignUpUseCase extends BaseUseCase implements IUseCase {
@@ -22,5 +27,9 @@ export class SignUpUseCase extends BaseUseCase implements IUseCase {
     } catch (error) {
       this.handleError(error);
     }
+  }
+
+  async withCompenstation(input: AuthIdentityFailedPayload): Promise<void> {
+    await this.authProvider.deleteIdentity(input.username);
   }
 }

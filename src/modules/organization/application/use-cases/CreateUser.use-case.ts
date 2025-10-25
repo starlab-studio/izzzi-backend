@@ -5,17 +5,14 @@ import {
   ApplicationError,
   EventStore,
   ErrorCode,
-  IUnitOfWork,
 } from "src/core";
 
-import { IUser, IUserCreate } from "../../domain/types";
+import { User } from "../../domain/entities/user.entity";
+import { IUser, IUserCreate, UserCreatedPayload } from "../../domain/types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { UserDomainService } from "../../domain/services/user.domain.service";
-import {
-  UserCreatedEvent,
-  UserCreatedPayload,
-} from "../../domain/events/userCreated.event";
-import { User } from "../../domain/entities/user.entity";
+import { UserCreatedEvent } from "../../domain/events/userCreated.event";
+import { UserFailedEvent } from "../../domain/events/userFailed.event";
 
 export class CreateUserUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -44,7 +41,25 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
       this.eventStore.publish(new UserCreatedEvent(payload));
       return ormUser;
     } catch (error) {
+      this.eventStore.publish(
+        new UserFailedEvent({
+          username: data.email,
+          authIdentityId: data.authIdentityId,
+        })
+      );
       this.handleError(error);
     }
+  }
+
+  async withCompenstation(data: {
+    username: string;
+    authIdentityId: string;
+  }): Promise<void> {
+    this.eventStore.publish(
+      new UserFailedEvent({
+        username: data.username,
+        authIdentityId: data.authIdentityId,
+      })
+    );
   }
 }

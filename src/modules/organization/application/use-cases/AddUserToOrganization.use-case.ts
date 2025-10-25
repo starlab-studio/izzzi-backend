@@ -6,7 +6,7 @@ import {
   ErrorCode,
 } from "src/core";
 
-import { Role } from "../../domain/types";
+import { IMembership, Role } from "../../domain/types";
 import { MembershipDomainService } from "../../domain/services/membership.domain.service";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
 import { MembershipEntity } from "../../domain/entities/membership.entity";
@@ -28,7 +28,7 @@ export class AddUserToOrganizationUseCase
     organizationId: string;
     role: Role;
     addedBy: string | null;
-  }): Promise<void> {
+  }): Promise<IMembership> {
     try {
       const existingMembership =
         await this.memberShipRepository.findByUserAndOrganization(
@@ -47,8 +47,11 @@ export class AddUserToOrganizationUseCase
           "Something went wrong during creation. Please try again later."
         );
       }
+      return ormMembership;
     } catch (error) {
       this.handleError(error);
     }
   }
+
+  async withCompenstation(input: IMembership): Promise<void> {}
 }

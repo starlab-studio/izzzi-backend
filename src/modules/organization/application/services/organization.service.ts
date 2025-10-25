@@ -14,20 +14,29 @@ export class OrganizationService {
     private readonly addUserToOrganizationUseCase: AddUserToOrganizationUseCase
   ) {}
 
-  async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
-    return await this.unitOfWork.withTransaction(async (uow) => {
-      const user = await this.createUserUseCase.execute(data);
-      const organization = await this.createOrganizationUseCase.execute({
-        name: data.organization,
-        ownerId: user.id,
+  async createUserAndOrganization(
+    data: IUserCreate
+  ): Promise<IUser | undefined> {
+    try {
+      return await this.unitOfWork.withTransaction(async (uow) => {
+        const user = await this.createUserUseCase.execute(data);
+        const organization = await this.createOrganizationUseCase.execute({
+          name: data.organization,
+          ownerId: user.id,
+        });
+        await this.addUserToOrganizationUseCase.execute({
+          userId: user.id,
+          organizationId: organization.id,
+          role: Role.ADMIN,
+          addedBy: null,
+        });
+        return user;
       });
-      await this.addUserToOrganizationUseCase.execute({
-        userId: user.id,
-        organizationId: organization.id,
-        role: Role.ADMIN,
-        addedBy: null,
+    } catch (error) {
+      this.createUserUseCase.withCompenstation({
+        username: data.email,
+        authIdentityId: data.authIdentityId,
       });
-      return user;
-    });
+    }
   }
 }

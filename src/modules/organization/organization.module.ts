@@ -15,7 +15,6 @@ import { UserModel } from "./infrastructure/models/user.model";
 import { UserDomainService } from "./domain/services/user.domain.service";
 import { CreateUserUseCase } from "./application/use-cases/CreateUser.use-case";
 import { UserController } from "./interface/controllers/user.controller";
-import { AuthIdentityCreatedHandler } from "./application/handlers/AuthIdentityCreated.handler";
 import { IUserRepository } from "./domain/repositories/user.repository";
 import { UserRepository } from "./infrastructure/repositories/user.repository";
 import { OrganizationService } from "./application/services/organization.service";
@@ -147,26 +146,16 @@ import { IMembershipRepository } from "./domain/repositories/membership.reposito
       ],
     },
     {
-      provide: EventHandlerRegistry,
-      useFactory: (logger: ILoggerService, eventStore: IEventStore) =>
-        new EventHandlerRegistry(eventStore, logger),
-      inject: ["LOGGER_SERVICE", EventStore],
-    },
-    {
-      provide: AuthIdentityCreatedHandler,
-      useFactory: (
-        logger: ILoggerService,
-        eventStore: EventStore,
-        createUserUseCase: CreateUserUseCase
-      ) =>
-        new AuthIdentityCreatedHandler(logger, eventStore, createUserUseCase),
-      inject: ["LOGGER_SERVICE", EventStore, "CREATE_USER_USE_CASE"],
-    },
-    {
       provide: OrganizationFacade,
       useFactory: (organizationService: OrganizationService) =>
         new OrganizationFacade(organizationService),
       inject: ["ORGANIZATION_SERVICE"],
+    },
+    {
+      provide: "EVENT_HANDLER_REGISTRY",
+      useFactory: (logger: ILoggerService, eventStore: IEventStore) =>
+        new EventHandlerRegistry(eventStore, logger),
+      inject: ["LOGGER_SERVICE", EventStore],
     },
   ],
   exports: [OrganizationFacade],

@@ -11,11 +11,17 @@ export class AuthService {
     private readonly createAuthIdentityUseCase: CreateAuthIdentityUseCase
   ) {}
 
-  async signUp(data: SignUpData): Promise<SignUpResponse> {
+  async signUp(
+    data: SignUpData
+  ): Promise<SignUpResponse & { authIdentityId: string }> {
     const signUpResponse = await this.signUpUseCase.execute(data);
     const authIdentityResponse =
       await this.createAuthIdentityUseCase.execute(signUpResponse);
 
-    return { ...signUpResponse, ...authIdentityResponse };
+    return {
+      ...signUpResponse,
+      authIdentityId: authIdentityResponse.id,
+      ...authIdentityResponse,
+    };
   }
 }

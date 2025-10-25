@@ -2,7 +2,13 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
-import { LoggerService, EventStore } from "src/core";
+import {
+  LoggerService,
+  EventStore,
+  EventHandlerRegistry,
+  ILoggerService,
+  IEventStore,
+} from "src/core";
 import { CoreModule } from "src/core/core.module";
 import { OrganizationModule } from "../organization";
 import { OrganizationFacade } from "../organization/application/facades/organization.facade";
@@ -17,6 +23,7 @@ import { AuthIdentityRepository } from "./infrastructure/repositories/authIdenti
 import { AuthIdentityFactory } from "./infrastructure/factories/auth.factory";
 import { IAuthIdentityRepository } from "./domain/repositories/authIdentity.repository";
 import { AuthFacade } from "./application/facades/auth.facade";
+import { AuthIdentityFailedHandler } from "./application/handlers/AuthIdentityFailed.handler";
 
 @Module({
   imports: [
@@ -89,6 +96,32 @@ import { AuthFacade } from "./application/facades/auth.facade";
       ) => new AuthFacade(authService, organizationFacade),
       inject: [AuthService, OrganizationFacade],
     },
+    {
+      provide: AuthIdentityFailedHandler,
+      useFactory: (
+        logger: ILoggerService,
+        eventStore: IEventStore,
+        signUpUseCase: SignUpUseCase
+      ) => new AuthIdentityFailedHandler(logger, eventStore, signUpUseCase),
+      inject: [LoggerService, EventStore, SignUpUseCase],
+    },
+    {
+      provide: EventHandlerRegistry,
+      useFactory: (logger: ILoggerService, eventStore: IEventStore) =>
+        new EventHandlerRegistry(eventStore, logger),
+      inject: [LoggerService, EventStore],
+    },
   ],
 })
-export class AuthModule {}
+export class AuthModule {
+  constructor(
+    private readonly eventHandlerRegistry: EventHandlerRegistry,
+    private readonly authIdentityFailedHandler: AuthIdentityFailedHandler
+  ) {
+    this.eventHandlerRegistry.registerHandler(
+      "auth_identity.failed",
+      this.authIdentityFailedHandler
+    );
+    this.eventHandlerRegistry.listen();
+  }
+}

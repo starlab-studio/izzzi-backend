@@ -1,5 +1,7 @@
+import { IDomainEvent } from "src/core";
+
 export interface IAuthIdentity {
-  id?: string;
+  readonly id: string;
   provider: string;
   providerUserId: string;
   userId: string | null;
@@ -61,4 +63,24 @@ export interface IAuthStrategy {
     oldPassword: string;
     newPassword: string;
   }): Promise<void>;
+
+  deleteIdentity(id: string): Promise<void>;
 }
+
+export interface AuthIdentityCreatedPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  organization: string;
+  id: string;
+  provider: string;
+  providerUserId: string;
+}
+
+export interface AuthIdentityFailedPayload {
+  username: string;
+}
+
+export type IAuthIdentityCreatedEvent =
+  IDomainEvent<AuthIdentityCreatedPayload>;
+export type IAuthIdentityFailedEvent = IDomainEvent<AuthIdentityFailedPayload>;

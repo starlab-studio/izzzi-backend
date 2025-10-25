@@ -1,3 +1,5 @@
+import { IDomainEvent } from "src/core";
+
 export enum UserStatus {
   PENDING = "pending",
   ACTIVE = "active",
@@ -20,7 +22,14 @@ export interface IUser {
 
 export type IUserCreate = Pick<IUser, "firstName" | "lastName" | "email"> & {
   organization: string;
+  authIdentityId: string;
 };
+
+export type UserCreatedPayload = { id: string } & IUserCreate;
+export type IUserCreatedEvent = IDomainEvent<UserCreatedPayload>;
+
+export type UserFailedPayload = { username: string; authIdentityId: string };
+export type IUserFailedEvent = IDomainEvent<UserFailedPayload>;
 
 export enum Role {
   ADMIN = "admin",

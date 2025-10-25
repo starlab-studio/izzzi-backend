@@ -2,8 +2,9 @@ import { IUseCase, ILoggerService, IEventStore, BaseUseCase } from "src/core";
 
 import { IAuthIdentityCreate, IAuthIdentity } from "../../domain/types";
 import { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.repository";
-import { AuthIdentityCreatedEvent } from "../../domain/events/AuthIdentityCreated.event";
 import { AuthDomainService } from "../../domain/services/auth.domain.service";
+import { AuthIdentityCreatedEvent } from "../../domain/events/authIdentityCreated.event";
+import { AuthIdentityFailedEvent } from "../../domain/events/authIdentityFailed.event";
 
 export class CreateAuthIdentityUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -28,6 +29,24 @@ export class CreateAuthIdentityUseCase extends BaseUseCase implements IUseCase {
 
       return authIdentity;
     } catch (error) {
+      this.eventStore.publish(
+        new AuthIdentityFailedEvent({ username: data.email })
+      );
+      this.handleError(error);
+    }
+  }
+
+  async withCompenstation(data: {
+    username: string;
+    authIdentityId: string;
+  }): Promise<void> {
+    try {
+      await this.authIdentityRepository.delete(data.authIdentityId);
+      this.eventStore.publish(
+        new AuthIdentityFailedEvent({ username: data.username })
+      );
+    } catch (error) {
+      // TODO : SETUP RETRY LOGIC HERE
       this.handleError(error);
     }
   }

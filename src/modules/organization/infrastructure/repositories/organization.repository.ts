@@ -1,47 +1,68 @@
 import { Repository } from "typeorm";
-import { InjectRepository } from "@nestjs/typeorm";
+import { IUnitOfWork, BaseTransactionalRepository } from "src/core";
 
 import { IOrganization, IOrganizationCreate } from "../../domain/types";
 import { OrganizationModel } from "../models/organization.model";
 import { IOrganizationRepository } from "../../domain/repositories/organization.repository";
 
-export class OrganizationRepository implements IOrganizationRepository {
-  constructor(
-    @InjectRepository(OrganizationModel)
-    private ormRepository: Repository<OrganizationModel>
-  ) {}
+export class OrganizationRepository
+  extends BaseTransactionalRepository<IOrganization>
+  implements IOrganizationRepository
+{
+  constructor(unitOfWork: IUnitOfWork) {
+    super(unitOfWork);
+  }
+
+  private getTypeOrmRepository(): Repository<OrganizationModel> {
+    // Cast vers TypeOrmUnitOfWork pour accéder à l'EntityManager
+    const typeOrmUow = this.unitOfWork as any;
+    return typeOrmUow.getEntityManager().getRepository(OrganizationModel);
+  }
 
   async create(data: IOrganizationCreate): Promise<IOrganization> {
-    const entity = this.ormRepository.create(data);
-    return await this.ormRepository.save(entity);
+    const repository = this.getTypeOrmRepository();
+    const entity = repository.create(data);
+    return await repository.save(entity);
   }
 
   async findById(id: string): Promise<IOrganization | null> {
-    return await this.ormRepository.findOne({ where: { id } });
+    const repository = this.getTypeOrmRepository();
+    return await repository.findOne({ where: { id } });
   }
 
   async findByName(name: string): Promise<IOrganization | null> {
-    return await this.ormRepository.findOneBy({ name });
+    const repository = this.getTypeOrmRepository();
+    return await repository.findOneBy({ name });
   }
 
   async findBySlug(slug: string): Promise<IOrganization | null> {
-    return await this.ormRepository.findOneBy({ slug });
+    const repository = this.getTypeOrmRepository();
+    return await repository.findOneBy({ slug });
   }
 
   async findByOwner(ownerId: string): Promise<IOrganization[] | []> {
-    return await this.ormRepository.findBy({ ownerId });
+    const repository = this.getTypeOrmRepository();
+    return await repository.findBy({ ownerId });
   }
 
   async findAll(): Promise<IOrganization[]> {
-    return await this.ormRepository.find();
+    const repository = this.getTypeOrmRepository();
+    return await repository.find();
   }
 
   async update(id: string, entity: IOrganization): Promise<IOrganization> {
-    await this.ormRepository.update(id, entity);
+    const repository = this.getTypeOrmRepository();
+    await repository.update(id, entity);
     return (await this.findById(id)) as IOrganization;
   }
 
   async delete(id: string): Promise<void> {
-    await this.ormRepository.delete(id);
+    const repository = this.getTypeOrmRepository();
+    await repository.delete(id);
+  }
+
+  async save(entity: IOrganization): Promise<IOrganization> {
+    const repository = this.getTypeOrmRepository();
+    return await repository.save(entity);
   }
 }

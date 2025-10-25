@@ -5,6 +5,7 @@ import {
   ApplicationError,
   EventStore,
   ErrorCode,
+  IUnitOfWork,
 } from "src/core";
 
 import { IUser, IUserCreate } from "../../domain/types";

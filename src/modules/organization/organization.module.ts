@@ -6,7 +6,9 @@ import {
   ILoggerService,
   LoggerService,
   EventStore,
+  TypeOrmUnitOfWork,
   EventHandlerRegistry,
+  IUnitOfWork,
 } from "src/core";
 import { CoreModule } from "src/core/core.module";
 import { UserModel } from "./infrastructure/models/user.model";
@@ -38,14 +40,28 @@ import { IMembershipRepository } from "./domain/repositories/membership.reposito
   providers: [
     { provide: "LOGGER_SERVICE", useClass: LoggerService },
     { provide: "USER_DOMAIN_SERVICE", useClass: UserDomainService },
-    { provide: "USER_REPOSITORY", useClass: UserRepository },
+    {
+      provide: "USER_REPOSITORY",
+      useFactory: (unitOfWork: IUnitOfWork) => new UserRepository(unitOfWork),
+      inject: [TypeOrmUnitOfWork],
+    },
     {
       provide: "ORGANIZATION_DOMAIN_SERVICE",
       useClass: OrganizationDomainService,
     },
-    { provide: "ORGANIZATION_REPOSITORY", useClass: OrganizationRepository },
+    {
+      provide: "ORGANIZATION_REPOSITORY",
+      useFactory: (unitOfWork: IUnitOfWork) =>
+        new OrganizationRepository(unitOfWork),
+      inject: [TypeOrmUnitOfWork],
+    },
     { provide: "MEMBERSHIP_DOMAIN_SERVICE", useClass: MembershipDomainService },
-    { provide: "MEMBERSHIP_REPOSITORY", useClass: MembershipRepository },
+    {
+      provide: "MEMBERSHIP_REPOSITORY",
+      useFactory: (unitOfWork: IUnitOfWork) =>
+        new MembershipRepository(unitOfWork),
+      inject: [TypeOrmUnitOfWork],
+    },
     {
       provide: "CREATE_USER_USE_CASE",
       useFactory: (
@@ -110,18 +126,21 @@ import { IMembershipRepository } from "./domain/repositories/membership.reposito
       provide: "ORGANIZATION_SERVICE",
       useFactory: (
         logger: ILoggerService,
+        unitOfWork: IUnitOfWork,
         createUserUseCase: CreateUserUseCase,
         createOrganizationUseCase: CreateOrganizationUseCase,
         addUserToOrganizationUseCase: AddUserToOrganizationUseCase
       ) =>
         new OrganizationService(
           logger,
+          unitOfWork,
           createUserUseCase,
           createOrganizationUseCase,
           addUserToOrganizationUseCase
         ),
       inject: [
         "LOGGER_SERVICE",
+        TypeOrmUnitOfWork,
         "CREATE_USER_USE_CASE",
         "CREATE_ORGANIZATION_USE_CASE",
         "ADD_USER_TO_ORGANIZATION_USE_CASE",

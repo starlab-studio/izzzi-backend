@@ -1,4 +1,4 @@
-import { ILoggerService } from "src/core";
+import { ILoggerService, IUnitOfWork } from "src/core";
 import { Role } from "../../domain/types";
 import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
 import { CreateOrganizationUseCase } from "../use-cases/CreateOrganization.use-case";
@@ -8,23 +8,26 @@ import { AddUserToOrganizationUseCase } from "../use-cases/AddUserToOrganization
 export class OrganizationService {
   constructor(
     readonly loagger: ILoggerService,
+    private readonly unitOfWork: IUnitOfWork,
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly createOrganizationUseCase: CreateOrganizationUseCase,
     private readonly addUserToOrganizationUseCase: AddUserToOrganizationUseCase
   ) {}
 
   async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
-    const user = await this.createUserUseCase.execute(data);
-    const organization = await this.createOrganizationUseCase.execute({
-      name: data.organization,
-      ownerId: user.id,
+    return await this.unitOfWork.withTransaction(async (uow) => {
+      const user = await this.createUserUseCase.execute(data);
+      const organization = await this.createOrganizationUseCase.execute({
+        name: data.organization,
+        ownerId: user.id,
+      });
+      await this.addUserToOrganizationUseCase.execute({
+        userId: user.id,
+        organizationId: organization.id,
+        role: Role.ADMIN,
+        addedBy: null,
+      });
+      return user;
     });
-    await this.addUserToOrganizationUseCase.execute({
-      userId: user.id,
-      organizationId: organization.id,
-      role: Role.ADMIN,
-      addedBy: null,
-    });
-    return user;
   }
 }

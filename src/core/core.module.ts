@@ -1,8 +1,10 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 
+import { AppDataSource } from "src/data-source";
 import { EventStore } from "./infrastructure/services/event.store";
 import { EventHandlerRegistry } from "./application/handlers/handler.registry";
+import { TypeOrmUnitOfWork } from "./infrastructure/unit-of-work/typeOrm.unit-of-work";
 
 @Module({
   imports: [
@@ -19,7 +21,27 @@ import { EventHandlerRegistry } from "./application/handlers/handler.registry";
       name: "event",
     }),
   ],
-  providers: [EventStore, EventHandlerRegistry],
-  exports: [EventStore, EventHandlerRegistry],
+  providers: [
+    EventStore,
+    EventHandlerRegistry,
+    {
+      provide: TypeOrmUnitOfWork,
+      useFactory: () => new TypeOrmUnitOfWork(AppDataSource),
+    },
+  ],
+  exports: [
+    EventStore,
+    EventHandlerRegistry,
+    {
+      provide: TypeOrmUnitOfWork,
+      useFactory: () => new TypeOrmUnitOfWork(AppDataSource),
+    },
+  ],
 })
-export class CoreModule {}
+export class CoreModule implements OnModuleInit {
+  async onModuleInit() {
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
+  }
+}

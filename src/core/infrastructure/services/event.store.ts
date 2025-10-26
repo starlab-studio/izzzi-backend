@@ -13,7 +13,6 @@ export class EventStore implements IEventStore {
 
   async publish(event: IDomainEvent) {
     this.events.push(event);
-    console.log("[EventStore.publish] enqueue:", (event as any).name, event);
     this.eventQueue.add(event.name, event, {
       attempts: 3,
       backoff: { type: "exponential", delay: 2000 },
@@ -26,20 +25,11 @@ export class EventStore implements IEventStore {
     eventName: string,
     handler: (event: IDomainEvent) => void
   ): Promise<void> {
-    const connection = this.eventQueue.opts.connection;
-    console.log(
-      "[EventStore.subscribe] start worker for:",
-      eventName,
-      "conn:",
-      !!connection
-    );
-
     if (!this.worker) {
       const connection = this.eventQueue.opts.connection;
       this.worker = new Worker(
         this.eventQueue.name,
         async (job) => {
-          console.log("[Worker] received job:", job.name, job.data);
           await handler(job.data as IDomainEvent);
         },
         { connection }

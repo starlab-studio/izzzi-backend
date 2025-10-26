@@ -10,17 +10,17 @@
 
 ## Table of Contents
 
-- [Overview](#-overview)
-- [Architecture](#️-architecture)
-- [Features](#-features)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Available Scripts](#-available-scripts)
-- [Database](#️-database)
-- [Testing](#-testing)
-- [Docker](#-docker)
-- [Documentation](#-documentation)
-- [Contributing](#-contributing)
+- [Overview](#overview)
+- [Architecture](#️architecture)
+- [Features](#features)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Available Scripts](#available-scripts)
+- [Database](#️database)
+- [Testing](#testing)
+- [Docker](#docker)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
 
 ---
 
@@ -280,17 +280,6 @@ test/
 
 ### **Running Tests**
 
-```bash
-# All tests
-npm test
-
-# Tests with coverage
-npm run test:cov
-
-# E2E tests
-npm run test:e2e
-```
-
 ---
 
 ## Docker
@@ -338,7 +327,7 @@ docker run -p 3000:3000 izzzi-backend
 Once the application is started, Swagger documentation is available at:
 
 - **Development** : http://localhost:3000/api
-- **Production** : https://www.izzzi.com/api
+- **Production** : https://www.izzzi-api.com/api
 
 ### **Main Endpoints**
 
@@ -450,9 +439,9 @@ For any questions or issues:
 
 ## Team
 
-- **Development** : Izzzi Team
+- **Development** : developed and maintained by [Omer DOTCHAMOU](https://www.omerdotchamou.com), [Saidou IBRAHIM](https://github.com/isaidou), [Johnny CHEN](https://github.com/johnnyhelloworld) and [Faez BACAR ZOUBEIRI](https://github.com/FAEZ10).
 - **Architecture** : Domain-Driven Design
-- **Technologies** : NestJS, TypeScript, PostgreSQL
+- **Technologies** : NestJS, TypeScript, PostgreSQL, AWS
 
 ---
 

@@ -9,8 +9,13 @@ export class AuthFacade {
   ) {}
 
   async signUp(data: SignUpData) {
-    const response = await this.authService.signUp(data);
-    await this.organizationFacade.createUserAndOrganization(response);
-    return response;
+    try {
+      const authResponse = await this.authService.signUp(data);
+      await this.organizationFacade.createUserAndOrganization(authResponse);
+      const { authIdentityId, ...response } = authResponse;
+      return response;
+    } catch (error) {
+      throw error;
+    }
   }
 }

@@ -84,3 +84,6 @@ export interface AuthIdentityFailedPayload {
 export type IAuthIdentityCreatedEvent =
   IDomainEvent<AuthIdentityCreatedPayload>;
 export type IAuthIdentityFailedEvent = IDomainEvent<AuthIdentityFailedPayload>;
+
+export type UserFailedPayload = { username: string; authIdentityId: string };
+export type IUserFailedEvent = IDomainEvent<UserFailedPayload>;

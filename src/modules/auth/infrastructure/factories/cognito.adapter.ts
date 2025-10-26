@@ -122,7 +122,8 @@ export class CognitoAdapter implements IAuthStrategy {
     });
 
     try {
-      await this.cognito.send(command);
+      const response = await this.cognito.send(command);
+      console.log(`Response from AWS COGNITO : ${response}`);
     } catch (error) {
       console.error(`Something went wrong during cognito delete : ${error}`);
     }

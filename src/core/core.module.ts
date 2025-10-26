@@ -2,6 +2,8 @@ import { Module, OnModuleInit } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 
 import { AppDataSource } from "src/data-source";
+import { ILoggerService } from "./application/services/logger.service";
+import { LoggerService } from "./infrastructure/services/logger.service";
 import { EventStore } from "./infrastructure/services/event.store";
 import { EventHandlerRegistry } from "./application/handlers/handler.registry";
 import { TypeOrmUnitOfWork } from "./infrastructure/unit-of-work/typeOrm.unit-of-work";
@@ -22,8 +24,14 @@ import { TypeOrmUnitOfWork } from "./infrastructure/unit-of-work/typeOrm.unit-of
     }),
   ],
   providers: [
+    LoggerService,
     EventStore,
-    EventHandlerRegistry,
+    {
+      provide: EventHandlerRegistry,
+      useFactory: (logger: ILoggerService, eventStore: EventStore) =>
+        new EventHandlerRegistry(eventStore, logger),
+      inject: [LoggerService, EventStore],
+    },
     {
       provide: TypeOrmUnitOfWork,
       useFactory: () => new TypeOrmUnitOfWork(AppDataSource),
@@ -39,9 +47,12 @@ import { TypeOrmUnitOfWork } from "./infrastructure/unit-of-work/typeOrm.unit-of
   ],
 })
 export class CoreModule implements OnModuleInit {
+  constructor(private readonly eventHandlerRegistry: EventHandlerRegistry) {}
   async onModuleInit() {
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
+
+    this.eventHandlerRegistry.listen();
   }
 }

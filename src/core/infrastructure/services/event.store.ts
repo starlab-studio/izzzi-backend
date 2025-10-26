@@ -7,6 +7,7 @@ import { IEventStore, IDomainEvent } from "src/core/domain/events/core.event";
 @Injectable()
 export class EventStore implements IEventStore {
   public readonly events: IDomainEvent[] = [];
+  private worker: Worker | null = null;
 
   constructor(@InjectQueue("event") private readonly eventQueue: Queue) {}
 
@@ -32,15 +33,17 @@ export class EventStore implements IEventStore {
       "conn:",
       !!connection
     );
-    new Worker(
-      this.eventQueue.name,
-      async (job) => {
-        if (job.name === eventName) {
+
+    if (!this.worker) {
+      const connection = this.eventQueue.opts.connection;
+      this.worker = new Worker(
+        this.eventQueue.name,
+        async (job) => {
           console.log("[Worker] received job:", job.name, job.data);
           await handler(job.data as IDomainEvent);
-        }
-      },
-      { connection }
-    );
+        },
+        { connection }
+      );
+    }
   }
 }

@@ -37,6 +37,7 @@ export class OrganizationService {
         username: data.email,
         authIdentityId: data.authIdentityId,
       });
+      throw error;
     }
   }
 }

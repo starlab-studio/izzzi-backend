@@ -24,6 +24,7 @@ import { AuthIdentityFactory } from "./infrastructure/factories/auth.factory";
 import { IAuthIdentityRepository } from "./domain/repositories/authIdentity.repository";
 import { AuthFacade } from "./application/facades/auth.facade";
 import { AuthIdentityFailedHandler } from "./application/handlers/AuthIdentityFailed.handler";
+import { UserFailedHandler } from "./application/handlers/UserFailed.handler";
 
 @Module({
   imports: [
@@ -106,22 +107,37 @@ import { AuthIdentityFailedHandler } from "./application/handlers/AuthIdentityFa
       inject: [LoggerService, EventStore, SignUpUseCase],
     },
     {
-      provide: EventHandlerRegistry,
-      useFactory: (logger: ILoggerService, eventStore: IEventStore) =>
-        new EventHandlerRegistry(eventStore, logger),
-      inject: [LoggerService, EventStore],
+      provide: UserFailedHandler,
+      useFactory: (
+        logger: ILoggerService,
+        eventStore: IEventStore,
+        createAuthIdentityUseCase
+      ) => new UserFailedHandler(logger, eventStore, createAuthIdentityUseCase),
+      inject: [LoggerService, EventStore, CreateAuthIdentityUseCase],
     },
+    // {
+    //   provide: EventHandlerRegistry,
+    //   useFactory: (logger: ILoggerService, eventStore: IEventStore) =>
+    //     new EventHandlerRegistry(eventStore, logger),
+    //   inject: [LoggerService, EventStore],
+    // },
   ],
 })
 export class AuthModule {
   constructor(
     private readonly eventHandlerRegistry: EventHandlerRegistry,
-    private readonly authIdentityFailedHandler: AuthIdentityFailedHandler
-  ) {
+    private readonly authIdentityFailedHandler: AuthIdentityFailedHandler,
+    private readonly userFailedHandler: UserFailedHandler
+  ) {}
+
+  async onModuleInit() {
     this.eventHandlerRegistry.registerHandler(
       "auth_identity.failed",
       this.authIdentityFailedHandler
     );
-    this.eventHandlerRegistry.listen();
+    this.eventHandlerRegistry.registerHandler(
+      "user.failed",
+      this.userFailedHandler
+    );
   }
 }

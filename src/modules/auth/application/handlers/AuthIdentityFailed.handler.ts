@@ -16,7 +16,6 @@ export class AuthIdentityFailedHandler extends BaseEventHandler {
     this.logEventHandling(event);
 
     try {
-      console.log("START ROLLBACK AT AUTH IDENTITY LEVEL");
       await this.signUpUseCase.withCompenstation({
         username: event.payload.username,
       });

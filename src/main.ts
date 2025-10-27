@@ -33,6 +33,15 @@ async function bootstrap() {
     })
   );
 
+  // Enable CORS
+  app.enableCors({
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  });
+
+  // Add prefix
+  app.setGlobalPrefix("api", { exclude: ["api"] });
+
   // Swagger Setup
   const config = new DocumentBuilder()
     .setTitle("IZZZI API Documentation")

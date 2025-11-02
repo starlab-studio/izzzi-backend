@@ -4,7 +4,7 @@ export interface IAuthIdentity {
   readonly id: string;
   provider: string;
   providerUserId: string;
-  username: string | null;
+  username: string;
   password: string | null;
   userId: string | null;
   createdAt?: Date;

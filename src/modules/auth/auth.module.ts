@@ -28,6 +28,7 @@ import { AuthIdentityFailedHandler } from "./application/handlers/AuthIdentityFa
 import { UserFailedHandler } from "./application/handlers/UserFailed.handler";
 import { CognitoAdapter } from "./infrastructure/factories/cognito.adapter";
 import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
+import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
 
 @Module({
   imports: [
@@ -102,7 +103,7 @@ import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
     {
       provide: SignUpUseCase,
       useFactory: (
-        logger: LoggerService,
+        logger: ILoggerService,
         authDomainService: AuthDomainService,
         authProvider: IAuthStrategy
       ) => new SignUpUseCase(logger, authDomainService, authProvider),
@@ -115,12 +116,19 @@ import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
       inject: [LoggerService, SignUpUseCase],
     },
     {
+      provide: SignInUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new SignInUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
       provide: AuthFacade,
       useFactory: (
         authService: AuthService,
+        signInUseCase: SignInUseCase,
         organizationFacade: OrganizationFacade
-      ) => new AuthFacade(authService, organizationFacade),
-      inject: [AuthService, OrganizationFacade],
+      ) => new AuthFacade(authService, signInUseCase, organizationFacade),
+      inject: [AuthService, SignInUseCase, OrganizationFacade],
     },
     {
       provide: AuthIdentityFailedHandler,
@@ -140,12 +148,6 @@ import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
       ) => new UserFailedHandler(logger, eventStore, signUpUseCase),
       inject: [LoggerService, EventStore, SignUpUseCase],
     },
-    // {
-    //   provide: EventHandlerRegistry,
-    //   useFactory: (logger: ILoggerService, eventStore: IEventStore) =>
-    //     new EventHandlerRegistry(eventStore, logger),
-    //   inject: [LoggerService, EventStore],
-    // },
   ],
 })
 export class AuthModule {

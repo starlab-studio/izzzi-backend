@@ -8,7 +8,7 @@ import {
 
 import { ApiProperty } from "@nestjs/swagger";
 
-import { SignUpData } from "../../domain/types";
+import { SignUpData, SignInData } from "../../domain/types";
 
 export class SignUpDto implements SignUpData {
   @ApiProperty()
@@ -64,4 +64,26 @@ export class SignUpDto implements SignUpData {
       "Organization name can only contain letters, spaces, hyphens, and apostrophes",
   })
   organization: string;
+}
+
+export class SignInDto implements SignInData {
+  @ApiProperty()
+  @IsEmail({}, { message: "Email must be a valid email address" })
+  email: string;
+
+  @ApiProperty()
+  @IsString({ message: "Password must be a string" })
+  @MinLength(12, { message: "Password must be at least 12 characters long" })
+  @MaxLength(128, { message: "Password must be at most 128 characters long" })
+  @Matches(/(?=.*[a-z])/, {
+    message: "Password must contain at least one lowercase letter",
+  })
+  @Matches(/(?=.*[A-Z])/, {
+    message: "Password must contain at least one uppercase letter",
+  })
+  @Matches(/(?=.*\d)/, { message: "Password must contain at least one number" })
+  @Matches(/(?=.*[\W_])/, {
+    message: "Password must contain at least one special character",
+  })
+  password: string;
 }

@@ -4,7 +4,7 @@ export class AuthIdentityEntity implements IAuthIdentity {
   public readonly id: string;
   public provider: string;
   public providerUserId: string;
-  public username: string | null;
+  public username: string;
   public password: string | null;
   public userId: string | null;
   public createdAt: Date;

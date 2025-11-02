@@ -17,6 +17,7 @@ export class AuthService {
     try {
       const signUpResponse = await this.signUpUseCase.execute(data);
       await organizationFacade.createUserAndOrganization(signUpResponse);
+      // TODO: Implement the logic to update Auth_identity to add userId
 
       return signUpResponse;
     } catch (error) {

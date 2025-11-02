@@ -2,6 +2,12 @@ import { DomainError, ErrorCode } from "src/core";
 import { IUser, UserStatus } from "../types";
 
 export class UserDomainService {
+  validateUserExists(existingUser: IUser | null): void {
+    if (!existingUser) {
+      throw new DomainError(ErrorCode.USER_NOT_FOUND, "Email already exists");
+    }
+  }
+
   validateUserUniqueness(existingUser: IUser | null): void {
     if (existingUser) {
       throw new DomainError(
@@ -11,7 +17,7 @@ export class UserDomainService {
     }
   }
 
-  validateUserStatus(user: IUser, requiredStatus?: UserStatus): void {
+  validateUserStatus(user: IUser | null, requiredStatus?: UserStatus): void {
     if (!user) {
       throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
     }
@@ -59,9 +65,10 @@ export class UserDomainService {
     return true;
   }
 
-  canUserLogin(user: IUser): boolean {
+  canUserLogin(user: IUser | null): boolean {
+    this.validateUserExists(user);
     this.validateUserStatus(user, UserStatus.ACTIVE);
-    this.canUserPerformAction(user);
+    this.canUserPerformAction(user!);
     return true;
   }
 }

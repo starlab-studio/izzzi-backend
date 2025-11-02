@@ -2,26 +2,26 @@ import { SignUpData, SignUpResponse } from "../../domain/types";
 
 import { ILoggerService } from "src/core";
 import { SignUpUseCase } from "../use-cases/SignUp.use-case";
-import { CreateAuthIdentityUseCase } from "../use-cases/CreateAuthIdentity.use-case";
+import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 
 export class AuthService {
   constructor(
     readonly logger: ILoggerService,
-    private readonly signUpUseCase: SignUpUseCase,
-    private readonly createAuthIdentityUseCase: CreateAuthIdentityUseCase
+    private readonly signUpUseCase: SignUpUseCase
   ) {}
 
   async signUp(
+    organizationFacade: OrganizationFacade,
     data: SignUpData
-  ): Promise<SignUpResponse & { authIdentityId: string }> {
-    const signUpResponse = await this.signUpUseCase.execute(data);
-    const authIdentityResponse =
-      await this.createAuthIdentityUseCase.execute(signUpResponse);
+  ): Promise<SignUpResponse | undefined> {
+    try {
+      const signUpResponse = await this.signUpUseCase.execute(data);
+      await organizationFacade.createUserAndOrganization(signUpResponse);
 
-    return {
-      ...signUpResponse,
-      authIdentityId: authIdentityResponse.id,
-      ...authIdentityResponse,
-    };
+      return signUpResponse;
+    } catch (error) {
+      this.logger.error(`Something went wrong : ${error}`, "auth/service");
+      throw error;
+    }
   }
 }

@@ -10,7 +10,12 @@ export default () => ({
     synchronize: false,
   },
   auth: {
-    provider: process.env.AUTH_PROVIDER || "AWS_COGNITO",
+    jwt: {
+      secret: process.env.AUTH_JWT_SECRET || "MY_JWT_SECRET",
+      expiresIn: process.env.AUTH_JWT_EXPIRES_IN || "15m",
+      refreshSecret: process.env.AUTH_JWT_REFRESH_SECRET || "MY_REFRESH_SECRET",
+      refreshExpiresIn: process.env.AUTH_JWT_REFRESH_EXPIRES_IN || "7d",
+    },
   },
   aws: {
     region: process.env.AWS_REGION!,

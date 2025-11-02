@@ -1,7 +1,7 @@
 import { Entity, Column } from "typeorm";
 
 import { BaseModel } from "src/core";
-import { IMembership, Role } from "../../domain/types";
+import { IMembership, IUser, IOrganization, Role } from "../../domain/types";
 
 @Entity({ name: "memberships" })
 export class MembershipModel extends BaseModel implements IMembership {
@@ -16,4 +16,7 @@ export class MembershipModel extends BaseModel implements IMembership {
 
   @Column({ name: "added_by", type: "uuid", nullable: true })
   addedBy: string | null;
+
+  user?: IUser;
+  organization?: IOrganization;
 }

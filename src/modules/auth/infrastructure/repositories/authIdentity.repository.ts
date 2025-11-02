@@ -8,11 +8,13 @@ import { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.
 export class AuthIdentityRepository implements IAuthIdentityRepository {
   constructor(
     @InjectRepository(AuthIdentity)
-    private ormRepository: Repository<AuthIdentity>
+    private ormRepository: Repository<IAuthIdentity>
   ) {}
 
-  async create(data: Partial<AuthIdentity>): Promise<IAuthIdentity> {
+  async create(data: Partial<IAuthIdentity>): Promise<IAuthIdentity> {
     const entity = this.ormRepository.create({
+      username: data.username,
+      password: data.password ?? null,
       provider: data.provider,
       providerUserId: data.providerUserId,
     });
@@ -22,6 +24,17 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
 
   async findById(id: string): Promise<IAuthIdentity | null> {
     return await this.ormRepository.findOne({ where: { id } });
+  }
+
+  async findByUsername(username: string): Promise<IAuthIdentity | null> {
+    return await this.ormRepository.findOne({ where: { username } });
+  }
+
+  async findByProviderAndUsername(
+    provider: string,
+    username: string
+  ): Promise<IAuthIdentity | null> {
+    return await this.ormRepository.findOne({ where: { provider, username } });
   }
 
   async findAll(): Promise<IAuthIdentity[]> {
@@ -38,5 +51,9 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
 
   async delete(id: string): Promise<void> {
     await this.ormRepository.delete(id);
+  }
+
+  async deleteByUsername(username: string): Promise<void> {
+    await this.ormRepository.delete({ username });
   }
 }

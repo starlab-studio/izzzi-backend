@@ -18,6 +18,7 @@ import {
 
 import { AuthIdentityName } from "../../domain/types";
 import { DomainError, ApplicationError, ErrorCode } from "src/core";
+import type { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.repository";
 
 @Injectable()
 export class CognitoAdapter implements IAuthStrategy {
@@ -27,7 +28,10 @@ export class CognitoAdapter implements IAuthStrategy {
   private readonly userPoolId: string;
   private readonly clientSecret: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly authIdentityRepository: IAuthIdentityRepository
+  ) {
     const aws = this.configService.get("aws");
     if (!aws)
       throw new ApplicationError(
@@ -67,13 +71,15 @@ export class CognitoAdapter implements IAuthStrategy {
         );
       }
 
-      const { password, ...userData } = data;
-
-      return {
-        ...userData,
+      const authIdnetity = await this.authIdentityRepository.create({
         provider: this.name,
         providerUserId: response.UserSub,
-      };
+        username: data.email,
+      });
+
+      const { password, ...userData } = data;
+
+      return { ...userData, authIdentityId: authIdnetity.id };
     } catch (error) {
       if (error instanceof UsernameExistsException) {
         throw new DomainError(
@@ -122,8 +128,7 @@ export class CognitoAdapter implements IAuthStrategy {
     });
 
     try {
-      const response = await this.cognito.send(command);
-      console.log(`Response from AWS COGNITO : ${response}`);
+      await this.cognito.send(command);
     } catch (error) {
       console.error(`Something went wrong during cognito delete : ${error}`);
     }

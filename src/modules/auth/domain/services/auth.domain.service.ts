@@ -12,7 +12,7 @@ export class AuthDomainService {
   }
 
   validateSignUpResponse(response: SignUpResponse): void {
-    if (!response || !response.provider || !response.providerUserId) {
+    if (!response) {
       throw new DomainError(
         ErrorCode.INVALID_SIGNUP_RESPONSE,
         "Invalid signup response from provider"

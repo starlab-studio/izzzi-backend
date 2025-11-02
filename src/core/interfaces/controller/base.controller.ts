@@ -9,10 +9,6 @@ export abstract class BaseController {
     return { success: true, data };
   }
 
-  protected failure<E>(error: E): Response<E> {
-    return { success: false, data: error };
-  }
-
   protected successPaginated<T>(
     data: T[],
     total: number,

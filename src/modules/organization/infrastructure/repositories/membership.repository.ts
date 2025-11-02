@@ -1,9 +1,11 @@
 import { Repository } from "typeorm";
 import { IUnitOfWork, BaseTransactionalRepository } from "src/core";
 
+import { UserModel } from "../models/user.model";
 import { MembershipModel } from "../models/membership.model";
+import { OrganizationModel } from "../models/organization.model";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
-import { IMembership } from "../../domain/types";
+import { IMembership, IUser, IOrganization, Role } from "../../domain/types";
 
 export class MembershipRepository
   extends BaseTransactionalRepository<IMembership>
@@ -24,9 +26,9 @@ export class MembershipRepository
     return await repository.save(entity);
   }
 
-  async findByUser(userId: string): Promise<IMembership[] | []> {
+  async findByUser(userId: string): Promise<IMembership[]> {
     const repository = this.getTypeOrmRepository();
-    return repository.findBy({ userId });
+    return await repository.findBy({ userId });
   }
 
   async findByOrganization(

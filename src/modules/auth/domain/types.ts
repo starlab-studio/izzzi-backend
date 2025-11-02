@@ -4,6 +4,8 @@ export interface IAuthIdentity {
   readonly id: string;
   provider: string;
   providerUserId: string;
+  username: string | null;
+  password: string | null;
   userId: string | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -18,8 +20,7 @@ export type SignUpData = {
 };
 
 export type SignUpResponse = Omit<SignUpData, "password"> & {
-  provider: string;
-  providerUserId: string;
+  authIdentityId: string;
 };
 
 export type SignInData = {
@@ -33,15 +34,17 @@ export type SignInResponse = {
 };
 
 export type AuthIdentityName =
-  | "BASIC"
+  | "CUSTOM"
   | "AWS_COGNITO"
   | "SUPABASE"
   | "FIREBASE";
 
 export type IAuthIdentityCreate = SignUpResponse;
 
+export const AUTH_STRATEGY_TOKEN = Symbol("AUTH_STRATEGY");
+
 export interface IAuthStrategy {
-  name: AuthIdentityName;
+  readonly name: AuthIdentityName;
   signUp(data: SignUpData): Promise<SignUpResponse>;
 
   signIn(data: { email: string; password: string }): Promise<SignInResponse>;
@@ -64,7 +67,7 @@ export interface IAuthStrategy {
     newPassword: string;
   }): Promise<void>;
 
-  deleteIdentity(id: string): Promise<void>;
+  deleteIdentity(username: string): Promise<void>;
 }
 
 export interface AuthIdentityCreatedPayload {

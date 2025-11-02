@@ -2,6 +2,15 @@ import { DomainError, ErrorCode } from "src/core";
 import { IUser, IMembership, UserStatus } from "../types";
 
 export class MembershipDomainService {
+  validateMembershipExsits(memberships: IMembership[] | null | undefined) {
+    if (!memberships || memberships.length === 0) {
+      throw new DomainError(
+        ErrorCode.USER_HAS_NO_ORGANIZATION,
+        "User has no organization"
+      );
+    }
+  }
+
   validateMembershipUniqueness(membership: IMembership | null): void {
     if (membership) {
       throw new DomainError(

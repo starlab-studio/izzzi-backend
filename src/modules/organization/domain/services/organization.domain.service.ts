@@ -20,11 +20,11 @@ export class OrganizationDomainService {
     }
   }
 
-  validateSlugUniqueness(existingOrganization: IOrganization | null): void {
-    if (existingOrganization) {
+  validateOrganizationExists(existingOrganization: IOrganization | null): void {
+    if (!existingOrganization) {
       throw new DomainError(
-        ErrorCode.ORGANIZATION_SLUG_ALREADY_EXISTS,
-        "Organization slug is already taken"
+        ErrorCode.ORGANIZATION_NOT_FOUND,
+        "Organization not found"
       );
     }
   }

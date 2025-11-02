@@ -22,6 +22,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof CustomError) {
       const status = exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
       return response.status(status).json({
+        success: false,
         statusCode: status,
         timestamp: new Date().toISOString(),
         path: request.url,
@@ -48,6 +49,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       if (typeof res === "string") {
         return response.status(status).json({
+          success: false,
           statusCode: status,
           timestamp: new Date().toISOString(),
           path: request.url,
@@ -56,6 +58,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
 
       return response.status(status).json({
+        success: false,
         statusCode: status,
         timestamp: new Date().toISOString(),
         path: request.url,
@@ -69,6 +72,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       (exception as any)?.stack
     );
     return response.status(status).json({
+      success: false,
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,

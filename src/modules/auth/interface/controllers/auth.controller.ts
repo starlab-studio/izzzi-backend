@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from "@nestjs/common";
+import { Controller, Post, Body } from "@nestjs/common";
 
 import { BaseController } from "src/core/interfaces/controller/base.controller";
 import { AuthFacade } from "../../application/facades/auth.facade";

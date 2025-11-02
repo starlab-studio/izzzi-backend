@@ -1,12 +1,12 @@
 import { IEventStore, BaseEventHandler, ILoggerService } from "src/core";
-import { CreateAuthIdentityUseCase } from "../use-cases/CreateAuthIdentity.use-case";
+import { SignUpUseCase } from "../use-cases/SignUp.use-case";
 import { IUserFailedEvent } from "../../domain/types";
 
 export class UserFailedHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
     readonly eventStore: IEventStore,
-    readonly createAuthIdentityUseCase: CreateAuthIdentityUseCase
+    readonly signUpUseCase: SignUpUseCase
   ) {
     super(logger);
   }
@@ -15,7 +15,7 @@ export class UserFailedHandler extends BaseEventHandler {
     this.logEventHandling(event);
 
     try {
-      await this.createAuthIdentityUseCase.withCompenstation(event.payload);
+      await this.signUpUseCase.withCompenstation(event.payload);
     } catch (error) {
       this.logEventHandlingError(event, error);
     }

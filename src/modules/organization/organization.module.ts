@@ -29,6 +29,7 @@ import { MembershipDomainService } from "./domain/services/membership.domain.ser
 import { MembershipModel } from "./infrastructure/models/membership.model";
 import { MembershipRepository } from "./infrastructure/repositories/membership.repository";
 import { IMembershipRepository } from "./domain/repositories/membership.repository";
+import { GetUserDetailsUseCase } from "./application/use-cases/GetUserDetails.use-case";
 
 @Module({
   imports: [
@@ -122,6 +123,30 @@ import { IMembershipRepository } from "./domain/repositories/membership.reposito
       ],
     },
     {
+      provide: "GET_USER_DETAILS_USE_CASE",
+      useFactory: (
+        logger: ILoggerService,
+        userDomainService: UserDomainService,
+        userRepository: IUserRepository,
+        membershipDomainService: MembershipDomainService,
+        membershipRepository: IMembershipRepository
+      ) =>
+        new GetUserDetailsUseCase(
+          logger,
+          userDomainService,
+          userRepository,
+          membershipDomainService,
+          membershipRepository
+        ),
+      inject: [
+        "LOGGER_SERVICE",
+        "USER_DOMAIN_SERVICE",
+        "USER_REPOSITORY",
+        "MEMBERSHIP_DOMAIN_SERVICE",
+        "MEMBERSHIP_REPOSITORY",
+      ],
+    },
+    {
       provide: "ORGANIZATION_SERVICE",
       useFactory: (
         logger: ILoggerService,
@@ -147,9 +172,11 @@ import { IMembershipRepository } from "./domain/repositories/membership.reposito
     },
     {
       provide: OrganizationFacade,
-      useFactory: (organizationService: OrganizationService) =>
-        new OrganizationFacade(organizationService),
-      inject: ["ORGANIZATION_SERVICE"],
+      useFactory: (
+        organizationService: OrganizationService,
+        getUserDetailsUseCase: GetUserDetailsUseCase
+      ) => new OrganizationFacade(organizationService, getUserDetailsUseCase),
+      inject: ["ORGANIZATION_SERVICE", "GET_USER_DETAILS_USE_CASE"],
     },
     {
       provide: "EVENT_HANDLER_REGISTRY",

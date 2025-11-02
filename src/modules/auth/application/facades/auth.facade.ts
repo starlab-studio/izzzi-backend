@@ -10,10 +10,7 @@ export class AuthFacade {
 
   async signUp(data: SignUpData) {
     try {
-      const authResponse = await this.authService.signUp(data);
-      await this.organizationFacade.createUserAndOrganization(authResponse);
-      const { authIdentityId, ...response } = authResponse;
-      return response;
+      return await this.authService.signUp(this.organizationFacade, data);
     } catch (error) {
       throw error;
     }

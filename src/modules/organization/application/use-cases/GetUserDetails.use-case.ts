@@ -18,13 +18,15 @@ export class GetUserDetailsUseCase extends BaseUseCase implements IUseCase {
   }
 
   async execute(
-    userId: string
+    email: string
   ): Promise<IUser & { roles: { organizationId: string; role: Role }[] }> {
     try {
-      const user = await this.userRepository.findById(userId);
+      const user = await this.userRepository.findByEmail(email);
       this.userDomainService.canUserLogin(user);
 
-      const memberships = await this.memberShipRepository.findByUser(userId);
+      const memberships = await this.memberShipRepository.findByUser(
+        user?.id as string
+      );
       this.membershipDomainService.validateMembershipExsits(memberships);
 
       const roles = memberships.map((m) => ({

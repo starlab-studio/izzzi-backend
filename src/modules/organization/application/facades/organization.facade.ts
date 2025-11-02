@@ -1,4 +1,3 @@
-import { UserFailedEvent } from "../../domain/events/userFailed.event";
 import { IUser, IUserCreate, Role } from "../../domain/types";
 import { OrganizationService } from "../services/organization.service";
 import { GetUserDetailsUseCase } from "../use-cases/GetUserDetails.use-case";

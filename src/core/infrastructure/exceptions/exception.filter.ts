@@ -22,11 +22,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof CustomError) {
       const status = exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
       return response.status(status).json({
+        success: false,
         statusCode: status,
         timestamp: new Date().toISOString(),
         path: request.url,
-        message: exception.errors?.map((e) => e.message).join(", "),
-        errors: exception.errors,
+        message: exception.errors
+          ?.map((e) =>
+            typeof e.message === "string"
+              ? e.message
+              : JSON.stringify(e.message)
+          )
+          .join(", "),
+        errors: exception.errors?.map((error) => ({
+          message: error.message,
+          code: error.code,
+          context: error.context,
+        })),
       });
     }
 
@@ -38,6 +49,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       if (typeof res === "string") {
         return response.status(status).json({
+          success: false,
           statusCode: status,
           timestamp: new Date().toISOString(),
           path: request.url,
@@ -46,6 +58,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
 
       return response.status(status).json({
+        success: false,
         statusCode: status,
         timestamp: new Date().toISOString(),
         path: request.url,
@@ -59,6 +72,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       (exception as any)?.stack
     );
     return response.status(status).json({
+      success: false,
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,

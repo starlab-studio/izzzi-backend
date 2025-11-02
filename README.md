@@ -1,98 +1,456 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Izzzi Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+[![NestJS](https://img.shields.io/badge/NestJS-11.0.1-E0234E?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeORM](https://img.shields.io/badge/TypeORM-0.3.27-FA5252?style=flat-square&logo=typeorm&logoColor=white)](https://typeorm.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-8.16.3-336791?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+> **Modern Backend API** built with NestJS, TypeScript and DDD (Domain-Driven Design) architecture with advanced transactional management.
 
-## Description
+## Table of Contents
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- [Overview](#overview)
+- [Architecture](#️architecture)
+- [Features](#features)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Available Scripts](#available-scripts)
+- [Database](#️database)
+- [Testing](#testing)
+- [Docker](#docker)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
 
-## Project setup
+---
 
-```bash
-$ npm install
+## Overview
+
+Izzzi Backend is a modern REST API built with **NestJS** and **TypeScript**, implementing a **Domain-Driven Design (DDD)** architecture with advanced and portable transactional management.
+
+### **Key Features**
+
+- **DDD Architecture** : Clear separation of domain, application and infrastructure layers
+- **Transactional Management** : Generic and portable Unit of Work pattern
+- **Multi-ORM Support** : Compatible with TypeORM, Prisma, Sequelize, etc.
+- **REST API** : Documented endpoints with Swagger
+- **Authentication** : AWS Cognito integration
+- **Queue System** : Asynchronous task management with BullMQ
+- **Docker Ready** : Containerized deployment
+- **Complete Testing** : Unit and integration tests
+
+---
+
+## Architecture
+
+### **Project Structure**
+
+```
+src/
+├── core/                          # Core layer (shared)
+│   ├── application/               # Application interfaces and services
+│   │   ├── handlers/             # Event handlers
+│   │   ├── interfaces/           # Generic interfaces
+│   │   └── services/             # Application services
+│   ├── domain/                   # Pure business logic
+│   │   ├── errors/               # Business errors
+│   │   ├── events/               # Domain events
+│   │   └── repositories/         # Repository interfaces
+│   └── infrastructure/           # Technical implementations
+│       ├── exceptions/           # Exception handlers
+│       ├── services/             # Infrastructure services
+│       └── unit-of-work/         # Transaction management
+├── modules/                      # Business modules
+│   ├── auth/                     # Authentication module
+│   └── organization/             # Organization module
+└── migrations/                   # Database migrations
 ```
 
-## Compile and run the project
+### **Implemented Patterns**
+
+- **Domain-Driven Design (DDD)**
+- **Unit of Work Pattern**
+- **Repository Pattern**
+- **Event-Driven Architecture**
+- **CQRS (Command Query Responsibility Segregation)**
+
+---
+
+## Features
+
+### **Authentication & Authorization**
+
+- Factory pattern for multi auth provider support
+- AWS Cognito integration
+- User identity management
+- Role and permission system
+
+### **Organization Management**
+
+- Organization creation and management
+- Membership system
+- User roles within organizations
+
+### **Transactional Management**
+
+- Atomic transactions
+- Portable Unit of Work pattern
+- Multi-ORM support
+
+### **Event System & SAGA pattern**
+
+- Domain events
+- Event handlers
+- Queue system with BullMQ
+- Saga pattern to compensate on failure
+
+### **Monitoring & Logging**
+
+- Structured logging
+- Performance metrics
+- Centralized error handling
+
+---
+
+## Installation
+
+### **Prerequisites**
+
+- **Node.js** >= 18.0.0
+- **npm** >= 8.0.0
+- **PostgreSQL** >= 18.0
+- **Redis** >= 7.0 (for BullMQ)
+
+### **Install Dependencies**
+
+# Clone the repository
+
+git clone [https://github.com/starlab-studio/izzzi-backend](https://github.com/starlab-studio/izzzi-backend)
+
+# Install dependencies
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### **Environment Variables**
+
+Create a `.env` file at the project root:
+
+```env
+# Database
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=izzzi_db
+DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=your_password
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# AWS Cognito
+AWS_REGION=us-east-1
+AWS_COGNITO_USER_POOL_ID=your_pool_id
+AWS_COGNITO_CLIENT_ID=your_client_id
+
+# Application
+PORT=3000
+NODE_ENV=development
+```
+
+---
+
+## Configuration
+
+### **Database Configuration**
+
+The project uses TypeORM with PostgreSQL. Configuration is located in `src/data-source.ts`.
+
+### **Module Configuration**
+
+Each module is configured in its own module file:
+
+- `src/modules/auth/auth.module.ts`
+- `src/modules/organization/organization.module.ts`
+
+---
+
+## Available Scripts
+
+### **Development**
 
 ```bash
-# unit tests
-$ npm run test
+# Start in development mode
+npm run start:dev
 
-# e2e tests
-$ npm run test:e2e
+# Start in debug mode
+npm run start:debug
 
-# test coverage
-$ npm run test:cov
+# Start in production mode
+npm run start:prod
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### **🏗️ Build & Compilation**
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Compile the project
+npm run build
+
+# Format code
+npm run format
+
+# Linter
+npm run lint
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### **Database**
 
-## Resources
+```bash
+# Generate a migration
+npm run migration:generate -- src/migrations/MigrationName
 
-Check out a few resources that may come in handy when working with NestJS:
+# Create an empty migration
+npm run migration:create -- src/migrations/MigrationName
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Run migrations
+npm run migration:run
 
-## Support
+# Revert last migration
+npm run migration:revert
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### **Testing**
 
-## Stay in touch
+```bash
+# Unit tests
+npm run test
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Tests in watch mode
+npm run test:watch
+
+# Tests with coverage
+npm run test:cov
+
+# E2E tests
+npm run test:e2e
+
+# Tests in debug mode
+npm run test:debug
+```
+
+---
+
+## Database
+
+### **Main Models**
+
+- **User** : System users
+- **AuthIdentity** : Authentication identities
+- **Organization** : Organizations
+- **Membership** : Organization memberships
+
+### **Migrations**
+
+Migrations are managed with TypeORM. Each migration is versioned and can be applied/reverted.
+
+```bash
+# View migration status
+npm run migration:show
+
+# Apply all migrations
+npm run migration:run
+
+# Revert last migration
+npm run migration:revert
+```
+
+---
+
+## Testing
+
+### **Test Structure**
+
+```
+test/
+├── unit/              # Unit tests
+├── integration/       # Integration tests
+└── e2e/              # End-to-end tests
+```
+
+### **Running Tests**
+
+---
+
+## Docker
+
+### **Docker Compose**
+
+The project includes a Docker Compose configuration for development:
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+```
+
+### **Included Services**
+
+- **PostgreSQL** : Main database
+- **Redis** : Cache and queue system
+- **Application** : NestJS API
+
+### **Dockerfile**
+
+The project includes an optimized Dockerfile for production:
+
+```bash
+# Build the image
+docker build -t izzzi-backend .
+
+# Run the container
+docker run -p 3000:3000 izzzi-backend
+```
+
+---
+
+## Documentation
+
+### **Technical Documentation**
+
+- [Transactional Architecture](./docs/TRANSACTION_ARCHITECTURE.md) - Complete documentation on transaction management
+
+### **API Documentation**
+
+Once the application is started, Swagger documentation is available at:
+
+- **Development** : http://localhost:3000/api
+- **Production** : https://www.izzzi-api.com/api
+
+### **Main Endpoints**
+
+#### **Authentication**
+
+```
+POST /v1/auth/signUp          # Registration
+POST /v1/auth/signIn          # Login
+POST /v1/auth/refresh         # Refresh token
+```
+
+#### **👥 Users**
+
+```
+GET    /v1/users              # List users
+GET    /v1/users/:id          # User details
+PUT    /v1/users/:id          # Update user
+DELETE /v1/users/:id          # Delete user
+```
+
+#### **Organizations**
+
+```
+GET    /v1/organizations      # List organizations
+POST   /v1/organizations      # Create organization
+GET    /v1/organizations/:id # Organization details
+PUT    /v1/organizations/:id  # Update organization
+```
+
+---
+
+## 🎯 Transactional Architecture
+
+The project implements an advanced transactional architecture with the following features:
+
+### **Advantages**
+
+- **Atomicity** : All operations execute in a single transaction
+- **Portability** : Compatible with TypeORM, Prisma, Sequelize, etc.
+- **DDD Compliance** : No framework dependencies in the domain
+- **Testability** : Easy to mock and test
+- **Flexibility** : Easy migration to other ORMs
+
+### **Unit of Work Pattern**
+
+```typescript
+// Usage example
+async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
+  return await this.unitOfWork.withTransaction(async (uow) => {
+    const user = await this.createUserUseCase.execute(data);
+    const organization = await this.createOrganizationUseCase.execute({
+      name: data.organization,
+      ownerId: user.id,
+    });
+    await this.addUserToOrganizationUseCase.execute({
+      userId: user.id,
+      organizationId: organization.id,
+      role: Role.ADMIN,
+    });
+    return user;
+  });
+}
+```
+
+For more details, see the [complete documentation](./docs/TRANSACTION_ARCHITECTURE.md).
+
+---
+
+## Contributing
+
+### **Contribution Workflow**
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### **Code Standards**
+
+- **ESLint** : Strict configuration for code quality
+- **Prettier** : Automatic code formatting
+- **TypeScript** : Strict typing enabled
+- **Tests** : Code coverage required
+
+### **Conventions**
+
+- **Commits** : Conventional commits format
+- **Branches** : `feature/`, `bugfix/`, `hotfix/`
+- **Code** : Strict TypeScript style guide
+
+---
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for more details.
+
+---
+
+## Support
+
+For any questions or issues:
+
+- **Email** : support@izzzi.com
+- **Issues** : [GitHub Issues](https://github.com/your-org/izzzi-backend/issues)
+- **Documentation** : [Project Wiki](https://github.com/your-org/izzzi-backend/wiki)
+
+---
+
+## Team
+
+- **Development** : developed and maintained by [Omer DOTCHAMOU](https://www.omerdotchamou.com), [Saidou IBRAHIM](https://github.com/isaidou), [Johnny CHEN](https://github.com/johnnyhelloworld) and [Faez BACAR ZOUBEIRI](https://github.com/FAEZ10).
+- **Architecture** : Domain-Driven Design
+- **Technologies** : NestJS, TypeScript, PostgreSQL, AWS
+
+---
+
+<div align="center">
+
+**Built with ❤️ by the Izzzi Team**
+
+[![NestJS](https://img.shields.io/badge/NestJS-11.0.1-E0234E?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-8.16.3-336791?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+
+</div>

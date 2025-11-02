@@ -1,9 +1,13 @@
 import { NestFactory } from "@nestjs/core";
-import { ConsoleLogger } from "@nestjs/common";
+import { ConsoleLogger, ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module";
-import { HttpExceptionFilter } from "./core";
+import {
+  HttpExceptionFilter,
+  RequestLoggingInterceptor,
+  LoggerService,
+} from "./core";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -13,7 +17,30 @@ async function bootstrap() {
   });
 
   // Custom Exception filter for error handling
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter(app.get(LoggerService)));
+
+  // Custom Request logging interceptor
+  app.useGlobalInterceptors(
+    new RequestLoggingInterceptor(app.get(LoggerService))
+  );
+
+  // Validation pipes for DTOs
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    })
+  );
+
+  // Enable CORS
+  app.enableCors({
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  });
+
+  // Add prefix
+  app.setGlobalPrefix("api", { exclude: ["api"] });
 
   // Swagger Setup
   const config = new DocumentBuilder()

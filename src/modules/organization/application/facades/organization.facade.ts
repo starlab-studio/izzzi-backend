@@ -1,0 +1,32 @@
+import { UserFailedEvent } from "../../domain/events/userFailed.event";
+import { IUser, IUserCreate, Role } from "../../domain/types";
+import { OrganizationService } from "../services/organization.service";
+import { GetUserDetailsUseCase } from "../use-cases/GetUserDetails.use-case";
+
+export class OrganizationFacade {
+  constructor(
+    private readonly organizationService: OrganizationService,
+    private readonly getUserDetailsUseCase: GetUserDetailsUseCase
+  ) {}
+
+  async createUserAndOrganization(
+    data: IUserCreate
+  ): Promise<IUser | undefined> {
+    try {
+      return await this.organizationService.createUserAndOrganization(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getUserProfile(userId: string): Promise<
+    IUser & {
+      roles: {
+        organizationId: string;
+        role: Role;
+      }[];
+    }
+  > {
+    return await this.getUserDetailsUseCase.execute(userId);
+  }
+}

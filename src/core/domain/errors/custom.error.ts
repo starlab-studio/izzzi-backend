@@ -1,4 +1,5 @@
 export type CustomErrorContent = {
+  code: string;
   message: string;
   context?: { [key: string]: any };
 };

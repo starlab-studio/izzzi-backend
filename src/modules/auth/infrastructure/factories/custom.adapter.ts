@@ -90,7 +90,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       );
 
     const userDetails = await this.organizationFacade.getUserProfile(
-      identity.userId as string
+      identity.username
     );
 
     const payload: JWTPayload = {
@@ -139,7 +139,6 @@ export class CustomAuthAdapter implements IAuthStrategy {
   }): Promise<void> {}
 
   async deleteIdentity(username: string): Promise<void> {
-    console.log("deleteIdentity", username);
     await this.authIdentityRepository.deleteByUsername(username);
   }
 

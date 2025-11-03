@@ -1,17 +1,20 @@
 import { Repository } from "typeorm";
-import { IUnitOfWork, BaseTransactionalRepository } from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 
-import { UserModel } from "../models/user.model";
 import { MembershipModel } from "../models/membership.model";
-import { OrganizationModel } from "../models/organization.model";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
-import { IMembership, IUser, IOrganization, Role } from "../../domain/types";
+import { IMembership } from "../../domain/types";
+import { InjectRepository } from "@nestjs/typeorm";
 
 export class MembershipRepository
   extends BaseTransactionalRepository<IMembership>
   implements IMembershipRepository
 {
-  constructor(unitOfWork: IUnitOfWork) {
+  constructor(
+    @InjectRepository(MembershipModel)
+    private readonly directRepository: Repository<MembershipModel>,
+    unitOfWork: IUnitOfWork
+  ) {
     super(unitOfWork);
   }
 
@@ -27,33 +30,28 @@ export class MembershipRepository
   }
 
   async findByUser(userId: string): Promise<IMembership[]> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.findBy({ userId });
+    return await this.directRepository.findBy({ userId });
   }
 
   async findByOrganization(
     organizationId: string
   ): Promise<IMembership[] | []> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.findBy({ organizationId });
+    return await this.directRepository.findBy({ organizationId });
   }
 
   async findByUserAndOrganization(
     userId: string,
     organizationId: string
   ): Promise<IMembership | null> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.findOneBy({ userId, organizationId });
+    return await this.directRepository.findOneBy({ userId, organizationId });
   }
 
   async findById(id: string): Promise<IMembership | null> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.findOne({ where: { id } });
+    return await this.directRepository.findOne({ where: { id } });
   }
 
   async findAll(): Promise<IMembership[]> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.find();
+    return await this.directRepository.find();
   }
 
   async update(id: string, entity: IMembership): Promise<IMembership> {

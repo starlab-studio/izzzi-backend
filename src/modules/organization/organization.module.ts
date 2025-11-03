@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
+import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
 import {
   IEventStore,
@@ -42,8 +43,11 @@ import { GetUserDetailsUseCase } from "./application/use-cases/GetUserDetails.us
     { provide: "USER_DOMAIN_SERVICE", useClass: UserDomainService },
     {
       provide: "USER_REPOSITORY",
-      useFactory: (unitOfWork: IUnitOfWork) => new UserRepository(unitOfWork),
-      inject: [TypeOrmUnitOfWork],
+      useFactory: (
+        ormRepository: Repository<UserModel>,
+        unitOfWork: IUnitOfWork
+      ) => new UserRepository(ormRepository, unitOfWork),
+      inject: [getRepositoryToken(UserModel), TypeOrmUnitOfWork],
     },
     {
       provide: "ORGANIZATION_DOMAIN_SERVICE",
@@ -51,16 +55,20 @@ import { GetUserDetailsUseCase } from "./application/use-cases/GetUserDetails.us
     },
     {
       provide: "ORGANIZATION_REPOSITORY",
-      useFactory: (unitOfWork: IUnitOfWork) =>
-        new OrganizationRepository(unitOfWork),
-      inject: [TypeOrmUnitOfWork],
+      useFactory: (
+        ormRepository: Repository<OrganizationModel>,
+        unitOfWork: IUnitOfWork
+      ) => new OrganizationRepository(ormRepository, unitOfWork),
+      inject: [getRepositoryToken(OrganizationModel), TypeOrmUnitOfWork],
     },
     { provide: "MEMBERSHIP_DOMAIN_SERVICE", useClass: MembershipDomainService },
     {
       provide: "MEMBERSHIP_REPOSITORY",
-      useFactory: (unitOfWork: IUnitOfWork) =>
-        new MembershipRepository(unitOfWork),
-      inject: [TypeOrmUnitOfWork],
+      useFactory: (
+        ormRepository: Repository<MembershipModel>,
+        unitOfWork: IUnitOfWork
+      ) => new MembershipRepository(ormRepository, unitOfWork),
+      inject: [getRepositoryToken(MembershipModel), TypeOrmUnitOfWork],
     },
     {
       provide: "CREATE_USER_USE_CASE",

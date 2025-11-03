@@ -1,20 +1,24 @@
 import { Repository } from "typeorm";
-import { IUnitOfWork, BaseTransactionalRepository } from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 
 import { IUser } from "../../domain/types";
 import { UserModel } from "../models/user.model";
 import { IUserRepository } from "../../domain/repositories/user.repository";
+import { InjectRepository } from "@nestjs/typeorm";
 
 export class UserRepository
   extends BaseTransactionalRepository<IUser>
   implements IUserRepository
 {
-  constructor(unitOfWork: IUnitOfWork) {
+  constructor(
+    @InjectRepository(UserModel)
+    private readonly directRepository: Repository<UserModel>,
+    readonly unitOfWork: IUnitOfWork
+  ) {
     super(unitOfWork);
   }
 
   private getTypeOrmRepository(): Repository<UserModel> {
-    // Cast vers TypeOrmUnitOfWork pour accéder à l'EntityManager
     const typeOrmUow = this.unitOfWork as any;
     return typeOrmUow.getEntityManager().getRepository(UserModel);
   }
@@ -26,18 +30,15 @@ export class UserRepository
   }
 
   async findById(id: string): Promise<IUser | null> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.findOne({ where: { id } });
+    return await this.directRepository.findOne({ where: { id } });
   }
 
   async findByEmail(email: string): Promise<IUser | null> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.findOne({ where: { email } });
+    return await this.directRepository.findOne({ where: { email } });
   }
 
   async findAll(): Promise<IUser[]> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.find();
+    return await this.directRepository.find();
   }
 
   async update(id: string, entity: IUser): Promise<IUser> {

@@ -29,4 +29,7 @@ export default () => ({
       userPoolId: process.env.AWS_COGNITO_USER_POOL_ID!,
     },
   },
+  nofitication: {
+    email_provider: { key: process.env.BREVO_API_KEY },
+  },
 });

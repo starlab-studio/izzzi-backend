@@ -25,7 +25,13 @@ export type IUserCreate = Pick<IUser, "firstName" | "lastName" | "email"> & {
   authIdentityId: string;
 };
 
-export type UserCreatedPayload = { id: string } & IUserCreate;
+export type UserCreatedPayload = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  verificationLink: string;
+};
 export type IUserCreatedEvent = IDomainEvent<UserCreatedPayload>;
 
 export type UserFailedPayload = { username: string; authIdentityId: string };
@@ -68,3 +74,5 @@ export type IMembershipCreate = Pick<
   IMembership,
   "userId" | "organizationId" | "role" | "addedBy"
 >;
+
+export type UserCreatedEvent = IDomainEvent<UserCreatedPayload>;

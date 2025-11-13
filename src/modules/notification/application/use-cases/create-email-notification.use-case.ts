@@ -2,6 +2,7 @@ import { INotificationRespository } from "../../domain/repositories/notification
 import {
   ICreateNotification,
   INotification,
+  NotificationMode,
   NotificationStatus,
 } from "../../domain/notification.types";
 import { NotificationDomainService } from "../../domain/services/notification.service";
@@ -15,11 +16,27 @@ export class CreateEmailNotificationUseCase {
     private readonly notificationProvider: INotificationProvider
   ) {}
 
-  async execute(data: ICreateNotification): Promise<INotification> {
+  async execute(
+    data: Omit<
+      ICreateNotification,
+      "sender" | "mode" | "deliveredAt" | "message"
+    >
+  ): Promise<INotification> {
     try {
-      this.notificationDomainService.validateNotification(data);
+      const name = "Izzzi";
+      const sender = "ddaniomer95@gmail.com"; // TODO: DEFINE GLOBALLY AND ENABLE ACCESS FROM config
+      const mode = NotificationMode.EMAIL;
+      this.notificationDomainService.validateNotification({
+        ...data,
+        name,
+        sender,
+        mode,
+      });
       const notification = new Notification({
         ...data,
+        name,
+        sender,
+        mode,
         status: NotificationStatus.PENDING,
         retryCount: 0,
       });

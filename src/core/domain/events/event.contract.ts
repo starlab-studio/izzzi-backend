@@ -5,6 +5,7 @@ export interface UserCreatedPayload {
   firstName: string;
   lastName: string;
   email: string;
+  verificationLink: string;
 }
 
 export type UserCreatedEvent = IDomainEvent<UserCreatedPayload>;

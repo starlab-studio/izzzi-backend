@@ -37,7 +37,16 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
           "Something went wrong during creation. Please try again later."
         );
 
-      const payload = { id: ormUser.id, ...data } satisfies UserCreatedPayload;
+      //TODO: REPLACE DUMMY VERIFICATION LINK
+      const verificationLink = "http://www.localhost:3001";
+
+      const payload = {
+        id: ormUser.id,
+        firstName: ormUser.firstName,
+        lastName: ormUser.lastName,
+        email: ormUser.email,
+        verificationLink,
+      } satisfies UserCreatedPayload;
       this.eventStore.publish(new UserCreatedEvent(payload));
       return ormUser;
     } catch (error) {

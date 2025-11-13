@@ -8,10 +8,9 @@ import {
 } from "src/core";
 
 import { User } from "../../domain/entities/user.entity";
-import { IUser, IUserCreate, UserCreatedPayload } from "../../domain/types";
+import { IUser, IUserCreate } from "../../domain/types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { UserDomainService } from "../../domain/services/user.domain.service";
-import { UserCreatedEvent } from "../../domain/events/userCreated.event";
 import { UserFailedEvent } from "../../domain/events/userFailed.event";
 
 export class CreateUserUseCase extends BaseUseCase implements IUseCase {
@@ -36,18 +35,6 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
           "Something went wrong during creation. Please try again later."
         );
-
-      //TODO: REPLACE DUMMY VERIFICATION LINK
-      const verificationLink = "http://www.localhost:3001";
-
-      const payload = {
-        id: ormUser.id,
-        firstName: ormUser.firstName,
-        lastName: ormUser.lastName,
-        email: ormUser.email,
-        verificationLink,
-      } satisfies UserCreatedPayload;
-      this.eventStore.publish(new UserCreatedEvent(payload));
       return ormUser;
     } catch (error) {
       this.eventStore.publish(

@@ -139,7 +139,6 @@ export class CustomAuthAdapter implements IAuthStrategy {
   }): Promise<void> {}
 
   async deleteIdentity(username: string): Promise<void> {
-    console.log("deleteIdentity", username);
     await this.authIdentityRepository.deleteByUsername(username);
   }
 

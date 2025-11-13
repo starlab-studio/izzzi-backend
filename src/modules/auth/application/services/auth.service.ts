@@ -6,7 +6,7 @@ import { OrganizationFacade } from "src/modules/organization/application/facades
 
 export class AuthService {
   constructor(
-    readonly logger: ILoggerService,
+    private readonly logger: ILoggerService,
     private readonly signUpUseCase: SignUpUseCase
   ) {}
 

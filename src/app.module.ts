@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { CoreModule } from "./core/core.module";
 import { AuthModule } from "./modules/auth";
 import { OrganizationModule } from "./modules/organization";
+import { NotificationModule } from "./modules/notification";
 
 import AppConfig from "./core/interfaces/config.global";
 
@@ -34,6 +35,7 @@ import AppConfig from "./core/interfaces/config.global";
     CoreModule,
     AuthModule,
     OrganizationModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}

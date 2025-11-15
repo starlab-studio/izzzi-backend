@@ -158,6 +158,7 @@ import { GetUserDetailsUseCase } from "./application/use-cases/GetUserDetails.us
       provide: "ORGANIZATION_SERVICE",
       useFactory: (
         logger: ILoggerService,
+        eventStore: IEventStore,
         unitOfWork: IUnitOfWork,
         createUserUseCase: CreateUserUseCase,
         createOrganizationUseCase: CreateOrganizationUseCase,
@@ -165,6 +166,7 @@ import { GetUserDetailsUseCase } from "./application/use-cases/GetUserDetails.us
       ) =>
         new OrganizationService(
           logger,
+          eventStore,
           unitOfWork,
           createUserUseCase,
           createOrganizationUseCase,
@@ -172,6 +174,7 @@ import { GetUserDetailsUseCase } from "./application/use-cases/GetUserDetails.us
         ),
       inject: [
         "LOGGER_SERVICE",
+        EventStore,
         TypeOrmUnitOfWork,
         "CREATE_USER_USE_CASE",
         "CREATE_ORGANIZATION_USE_CASE",

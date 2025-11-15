@@ -1,5 +1,12 @@
-import { ILoggerService, IUnitOfWork } from "src/core";
+import {
+  IEventStore,
+  ILoggerService,
+  IUnitOfWork,
+  UserCreatedPayload,
+} from "src/core";
+
 import { Role } from "../../domain/types";
+import { UserCreatedEvent } from "../../domain/events/userCreated.event";
 import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
 import { CreateOrganizationUseCase } from "../use-cases/CreateOrganization.use-case";
 import { IUserCreate, IUser } from "../../domain/types";
@@ -7,7 +14,8 @@ import { AddUserToOrganizationUseCase } from "../use-cases/AddUserToOrganization
 
 export class OrganizationService {
   constructor(
-    readonly loagger: ILoggerService,
+    private readonly logger: ILoggerService,
+    private readonly eventStore: IEventStore,
     private readonly unitOfWork: IUnitOfWork,
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly createOrganizationUseCase: CreateOrganizationUseCase,
@@ -30,6 +38,19 @@ export class OrganizationService {
           role: Role.ADMIN,
           addedBy: null,
         });
+
+        //TODO: REPLACE DUMMY VERIFICATION LINK
+        const verificationLink = "http://www.localhost:3001";
+
+        this.eventStore.publish(
+          new UserCreatedEvent({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            verificationLink,
+          })
+        );
         return user;
       });
     } catch (error) {

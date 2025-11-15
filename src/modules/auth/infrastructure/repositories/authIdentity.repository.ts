@@ -1,5 +1,5 @@
-import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
 
 import { IAuthIdentity } from "../../domain/types";
 import { AuthIdentity } from "../models/authIdentity.model";

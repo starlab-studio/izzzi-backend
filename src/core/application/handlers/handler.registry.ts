@@ -41,7 +41,7 @@ export class EventHandlerRegistry {
           await handler.handle(event);
         }
       } catch (error) {
-        this.logger.warn(`Handler failed for event: ${event.name}`);
+        this.logger.warn(`Handler failed for event: ${event.name} - ${error}`);
         throw new DomainError(
           ErrorCode.EVENT_HANDLER_FAILED,
           `Handler failed for event: ${event.name}`,

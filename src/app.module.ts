@@ -6,6 +6,7 @@ import { CoreModule } from "./core/core.module";
 import { AuthModule } from "./modules/auth";
 import { OrganizationModule } from "./modules/organization";
 import { NotificationModule } from "./modules/notification";
+import { SubjectModule } from "./modules/subject";
 
 import AppConfig from "./core/interfaces/config.global";
 
@@ -36,6 +37,7 @@ import AppConfig from "./core/interfaces/config.global";
     AuthModule,
     OrganizationModule,
     NotificationModule,
+    SubjectModule,
   ],
 })
 export class AppModule {}

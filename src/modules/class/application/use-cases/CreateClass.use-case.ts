@@ -32,6 +32,7 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
       );
       this.classDomainService.validateClassUniqueness(existingClass);
 
+      // TODO: Vérifier la limite d'abonnement avant de créer la classe
       const classEntity = new Class(data);
       const ormClass = await this.classRepository.create(classEntity);
 

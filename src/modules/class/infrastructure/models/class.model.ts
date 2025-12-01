@@ -13,6 +13,12 @@ export class ClassModel extends BaseModel implements IClass {
   @Column({ type: "text", nullable: true })
   description?: string;
 
+  @Column({ name: "number_of_students", type: "integer" })
+  numberOfStudents: number;
+
+  @Column({ name: "student_emails", type: "jsonb", default: () => "'[]'::jsonb" })
+  studentEmails: string[];
+
   @Column({ name: "access_token", type: "varchar", length: 255 })
   accessToken: string;
 

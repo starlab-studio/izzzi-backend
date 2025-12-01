@@ -5,6 +5,8 @@ export interface IClass {
   name: string;
   code: string;
   description?: string;
+  numberOfStudents: number;
+  studentEmails: string[];
   accessToken: string;
   isActive: boolean;
   organizationId: string;

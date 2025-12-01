@@ -3,15 +3,12 @@ import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
 import {
-  ILoggerService,
   LoggerService,
   EventStore,
   TypeOrmUnitOfWork,
-  EventHandlerRegistry,
   IUnitOfWork,
 } from "src/core";
 import { CoreModule } from "src/core/core.module";
-import { NotificationModule } from "../notification/notification.module";
 import { ClassModel } from "./infrastructure/models/class.model";
 import { ClassDomainService } from "./domain/services/class.domain.service";
 import { CreateClassUseCase } from "./application/use-cases/CreateClass.use-case";
@@ -19,15 +16,9 @@ import { ClassController } from "./interface/controllers/class.controller";
 import { IClassRepository } from "./domain/repositories/class.repository";
 import { ClassRepository } from "./infrastructure/repositories/class.repository";
 import { ClassFacade } from "./application/facades/class.facade";
-import { ClassCreatedEventHandler } from "./application/handlers/class-created.handler";
-import { CreateEmailNotificationUseCase } from "../notification/application/use-cases/create-email-notification.use-case";
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([ClassModel]),
-    CoreModule,
-    NotificationModule,
-  ],
+  imports: [TypeOrmModule.forFeature([ClassModel]), CoreModule],
   controllers: [ClassController],
   providers: [
     { provide: "LOGGER_SERVICE", useClass: LoggerService },
@@ -36,7 +27,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       provide: "CLASS_REPOSITORY",
       useFactory: (
         ormRepository: Repository<ClassModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new ClassRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(ClassModel), TypeOrmUnitOfWork],
     },
@@ -46,7 +37,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         logger: LoggerService,
         eventStore: EventStore,
         classDomainService: ClassDomainService,
-        classRepository: IClassRepository
+        classRepository: IClassRepository,
       ) =>
         new CreateClassUseCase(
           logger,
@@ -65,32 +56,12 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       provide: ClassFacade,
       useFactory: (
         createClassUseCase: CreateClassUseCase,
-        eventStore: EventStore
-      ) => new ClassFacade(createClassUseCase, eventStore),
-      inject: ["CREATE_CLASS_USE_CASE", EventStore],
-    },
-    {
-      provide: ClassCreatedEventHandler,
-      useFactory: (
-        logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase
-      ) =>
-        new ClassCreatedEventHandler(logger, createEmailNotificationUseCase),
-      inject: [LoggerService, CreateEmailNotificationUseCase],
+        eventStore: EventStore,
+        unitOfWork: IUnitOfWork,
+      ) => new ClassFacade(createClassUseCase, eventStore, unitOfWork),
+      inject: ["CREATE_CLASS_USE_CASE", EventStore, TypeOrmUnitOfWork],
     },
   ],
   exports: [ClassFacade],
 })
-export class ClassModule {
-  constructor(
-    private readonly eventHandlerRegistry: EventHandlerRegistry,
-    private readonly classCreatedEventHandler: ClassCreatedEventHandler
-  ) {}
-
-  onModuleInit() {
-    this.eventHandlerRegistry.registerHandler(
-      "class.created",
-      this.classCreatedEventHandler,
-    );
-  }
-}
+export class ClassModule {}

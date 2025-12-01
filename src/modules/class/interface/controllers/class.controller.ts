@@ -3,11 +3,10 @@ import { BaseController } from "src/core/interfaces/controller/base.controller";
 import { ClassFacade } from "../../application/facades/class.facade";
 import { CreateClassDto } from "../dto/class.dto";
 import { JWTPayload } from "src/modules/auth/infrastructure/factories/custom.adapter";
-import { Role } from "src/modules/organization/domain/types";
-// import { AuthGuard } from "src/core/guards/auth.guard";
+import { DomainError, ErrorCode } from "src/core";
 
 interface AuthenticatedRequest extends Request {
-  user: JWTPayload;
+  user?: JWTPayload;
 }
 
 @Controller("v1/classes")
@@ -16,19 +15,38 @@ export class ClassController extends BaseController {
     super();
   }
 
-  // @AuthGuard(Role.PEDAGOGICAL_RESPONSIBLE)
   @Post()
   async createClass(
     @Body() dto: CreateClassDto,
     @Request() req: AuthenticatedRequest,
   ) {
-    const pedagogicalRole = req.user.roles.find(
-      (r) => r.role === Role.PEDAGOGICAL_RESPONSIBLE
-    );
+    //faites pas attendition a tous ça c'etait juste pour tester mais je clinerais
 
-    const organizationId = pedagogicalRole!.organizationId;
-    const userId = req.user.userId;
+    if (!req.user) {
+      throw new DomainError(
+        ErrorCode.INVALID_AUTH_DATA,
+        "Authentification requise",
+      );
+    }
+
+    //pareil pour ici passez votre chemain
+    const organizationId = req.user.roles?.[0]?.organizationId;
+    const userId = req.user.userId || req.user.sub;
     const userEmail = req.user.username;
+
+    if (!organizationId) {
+      throw new DomainError(
+        ErrorCode.INVALID_AUTH_DATA,
+        "Aucune organisation trouvée pour cet utilisateur",
+      );
+    }
+    //meme ici chef
+    if (!userId) {
+      throw new DomainError(
+        ErrorCode.INVALID_AUTH_DATA,
+        "Impossible de déterminer l'identifiant de l'utilisateur",
+      );
+    }
 
     const createdClass = await this.classFacade.createClass(
       {

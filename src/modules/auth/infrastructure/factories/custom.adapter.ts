@@ -20,6 +20,7 @@ import { AuthIdentityEntity } from "../../domain/entities/authIdentity.entity";
 
 export type JWTPayload = {
   sub: string;
+  userId: string;
   username: string;
   roles: { organizationId: string; role: Role }[];
 };
@@ -95,6 +96,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
 
     const payload: JWTPayload = {
       sub: identity.providerUserId,
+      userId: userDetails.id,
       username: userDetails.email,
       roles: userDetails.roles,
     };

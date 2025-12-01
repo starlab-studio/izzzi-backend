@@ -1,7 +1,7 @@
 import { BaseEventHandler, ILoggerService } from "src/core";
-import { ClassCreatedEvent } from "../../domain/events/classCreated.event";
+import { ClassCreatedEvent } from "src/modules/class/domain/events/classCreated.event";
 import { GeneralUtils } from "src/utils/general.utils";
-import { CreateEmailNotificationUseCase } from "src/modules/notification/application/use-cases/create-email-notification.use-case";
+import { CreateEmailNotificationUseCase } from "../use-cases/create-email-notification.use-case";
 
 export class ClassCreatedEventHandler extends BaseEventHandler {
   constructor(

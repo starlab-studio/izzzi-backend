@@ -2,6 +2,7 @@ import {
   IsString,
   IsInt,
   MinLength,
+  Min,
   IsNotEmpty,
   IsOptional,
 } from "class-validator";

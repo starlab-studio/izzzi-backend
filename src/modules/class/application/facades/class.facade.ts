@@ -1,18 +1,19 @@
 import { IClass, IClassCreate } from "../../domain/types";
 import { CreateClassUseCase } from "../use-cases/CreateClass.use-case";
-import { IEventStore } from "src/core";
+import { IEventStore, IUnitOfWork } from "src/core";
 import { ClassCreatedEvent } from "../../domain/events/classCreated.event";
 
 export class ClassFacade {
   constructor(
     private readonly createClassUseCase: CreateClassUseCase,
-    private readonly eventStore: IEventStore
+    private readonly eventStore: IEventStore,
+    private readonly unitOfWork: IUnitOfWork,
   ) {}
 
   async createClass(data: IClassCreate, userEmail: string): Promise<IClass> {
-    try {
+    return await this.unitOfWork.withTransaction(async (uow) => {
       const createdClass = await this.createClassUseCase.execute(data);
-
+  
       this.eventStore.publish(
         new ClassCreatedEvent({
           id: createdClass.id,
@@ -22,12 +23,10 @@ export class ClassFacade {
           organizationId: createdClass.organizationId,
           userId: createdClass.userId,
           userEmail,
-        })
+        }),
       );
 
       return createdClass;
-    } catch (error) {
-      throw error;
-    }
+    });
   }
 }

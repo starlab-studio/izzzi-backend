@@ -5,6 +5,8 @@ export class Class implements IClass {
   public readonly id: string;
   public name: string;
   public code: string;
+  public numberOfStudents: number;
+  public studentEmails: string[];
   public description?: string;
   public accessToken: string;
   public isActive: boolean;
@@ -18,6 +20,8 @@ export class Class implements IClass {
     this.description = data.description;
     this.organizationId = data.organizationId;
     this.userId = data.userId;
+    this.numberOfStudents = data.numberOfStudents;
+    this.studentEmails = this.parseEmails(data.studentEmails);
     this.isActive = true;
     this.code = this.generateCode(data.name);
     this.accessToken = this.generateAccessToken();
@@ -36,5 +40,10 @@ export class Class implements IClass {
   private generateAccessToken(): string {
     return crypto.randomBytes(32).toString("hex");
   }
+  private parseEmails(emailsString: string): string[] {
+    return emailsString
+      .split(";")
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+  }
 }
-

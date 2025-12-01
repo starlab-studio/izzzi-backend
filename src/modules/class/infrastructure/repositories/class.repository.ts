@@ -27,7 +27,7 @@ export class ClassRepository
     return typeOrmUow.getEntityManager().getRepository(ClassModel);
   }
 
-  async create(data: IClassCreate): Promise<IClass> {
+  async create(data: IClass): Promise<IClass> { 
     const repository = this.getTypeOrmRepository();
     const entity = repository.create(data);
     return await repository.save(entity);

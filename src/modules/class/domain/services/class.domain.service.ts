@@ -88,5 +88,6 @@ export class ClassDomainService {
       );
     }
   }
+  // TODO: Ajouter la méthode validateSubscriptionLimit(existingClassesCount: number, allowedClassesCount: number)
 }
 

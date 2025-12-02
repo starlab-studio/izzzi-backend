@@ -19,7 +19,6 @@ export class SignUpUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: SignUpData): Promise<SignUpResponse> {
     try {
-      this.authDomainService.validateSignUpData(data);
       const response = await this.authProvider.signUp(data);
       this.authDomainService.validateSignUpResponse(response);
 
@@ -29,7 +28,7 @@ export class SignUpUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompenstation(input: AuthIdentityFailedPayload): Promise<void> {
+  async withCompensation(input: AuthIdentityFailedPayload): Promise<void> {
     await this.authProvider.deleteIdentity(input.username);
   }
 }

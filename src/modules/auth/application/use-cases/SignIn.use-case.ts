@@ -23,5 +23,5 @@ export class SignInUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompenstation(input: AuthIdentityFailedPayload): Promise<void> {}
+  async withCompensation(input: AuthIdentityFailedPayload): Promise<void> {}
 }

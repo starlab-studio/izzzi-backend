@@ -2,15 +2,6 @@ import { DomainError, ErrorCode } from "src/core";
 import { SignUpData, SignUpResponse } from "../types";
 
 export class AuthDomainService {
-  validateSignUpData(data: SignUpData): void {
-    if (!data.email || !data.password) {
-      throw new DomainError(
-        ErrorCode.EMAIL_AND_PASSWORD_REQUIRED,
-        "Email and password are required"
-      );
-    }
-  }
-
   validateSignUpResponse(response: SignUpResponse): void {
     if (!response) {
       throw new DomainError(

@@ -14,14 +14,20 @@ import {
 import { CoreModule } from "src/core/core.module";
 import { OrganizationModule } from "../organization";
 import { OrganizationFacade } from "../organization/application/facades/organization.facade";
-import { AUTH_STRATEGY_TOKEN, IAuthStrategy } from "./domain/types";
+import {
+  AUTH_STRATEGY_TOKEN,
+  AuthIdentityName,
+  IAuthStrategy,
+} from "./domain/types";
 import { AuthDomainService } from "./domain/services/auth.domain.service";
 import { SignUpUseCase } from "./application/use-cases/SignUp.use-case";
 import { AuthService } from "./application/services/auth.service";
 import { AuthController } from "./interface/controllers/auth.controller";
-import { AuthIdentity } from "./infrastructure/models/authIdentity.model";
+import { AuthIdentityModel } from "./infrastructure/models/authIdentity.model";
+import { VerificationTokenModel } from "./infrastructure/models/verificationToken.model";
 import { IAuthIdentityRepository } from "./domain/repositories/authIdentity.repository";
 import { AuthIdentityRepository } from "./infrastructure/repositories/authIdentity.repository";
+import { VerificationTokenRepository } from "./infrastructure/repositories/verificationToken.repository";
 import { AuthIdentityFactory } from "./infrastructure/factories/auth.factory";
 import { AuthFacade } from "./application/facades/auth.facade";
 import { AuthIdentityFailedHandler } from "./application/handlers/AuthIdentityFailed.handler";
@@ -29,11 +35,12 @@ import { UserFailedHandler } from "./application/handlers/UserFailed.handler";
 import { CognitoAdapter } from "./infrastructure/factories/cognito.adapter";
 import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
 import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
+import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-case";
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([AuthIdentity]),
+    TypeOrmModule.forFeature([AuthIdentityModel, VerificationTokenModel]),
     CoreModule,
     OrganizationModule,
     JwtModule.registerAsync({
@@ -51,15 +58,29 @@ import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
   providers: [
     LoggerService,
     AuthIdentityRepository,
+    VerificationTokenRepository,
     AuthIdentityFactory,
     AuthDomainService,
     {
       provide: CognitoAdapter,
       useFactory: (
         configService: ConfigService,
-        authIdentityRepository: IAuthIdentityRepository
-      ) => new CognitoAdapter(configService, authIdentityRepository),
-      inject: [ConfigService, AuthIdentityRepository],
+        authIdentityRepository: IAuthIdentityRepository,
+        logger: ILoggerService,
+        verificationTokenRepository: VerificationTokenRepository
+      ) =>
+        new CognitoAdapter(
+          configService,
+          authIdentityRepository,
+          logger,
+          verificationTokenRepository
+        ),
+      inject: [
+        ConfigService,
+        AuthIdentityRepository,
+        LoggerService,
+        VerificationTokenRepository,
+      ],
     },
     {
       provide: CustomAuthAdapter,
@@ -67,19 +88,22 @@ import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
         configService: ConfigService,
         jwtService: JwtService,
         authIdentityRepository: IAuthIdentityRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
+        verificationTokenRepository: VerificationTokenRepository
       ) =>
         new CustomAuthAdapter(
           configService,
           jwtService,
           authIdentityRepository,
-          organizationFacade
+          organizationFacade,
+          verificationTokenRepository
         ),
       inject: [
         ConfigService,
         JwtService,
         AuthIdentityRepository,
         OrganizationFacade,
+        VerificationTokenRepository,
       ],
     },
     {
@@ -94,11 +118,15 @@ import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
     },
     {
       provide: "AUTH_IDENTITY_PROVIDER",
-      useFactory: (factory: AuthIdentityFactory): IAuthStrategy => {
-        const provider = "CUSTOM";
-        return factory.create(provider);
+      useFactory: (
+        factory: AuthIdentityFactory,
+        configService: ConfigService
+      ): IAuthStrategy => {
+        const provider =
+          configService.get<string>("auth.provider") || AuthIdentityName.CUSTOM;
+        return factory.create(provider as AuthIdentityName);
       },
-      inject: [AuthIdentityFactory],
+      inject: [AuthIdentityFactory, ConfigService],
     },
     {
       provide: SignUpUseCase,
@@ -111,9 +139,12 @@ import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
     },
     {
       provide: AuthService,
-      useFactory: (logger: LoggerService, signUpUseCase: SignUpUseCase) =>
-        new AuthService(logger, signUpUseCase),
-      inject: [LoggerService, SignUpUseCase],
+      useFactory: (
+        logger: LoggerService,
+        eventStore: EventStore,
+        signUpUseCase: SignUpUseCase
+      ) => new AuthService(logger, eventStore, signUpUseCase),
+      inject: [LoggerService, EventStore, SignUpUseCase],
     },
     {
       provide: SignInUseCase,
@@ -126,9 +157,21 @@ import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
       useFactory: (
         authService: AuthService,
         signInUseCase: SignInUseCase,
-        organizationFacade: OrganizationFacade
-      ) => new AuthFacade(authService, signInUseCase, organizationFacade),
-      inject: [AuthService, SignInUseCase, OrganizationFacade],
+        organizationFacade: OrganizationFacade,
+        confirmSignUpUseCase: ConfirmSignUpUseCase
+      ) =>
+        new AuthFacade(
+          authService,
+          signInUseCase,
+          organizationFacade,
+          confirmSignUpUseCase
+        ),
+      inject: [
+        AuthService,
+        SignInUseCase,
+        OrganizationFacade,
+        ConfirmSignUpUseCase,
+      ],
     },
     {
       provide: AuthIdentityFailedHandler,
@@ -148,7 +191,14 @@ import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
       ) => new UserFailedHandler(logger, eventStore, signUpUseCase),
       inject: [LoggerService, EventStore, SignUpUseCase],
     },
+    {
+      provide: ConfirmSignUpUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new ConfirmSignUpUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
   ],
+  exports: [AuthFacade],
 })
 export class AuthModule {
   constructor(

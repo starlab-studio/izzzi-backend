@@ -5,6 +5,7 @@ import {
   MaxLength,
   Matches,
 } from "class-validator";
+import { Transform } from "class-transformer";
 
 import { ApiProperty } from "@nestjs/swagger";
 
@@ -19,6 +20,7 @@ export class SignUpDto implements SignUpData {
     message:
       "First name can only contain letters, spaces, hyphens, and apostrophes",
   })
+  @Transform(({ value }) => value.trim())
   firstName: string;
 
   @ApiProperty()
@@ -29,10 +31,12 @@ export class SignUpDto implements SignUpData {
     message:
       "Last name can only contain letters, spaces, hyphens, and apostrophes",
   })
+  @Transform(({ value }) => value.trim())
   lastName: string;
 
   @ApiProperty()
   @IsEmail({}, { message: "Email must be a valid email address" })
+  @Transform(({ value }) => value.trim())
   email: string;
 
   @ApiProperty()
@@ -49,6 +53,7 @@ export class SignUpDto implements SignUpData {
   @Matches(/(?=.*[\W_])/, {
     message: "Password must contain at least one special character",
   })
+  @Transform(({ value }) => value.trim())
   password: string;
 
   @ApiProperty()
@@ -63,12 +68,14 @@ export class SignUpDto implements SignUpData {
     message:
       "Organization name can only contain letters, spaces, hyphens, and apostrophes",
   })
+  @Transform(({ value }) => value.trim().toLowerCase())
   organization: string;
 }
 
 export class SignInDto implements SignInData {
   @ApiProperty()
   @IsEmail({}, { message: "Email must be a valid email address" })
+  @Transform(({ value }) => value.trim())
   email: string;
 
   @ApiProperty()
@@ -85,5 +92,6 @@ export class SignInDto implements SignInData {
   @Matches(/(?=.*[\W_])/, {
     message: "Password must contain at least one special character",
   })
+  @Transform(({ value }) => value.trim())
   password: string;
 }

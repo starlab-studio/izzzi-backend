@@ -62,6 +62,12 @@ import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-
     AuthIdentityFactory,
     AuthIdentityUniquenessService,
     {
+      provide: AuthIdentityUniquenessService,
+      useFactory: (authIdentityRepository: IAuthIdentityRepository) =>
+        new AuthIdentityUniquenessService(authIdentityRepository),
+      inject: [AuthIdentityRepository],
+    },
+    {
       provide: CognitoAdapter,
       useFactory: (
         configService: ConfigService,

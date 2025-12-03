@@ -49,7 +49,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
     const emailVO = Email.create(data.email);
     const passwordVO = await Password.create(data.password);
 
-    this.authIdentityUniquenessService.ensureEmailIsUnique(emailVO.value);
+    await this.authIdentityUniquenessService.ensureEmailIsUnique(emailVO.value);
 
     const authIdentityEntity = AuthIdentityEntity.create({
       provider: this.name,

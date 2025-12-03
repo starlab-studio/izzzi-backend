@@ -1,4 +1,5 @@
 // Domain layer
+export * from "./domain/entities/base.entity";
 export * from "./domain/errors/code.error";
 export * from "./domain/errors/domain.error";
 export * from "./domain/errors/application.error";

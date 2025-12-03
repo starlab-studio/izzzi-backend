@@ -19,11 +19,11 @@ import {
   AuthIdentityName,
   IAuthStrategy,
 } from "./domain/types";
-import { AuthDomainService } from "./domain/services/auth.domain.service";
 import { SignUpUseCase } from "./application/use-cases/SignUp.use-case";
 import { AuthService } from "./application/services/auth.service";
 import { AuthController } from "./interface/controllers/auth.controller";
 import { AuthIdentityModel } from "./infrastructure/models/authIdentity.model";
+import { AuthIdentityUniquenessService } from "./domain/services/authIdentity-uniqueness.service";
 import { VerificationTokenModel } from "./infrastructure/models/verificationToken.model";
 import { IAuthIdentityRepository } from "./domain/repositories/authIdentity.repository";
 import { AuthIdentityRepository } from "./infrastructure/repositories/authIdentity.repository";
@@ -60,7 +60,7 @@ import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-
     AuthIdentityRepository,
     VerificationTokenRepository,
     AuthIdentityFactory,
-    AuthDomainService,
+    AuthIdentityUniquenessService,
     {
       provide: CognitoAdapter,
       useFactory: (
@@ -87,6 +87,7 @@ import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-
       useFactory: (
         configService: ConfigService,
         jwtService: JwtService,
+        authIdentityUniquenessService: AuthIdentityUniquenessService,
         authIdentityRepository: IAuthIdentityRepository,
         organizationFacade: OrganizationFacade,
         verificationTokenRepository: VerificationTokenRepository
@@ -94,6 +95,7 @@ import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-
         new CustomAuthAdapter(
           configService,
           jwtService,
+          authIdentityUniquenessService,
           authIdentityRepository,
           organizationFacade,
           verificationTokenRepository
@@ -101,6 +103,7 @@ import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-
       inject: [
         ConfigService,
         JwtService,
+        AuthIdentityUniquenessService,
         AuthIdentityRepository,
         OrganizationFacade,
         VerificationTokenRepository,
@@ -130,12 +133,9 @@ import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-
     },
     {
       provide: SignUpUseCase,
-      useFactory: (
-        logger: ILoggerService,
-        authDomainService: AuthDomainService,
-        authProvider: IAuthStrategy
-      ) => new SignUpUseCase(logger, authDomainService, authProvider),
-      inject: [LoggerService, AuthDomainService, "AUTH_IDENTITY_PROVIDER"],
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new SignUpUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
     },
     {
       provide: AuthService,

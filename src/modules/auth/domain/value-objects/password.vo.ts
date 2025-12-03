@@ -34,10 +34,10 @@ export class Password {
       );
     }
 
-    if (password.length < 12) {
+    if (password.length < 8) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password must be at least 12 characters long"
+        "Password must be at least 8 characters long"
       );
     }
 

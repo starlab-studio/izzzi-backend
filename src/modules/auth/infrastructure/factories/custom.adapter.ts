@@ -23,6 +23,7 @@ import { VerificationTokenType } from "../../domain/types";
 import { Email } from "../../domain/value-objects/email.vo";
 import { Password } from "../../domain/value-objects/password.vo";
 import { VerificationTokenEntity } from "../../domain/entities/verificationToken.entity";
+import { AuthIdentityUniquenessService } from "../../domain/services/authIdentity-uniqueness.service";
 
 export type JWTPayload = {
   sub: string;
@@ -37,6 +38,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly authIdentityUniquenessService: AuthIdentityUniquenessService,
     private readonly authIdentityRepository: IAuthIdentityRepository,
     private readonly organizationFacade: OrganizationFacade,
     private readonly verificationTokenRepository: IVerificationTokenRepository
@@ -47,17 +49,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
     const emailVO = Email.create(data.email);
     const passwordVO = await Password.create(data.password);
 
-    const existingIdentityEntity =
-      await this.authIdentityRepository.findByProviderAndUsername(
-        this.name,
-        emailVO.value
-      );
-    if (existingIdentityEntity) {
-      throw new DomainError(
-        ErrorCode.USER_ALREADY_EXISTS,
-        "User already exists with this email"
-      );
-    }
+    this.authIdentityUniquenessService.ensureEmailIsUnique(emailVO.value);
 
     const authIdentityEntity = AuthIdentityEntity.create({
       provider: this.name,

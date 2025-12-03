@@ -6,12 +6,10 @@ import {
   SignUpResponse,
   AuthIdentityFailedPayload,
 } from "../../domain/types";
-import { AuthDomainService } from "../../domain/services/auth.domain.service";
 
 export class SignUpUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly authDomainService: AuthDomainService,
     private readonly authProvider: IAuthStrategy
   ) {
     super(logger);
@@ -19,10 +17,7 @@ export class SignUpUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: SignUpData): Promise<SignUpResponse> {
     try {
-      const response = await this.authProvider.signUp(data);
-      this.authDomainService.validateSignUpResponse(response);
-
-      return response;
+      return await this.authProvider.signUp(data);
     } catch (error) {
       this.handleError(error);
     }

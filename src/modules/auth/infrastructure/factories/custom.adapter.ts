@@ -27,6 +27,7 @@ import { AuthIdentityUniquenessService } from "../../domain/services/authIdentit
 
 export type JWTPayload = {
   sub: string;
+  userId: string;
   username: string;
   roles: { organizationId: string; role: Role }[];
 };
@@ -134,6 +135,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
 
     const payload: JWTPayload = {
       sub: authIdentityEntity.providerUserId,
+      userId: authIdentityEntity.userId || userDetails.id,
       username: userDetails.email,
       roles: userDetails.roles,
     };
@@ -236,7 +238,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
   }
 
   async deleteIdentity(username: string): Promise<void> {
-    // TODO: Implement logic to delete  identity
+    await this.authIdentityRepository.findByUsername(username);
   }
 
   private generateUserId(username: string): string {

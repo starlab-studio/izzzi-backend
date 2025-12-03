@@ -26,4 +26,6 @@ export * from "./infrastructure/models/typeorm.model";
 export * from "./infrastructure/unit-of-work/typeOrm.unit-of-work";
 
 // Interface layer
-export * from "./interfaces/controller/base.controller";
+export * from "./interfaces/controllers/base.controller";
+export * from "./interfaces/guards/auth.guard";
+export * from "./interfaces/decorators/current-user.decorator";

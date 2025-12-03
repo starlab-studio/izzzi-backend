@@ -75,7 +75,7 @@ export class SignInDto implements SignInData {
 
   @ApiProperty()
   @IsString({ message: "Password must be a string" })
-  @MinLength(12, { message: "Password must be at least 12 characters long" })
+  @MinLength(8, { message: "Password must be at least 8 characters long" })
   @MaxLength(128, { message: "Password must be at most 128 characters long" })
   @Matches(/(?=.*[a-z])/, {
     message: "Password must contain at least one lowercase letter",

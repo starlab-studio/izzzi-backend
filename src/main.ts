@@ -47,6 +47,14 @@ async function bootstrap() {
     .setTitle("IZZZI API Documentation")
     .setDescription("Documentation for IZZZI main backend API")
     .setVersion("1.0")
+    .addBearerAuth({
+      type: "http",
+      scheme: "bearer",
+      bearerFormat: "JWT",
+      name: "JWT",
+      description: "Enter JWT token",
+      in: "header",
+    })
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, documentFactory);

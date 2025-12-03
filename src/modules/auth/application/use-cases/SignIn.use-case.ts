@@ -16,8 +16,7 @@ export class SignInUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: SignInData): Promise<SignInResponse> {
     try {
-      const response = await this.authProvider.signIn(data);
-      return response;
+      return await this.authProvider.signIn(data);
     } catch (error) {
       this.handleError(error);
     }

@@ -7,6 +7,7 @@ import { LoggerService } from "./infrastructure/services/logger.service";
 import { EventStore } from "./infrastructure/services/event.store";
 import { EventHandlerRegistry } from "./application/handlers/handler.registry";
 import { TypeOrmUnitOfWork } from "./infrastructure/unit-of-work/typeOrm.unit-of-work";
+import { AuthGuard } from "./interfaces/guards/auth.guard";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { TypeOrmUnitOfWork } from "./infrastructure/unit-of-work/typeOrm.unit-of
   providers: [
     LoggerService,
     EventStore,
+    AuthGuard,
     {
       provide: EventHandlerRegistry,
       useFactory: (logger: ILoggerService, eventStore: EventStore) =>

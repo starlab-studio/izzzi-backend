@@ -22,7 +22,7 @@ export class AuthService {
         await organizationFacade.createUserAndOrganization(signUpResponse);
 
       const sendVerificationToken = signUpResponse.sendVerificationToken;
-      const verificationLink = `http://www.localhost:3001/auth?token=${signUpResponse.verificationToken}`; // TODO : Remove hardcode frontend link to use dynamic value
+      const verificationLink = `http://www.localhost:3001/auth/verify?token=${signUpResponse.verificationToken}`; // TODO : Remove hardcode frontend link to use dynamic value
 
       this.eventStore.publish(
         new SignUpSucceedEvent({

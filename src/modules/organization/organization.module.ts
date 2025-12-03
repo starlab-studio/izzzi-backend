@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -35,7 +35,7 @@ import { GetUserDetailsUseCase } from "./application/use-cases/GetUserDetails.us
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserModel, OrganizationModel, MembershipModel]),
-    CoreModule,
+    forwardRef(() => CoreModule),
   ],
   controllers: [UserController],
   providers: [

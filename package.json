@@ -26,7 +26,9 @@
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.901.0",
     "@aws-sdk/client-s3": "^3.901.0",
+    "@keyv/redis": "^5.1.4",
     "@nestjs/bullmq": "^11.0.4",
+    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -38,6 +40,8 @@
     "@sendinblue/client": "^3.3.1",
     "argon2": "^0.44.0",
     "bullmq": "^5.61.0",
+    "cache-manager": "^7.2.5",
+    "cacheable": "^2.3.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "handlebars": "^4.7.8",

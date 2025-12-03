@@ -28,4 +28,6 @@ export * from "./infrastructure/unit-of-work/typeOrm.unit-of-work";
 // Interface layer
 export * from "./interfaces/controllers/base.controller";
 export * from "./interfaces/guards/auth.guard";
+export * from "./interfaces/guards/role.guard";
 export * from "./interfaces/decorators/current-user.decorator";
+export * from "./interfaces/decorators/role.decorator";

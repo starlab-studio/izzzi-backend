@@ -7,7 +7,9 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from "@nestjs/common";
-import { Role, ROLES_KEY } from "../decorators/role.decorator";
+
+import { Role } from "src/core/domain/types";
+import { ROLES_KEY } from "../decorators/role.decorator";
 import { type ICacheService } from "src/core/domain/services/cache.service";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 

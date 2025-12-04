@@ -13,10 +13,9 @@ import {
 
 import { GeneralUtils } from "src/utils/general.utils";
 import { AuthIdentityName } from "../../domain/types";
-import { DomainError, ErrorCode } from "src/core";
+import { Role, DomainError, ErrorCode } from "src/core";
 import type { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.repository";
 import type { IVerificationTokenRepository } from "../../domain/repositories/verificationToken.repository";
-import { Role } from "src/modules/organization";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { AuthIdentityEntity } from "../../domain/entities/authIdentity.entity";
 import { VerificationTokenType } from "../../domain/types";

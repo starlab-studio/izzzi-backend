@@ -4,9 +4,10 @@ import {
   ILoggerService,
   ApplicationError,
   ErrorCode,
+  Role,
 } from "src/core";
 
-import { IMembership, Role } from "../../domain/types";
+import { IMembership } from "../../domain/types";
 import { MembershipDomainService } from "../../domain/services/membership.domain.service";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
 import { MembershipEntity } from "../../domain/entities/membership.entity";

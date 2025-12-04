@@ -1,6 +1,6 @@
-import { IUseCase, BaseUseCase, ILoggerService } from "src/core";
+import { IUseCase, BaseUseCase, ILoggerService, Role } from "src/core";
 
-import { IMembership, IUser, Role } from "../../domain/types";
+import { IMembership, IUser } from "../../domain/types";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
 import { MembershipDomainService } from "../../domain/services/membership.domain.service";
 import { UserDomainService } from "../../domain/services/user.domain.service";
@@ -22,7 +22,6 @@ export class GetUserDetailsUseCase extends BaseUseCase implements IUseCase {
   ): Promise<IUser & { roles: { organizationId: string; role: Role }[] }> {
     try {
       const user = await this.userRepository.findByEmail(email);
-      // this.userDomainService.canUserLogin(user); TODO : Update user entity to perform validations from entity
 
       const memberships = await this.memberShipRepository.findByUser(
         user?.id as string

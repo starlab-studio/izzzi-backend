@@ -1,4 +1,5 @@
-import { IUser, IUserCreate, Role } from "../../domain/types";
+import { Role } from "src/core";
+import { IUser, IUserCreate } from "../../domain/types";
 import { OrganizationService } from "../services/organization.service";
 import { GetUserDetailsUseCase } from "../use-cases/GetUserDetails.use-case";
 

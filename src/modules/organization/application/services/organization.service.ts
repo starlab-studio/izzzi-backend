@@ -1,7 +1,5 @@
-import { IEventStore, ILoggerService, IUnitOfWork } from "src/core";
+import { IEventStore, ILoggerService, IUnitOfWork, Role } from "src/core";
 
-import { Role } from "../../domain/types";
-import { UserCreatedEvent } from "../../domain/events/userCreated.event";
 import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
 import { CreateOrganizationUseCase } from "../use-cases/CreateOrganization.use-case";
 import { IUserCreate, IUser } from "../../domain/types";

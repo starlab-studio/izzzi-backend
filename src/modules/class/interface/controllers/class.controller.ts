@@ -1,14 +1,23 @@
-import { Controller, Post, Body, Request } from "@nestjs/common";
-import { BaseController } from "src/core/interfaces/controller/base.controller";
+import { Controller, Post, Body, UseGuards } from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from "@nestjs/swagger";
+import {
+  BaseController,
+  AuthGuard,
+  CurrentUser,
+  Role,
+  DomainError,
+  ErrorCode,
+} from "src/core";
 import { ClassFacade } from "../../application/facades/class.facade";
 import { CreateClassDto } from "../dto/class.dto";
-import { JWTPayload } from "src/modules/auth/infrastructure/factories/custom.adapter";
-import { DomainError, ErrorCode } from "src/core";
+import type { JWTPayload } from "src/modules/auth/infrastructure/factories/custom.adapter";
 
-interface AuthenticatedRequest extends Request {
-  user?: JWTPayload;
-}
-
+@ApiTags("Classes")
 @Controller("v1/classes")
 export class ClassController extends BaseController {
   constructor(private readonly classFacade: ClassFacade) {
@@ -16,45 +25,34 @@ export class ClassController extends BaseController {
   }
 
   @Post()
+  @ApiOperation({ summary: "Créer une nouvelle classe" })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @ApiResponse({ status: 201, description: "Classe créée avec succès" })
+  @ApiResponse({ status: 400, description: "Données invalides" })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
   async createClass(
     @Body() dto: CreateClassDto,
-    @Request() req: AuthenticatedRequest,
+    @CurrentUser() user: JWTPayload,
   ) {
-    //faites pas attendition a tous ça c'etait juste pour tester mais je clinerais
+    const learningManagerRole = user.roles.find(
+      (r) => r.role === Role.LEARNING_MANAGER,
+    );
 
-    if (!req.user) {
+    if (!learningManagerRole) {
       throw new DomainError(
         ErrorCode.INVALID_AUTH_DATA,
-        "Authentification requise",
-      );
-    }
-
-    //pareil pour ici passez votre chemain
-    const organizationId = req.user.roles?.[0]?.organizationId;
-    const userId = req.user.userId || req.user.sub;
-    const userEmail = req.user.username;
-
-    if (!organizationId) {
-      throw new DomainError(
-        ErrorCode.INVALID_AUTH_DATA,
-        "Aucune organisation trouvée pour cet utilisateur",
-      );
-    }
-    //meme ici chef
-    if (!userId) {
-      throw new DomainError(
-        ErrorCode.INVALID_AUTH_DATA,
-        "Impossible de déterminer l'identifiant de l'utilisateur",
+        "Vous devez avoir le rôle LEARNING_MANAGER pour créer une classe",
       );
     }
 
     const createdClass = await this.classFacade.createClass(
       {
         ...dto,
-        organizationId,
-        userId,
+        organizationId: learningManagerRole.organizationId,
+        userId: user.userId,
       },
-      userEmail,
+      user.username,
     );
 
     return this.success(createdClass);

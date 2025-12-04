@@ -35,19 +35,16 @@ import { ClassFacade } from "./application/facades/class.facade";
       provide: "CREATE_CLASS_USE_CASE",
       useFactory: (
         logger: LoggerService,
-        eventStore: EventStore,
         classDomainService: ClassDomainService,
         classRepository: IClassRepository,
       ) =>
         new CreateClassUseCase(
           logger,
-          eventStore,
           classDomainService,
           classRepository,
         ),
       inject: [
         "LOGGER_SERVICE",
-        EventStore,
         "CLASS_DOMAIN_SERVICE",
         "CLASS_REPOSITORY",
       ],

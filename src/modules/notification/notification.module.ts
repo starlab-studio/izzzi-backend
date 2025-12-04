@@ -83,13 +83,13 @@ export class NotificationModule {
     );
 
     this.eventHandlerRegistry.registerHandler(
-      "user.created",
-      this.userCreatedEventHandler,
+      "signup.succeed",
+      this.userCreatedEventHandler
     );
 
     this.eventHandlerRegistry.registerHandler(
       "class.created",
-      this.classCreatedEventHandler,
+      this.classCreatedEventHandler
     );
   }
 }

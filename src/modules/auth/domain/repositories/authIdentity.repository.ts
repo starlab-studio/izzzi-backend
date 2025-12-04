@@ -1,12 +1,15 @@
 import { IRepository } from "src/core";
-import { IAuthIdentity } from "../types";
+import { AuthIdentityName } from "../types";
+import { AuthIdentityEntity } from "../entities/authIdentity.entity";
 
-export interface IAuthIdentityRepository extends IRepository<IAuthIdentity> {
-  create(entity: Partial<IAuthIdentity>): Promise<IAuthIdentity>;
-  findByUsername(username: string): Promise<IAuthIdentity | null>;
+export interface IAuthIdentityRepository
+  extends IRepository<AuthIdentityEntity> {
+  create(entity: AuthIdentityEntity): Promise<AuthIdentityEntity>;
+  save(entity: AuthIdentityEntity): Promise<AuthIdentityEntity>;
+  findByUsername(username: string): Promise<AuthIdentityEntity | null>;
   findByProviderAndUsername(
-    provider: string,
+    provider: AuthIdentityName,
     username: string
-  ): Promise<IAuthIdentity | null>;
+  ): Promise<AuthIdentityEntity | null>;
   deleteByUsername(username: string): Promise<void>;
 }

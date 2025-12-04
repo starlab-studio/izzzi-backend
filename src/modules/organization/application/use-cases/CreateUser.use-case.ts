@@ -47,7 +47,7 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompenstation(data: {
+  async withCompensation(data: {
     username: string;
     authIdentityId: string;
   }): Promise<void> {

@@ -1,7 +1,7 @@
 import { Entity, Column } from "typeorm";
 
-import { BaseModel } from "src/core";
-import { IMembership, IUser, IOrganization, Role } from "../../domain/types";
+import { BaseModel, Role } from "src/core";
+import { IMembership, IUser, IOrganization } from "../../domain/types";
 
 @Entity({ name: "memberships" })
 export class MembershipModel extends BaseModel implements IMembership {

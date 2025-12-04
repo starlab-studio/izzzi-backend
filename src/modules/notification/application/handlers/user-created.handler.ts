@@ -1,8 +1,8 @@
 import { BaseEventHandler, ILoggerService } from "src/core";
 
-import { UserCreatedEvent } from "src/core";
 import { GeneralUtils } from "src/utils/general.utils";
 import { CreateEmailNotificationUseCase } from "../use-cases/create-email-notification.use-case";
+import { SignUpSucceedEvent } from "src/modules/auth/domain/events/signUpSucceedEvent.event";
 
 export class UserCreatedEventHandler extends BaseEventHandler {
   constructor(
@@ -12,7 +12,9 @@ export class UserCreatedEventHandler extends BaseEventHandler {
     super(logger);
   }
 
-  async handle(event: UserCreatedEvent): Promise<void> {
+  async handle(event: SignUpSucceedEvent): Promise<void> {
+    if (!event.payload.sendVerificationToken) return;
+
     const verificationLink = event.payload.verificationLink;
     const firstName = event.payload.firstName;
     const template = GeneralUtils.htmlTemplateReader("confirmation.html", {
@@ -28,6 +30,6 @@ export class UserCreatedEventHandler extends BaseEventHandler {
   }
 
   canHandle(eventName: string): boolean {
-    return eventName === "user.created";
+    return eventName === "signup.succeed";
   }
 }

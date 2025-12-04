@@ -23,5 +23,5 @@ export class GetOrganizationUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompenstation(input: any): Promise<void> {}
+  async withCompensation(input: any): Promise<void> {}
 }

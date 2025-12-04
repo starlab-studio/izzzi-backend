@@ -3,7 +3,6 @@ import {
   BaseUseCase,
   ILoggerService,
   ApplicationError,
-  EventStore,
   ErrorCode,
 } from "src/core";
 
@@ -15,7 +14,6 @@ import { ClassDomainService } from "../../domain/services/class.domain.service";
 export class CreateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly eventStore: EventStore,
     private readonly classDomainService: ClassDomainService,
     private readonly classRepository: IClassRepository
   ) {
@@ -32,7 +30,7 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
       );
       this.classDomainService.validateClassUniqueness(existingClass);
 
-      // TODO: Vérifier la limite d'abonnement avant de créer la classe
+      // TODO: Vérifier limite d'abonnement
       const classEntity = new Class(data);
       const ormClass = await this.classRepository.create(classEntity);
 
@@ -49,6 +47,5 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompenstation(input: IClass): Promise<void> {}
+  async withCompensation(input: IClass): Promise<void> {}
 }
-

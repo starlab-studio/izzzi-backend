@@ -57,5 +57,5 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompenstation(input: IOrganization): Promise<void> {}
+  async withCompensation(input: IOrganization): Promise<void> {}
 }

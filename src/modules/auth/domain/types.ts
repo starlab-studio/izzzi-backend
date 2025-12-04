@@ -2,13 +2,19 @@ import { IDomainEvent } from "src/core";
 
 export interface IAuthIdentity {
   readonly id: string;
-  provider: string;
-  providerUserId: string;
-  username: string;
-  password: string | null;
-  userId: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+  readonly provider: AuthIdentityName;
+  readonly providerUserId: string;
+  readonly username: string;
+  readonly password?: string;
+  readonly userId?: string;
+  readonly failedLoginAttempts: number;
+  readonly lastFailedLoginAt: Date | null;
+  readonly lockedUntil: Date | null;
+  readonly isLocked: boolean;
+  readonly isEmailVerified: boolean;
+  readonly emailVerifiedAt: Date | null;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export type SignUpData = {
@@ -21,6 +27,8 @@ export type SignUpData = {
 
 export type SignUpResponse = Omit<SignUpData, "password"> & {
   authIdentityId: string;
+  verificationToken: string;
+  sendVerificationToken: boolean;
 };
 
 export type SignInData = {
@@ -33,11 +41,12 @@ export type SignInResponse = {
   refreshToken: string;
 };
 
-export type AuthIdentityName =
-  | "CUSTOM"
-  | "AWS_COGNITO"
-  | "SUPABASE"
-  | "FIREBASE";
+export enum AuthIdentityName {
+  CUSTOM = "CUSTOM",
+  AWS_COGNITO = "AWS_COGNITO",
+  SUPABASE = "SUPABASE",
+  FIREBASE = "FIREBASE",
+}
 
 export type IAuthIdentityCreate = SignUpResponse;
 
@@ -49,7 +58,7 @@ export interface IAuthStrategy {
 
   signIn(data: { email: string; password: string }): Promise<SignInResponse>;
 
-  confirmSignUp(data: { email: string; code: string }): Promise<Boolean>;
+  confirmSignUp(data: ConfirmSignUpData): Promise<boolean>;
 
   resendConfirmationCode(data: { email: string }): Promise<void>;
 
@@ -88,5 +97,40 @@ export type IAuthIdentityCreatedEvent =
   IDomainEvent<AuthIdentityCreatedPayload>;
 export type IAuthIdentityFailedEvent = IDomainEvent<AuthIdentityFailedPayload>;
 
-export type UserFailedPayload = { username: string; authIdentityId: string };
+export interface UserFailedPayload {
+  username: string;
+  authIdentityId: string;
+}
 export type IUserFailedEvent = IDomainEvent<UserFailedPayload>;
+
+export interface SignUpSucceedPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  verificationLink: string;
+  sendVerificationToken: boolean;
+}
+export type ISignUpSucceedEvent = IDomainEvent<SignUpSucceedPayload>;
+
+export enum VerificationTokenType {
+  EMAIL_VERIFICATION = "EMAIL_VERIFICATION",
+  PHONE_VERIFICATION = "PHONE_VERIFICATION",
+  TWO_FACTOR_AUTH = "TWO_FACTOR_AUTH",
+  MAGIC_LINK = "MAGIC_LINK",
+}
+
+export interface IVerificationToken {
+  readonly id: string;
+  readonly email: string;
+  readonly token: string;
+  readonly type: VerificationTokenType;
+  readonly expiresAt: Date;
+  readonly isUsed: boolean;
+  readonly usedAt: Date | null;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+export interface ConfirmSignUpData {
+  token: string;
+}

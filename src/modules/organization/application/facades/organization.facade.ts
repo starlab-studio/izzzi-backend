@@ -1,4 +1,5 @@
-import { IUser, IUserCreate, Role } from "../../domain/types";
+import { Role } from "src/core";
+import { IUser, IUserCreate } from "../../domain/types";
 import { OrganizationService } from "../services/organization.service";
 import { GetUserDetailsUseCase } from "../use-cases/GetUserDetails.use-case";
 
@@ -8,9 +9,7 @@ export class OrganizationFacade {
     private readonly getUserDetailsUseCase: GetUserDetailsUseCase
   ) {}
 
-  async createUserAndOrganization(
-    data: IUserCreate
-  ): Promise<IUser | undefined> {
+  async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
     try {
       return await this.organizationService.createUserAndOrganization(data);
     } catch (error) {

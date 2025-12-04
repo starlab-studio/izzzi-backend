@@ -1,4 +1,5 @@
-import { IMembership, IMembershipCreate, Role } from "../types";
+import { Role } from "src/core";
+import { IMembership, IMembershipCreate } from "../types";
 
 export class MembershipEntity implements IMembership {
   public readonly id: string;

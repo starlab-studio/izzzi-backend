@@ -5,7 +5,7 @@ import { IOrganization } from "../../domain/types";
 
 @Entity({ name: "organizations" })
 export class OrganizationModel extends BaseModel implements IOrganization {
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: "varchar", length: 255, unique: true })
   name: string;
 
   @Column({ type: "varchar", length: 20, nullable: true })

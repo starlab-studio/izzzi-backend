@@ -9,8 +9,5 @@ export class ConfirmEmailDto implements ConfirmSignUpData {
   })
   @IsString({ message: "Token must be a string" })
   @IsNotEmpty({ message: "Verification token is required" })
-  @Length(64, 64, {
-    message: "Verification token must be exactly 64 characters",
-  })
   token: string;
 }

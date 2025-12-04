@@ -73,7 +73,7 @@ export class NotificationModule {
     );
 
     this.eventHandlerRegistry.registerHandler(
-      "user.created",
+      "signup.succeed",
       this.userCreatedEventHandler
     );
   }

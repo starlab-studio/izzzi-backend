@@ -1,4 +1,4 @@
-import { IDomainEvent } from "src/core";
+import { IDomainEvent, Role } from "src/core";
 
 export enum UserStatus {
   PENDING = "pending",
@@ -36,12 +36,6 @@ export type IUserCreatedEvent = IDomainEvent<UserCreatedPayload>;
 
 export type UserFailedPayload = { username: string; authIdentityId: string };
 export type IUserFailedEvent = IDomainEvent<UserFailedPayload>;
-
-export enum Role {
-  ADMIN = "admin",
-  SUPER_ADMIN = "super_admin",
-  MEMBER = "member",
-}
 
 export interface IOrganization {
   readonly id: string;

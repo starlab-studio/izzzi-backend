@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as Handlebars from "handlebars";
+import { randomBytes } from "crypto";
 
 export class GeneralUtils {
   static htmlTemplateReader = (
@@ -16,4 +17,8 @@ export class GeneralUtils {
     const template = Handlebars.compile(templateContent);
     return template(variables);
   };
+
+  static generateToken(length: number): string {
+    return randomBytes(length).toString("hex");
+  }
 }

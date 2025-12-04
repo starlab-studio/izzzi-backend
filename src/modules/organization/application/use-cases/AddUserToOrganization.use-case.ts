@@ -53,5 +53,5 @@ export class AddUserToOrganizationUseCase
     }
   }
 
-  async withCompenstation(input: IMembership): Promise<void> {}
+  async withCompensation(input: IMembership): Promise<void> {}
 }

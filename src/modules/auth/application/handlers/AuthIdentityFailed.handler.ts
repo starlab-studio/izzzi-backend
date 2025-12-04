@@ -16,7 +16,7 @@ export class AuthIdentityFailedHandler extends BaseEventHandler {
     this.logEventHandling(event);
 
     try {
-      await this.signUpUseCase.withCompenstation({
+      await this.signUpUseCase.withCompensation({
         username: event.payload.username,
       });
     } catch (error) {

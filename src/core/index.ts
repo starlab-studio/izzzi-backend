@@ -1,4 +1,6 @@
 // Domain layer
+export * from "./domain/types";
+export * from "./domain/entities/base.entity";
 export * from "./domain/errors/code.error";
 export * from "./domain/errors/domain.error";
 export * from "./domain/errors/application.error";
@@ -25,4 +27,8 @@ export * from "./infrastructure/models/typeorm.model";
 export * from "./infrastructure/unit-of-work/typeOrm.unit-of-work";
 
 // Interface layer
-export * from "./interfaces/controller/base.controller";
+export * from "./interfaces/controllers/base.controller";
+export * from "./interfaces/guards/auth.guard";
+export * from "./interfaces/guards/role.guard";
+export * from "./interfaces/decorators/current-user.decorator";
+export * from "./interfaces/decorators/role.decorator";

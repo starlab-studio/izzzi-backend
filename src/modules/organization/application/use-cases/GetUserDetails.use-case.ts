@@ -22,7 +22,7 @@ export class GetUserDetailsUseCase extends BaseUseCase implements IUseCase {
   ): Promise<IUser & { roles: { organizationId: string; role: Role }[] }> {
     try {
       const user = await this.userRepository.findByEmail(email);
-      this.userDomainService.canUserLogin(user);
+      // this.userDomainService.canUserLogin(user); TODO : Update user entity to perform validations from entity
 
       const memberships = await this.memberShipRepository.findByUser(
         user?.id as string
@@ -40,5 +40,5 @@ export class GetUserDetailsUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompenstation(input: IMembership): Promise<void> {}
+  async withCompensation(input: IMembership): Promise<void> {}
 }

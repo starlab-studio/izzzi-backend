@@ -8,9 +8,7 @@ export class OrganizationFacade {
     private readonly getUserDetailsUseCase: GetUserDetailsUseCase
   ) {}
 
-  async createUserAndOrganization(
-    data: IUserCreate
-  ): Promise<IUser | undefined> {
+  async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
     try {
       return await this.organizationService.createUserAndOrganization(data);
     } catch (error) {

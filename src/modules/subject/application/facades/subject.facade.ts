@@ -22,7 +22,7 @@ export class SubjectFacade {
         description: createdSubject.description,
         color: createdSubject.color,
         organizationId: createdSubject.organizationId,
-        userId: createdSubject.userId,
+        createdBy: createdSubject.createdBy,
         userEmail,
       }),
     );

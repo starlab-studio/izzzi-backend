@@ -1,16 +1,25 @@
-import { Controller, Post, Body, Request } from "@nestjs/common";
-import { BaseController } from "src/core/interfaces/controller/base.controller";
+import { Controller, Post, Body, UseGuards } from "@nestjs/common";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { SubjectFacade } from "../../application/facades/subject.facade";
-import { JWTPayload } from "src/modules/auth/infrastructure/factories/custom.adapter";
-import { Role } from "src/modules/organization/domain/types";
-import { Request as ExpressRequest } from "express";
-// import { AuthGuard } from "src/core/guards/auth.guard";
+import type { JWTPayload } from "src/modules/auth/infrastructure/factories/custom.adapter";
 import { CreateSubjectDto } from "../dto/subject.dto";
+import {
+  BaseController,
+  Role,
+  Roles,
+  AuthGuard,
+  RolesGuard,
+  CurrentUser,
+} from "src/core";
 
-interface AuthenticatedRequest extends ExpressRequest {
-  user: JWTPayload;
-}
-
+@ApiBearerAuth()
+@UseGuards(AuthGuard, RolesGuard)
+@ApiTags("Subjects")
 @Controller("v1/subjects")
 export class SubjectController extends BaseController {
   constructor(private readonly subjectFacade: SubjectFacade) {
@@ -18,24 +27,25 @@ export class SubjectController extends BaseController {
   }
 
   @Post()
+  @ApiOperation({ summary: "Créer une nouvelle matière" })
+  @ApiBearerAuth()
+  @Roles(Role.LEARNING_MANAGER)
+  @ApiResponse({ status: 201, description: "Matière créée avec succès" })
+  @ApiResponse({ status: 400, description: "Données invalides" })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
   async createSubject(
     @Body() dto: CreateSubjectDto,
-    @Request() req: AuthenticatedRequest,
+    @CurrentUser() user: JWTPayload,
   ) {
-    const roleEntry =
-      req.user.roles.find((r) => r.role === Role.ADMIN) ?? req.user.roles[0];
-    const organizationId = roleEntry.organizationId;
-
-    const userId = req.user.sub;
-    const userEmail = req.user.username;
-
     const createdSubject = await this.subjectFacade.createSubject(
       {
         ...dto,
-        organizationId,
-        userId,
+        description: dto.description ?? null,
+        organizationId: user.roles[0].organizationId,
+        createdBy: user.userId,
       },
-      userEmail,
+      user.username,
     );
 
     return this.success(createdSubject);

@@ -3,27 +3,27 @@ import { IDomainEvent } from "src/core";
 export interface ISubject {
   readonly id: string;
   name: string;
-  description?: string;
+  description: string | null;
   color: string;
   isActive: boolean;
   organizationId: string;
-  userId: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdBy: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export type ISubjectCreate = Pick<
   ISubject,
-  "name" | "description" | "color" | "organizationId" | "userId"
+  "name" | "description" | "color" | "organizationId" | "createdBy"
 >;
 
 export interface SubjectCreatedPayload {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   color: string;
   organizationId: string;
-  userId: string;
+  createdBy: string;
   userEmail: string;
 }
 

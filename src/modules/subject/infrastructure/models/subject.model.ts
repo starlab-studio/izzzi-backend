@@ -1,14 +1,16 @@
-import { Entity, Column } from "typeorm";
-import { BaseModel } from "src/core";
+import { Entity, Column, PrimaryColumn } from "typeorm";
 import { ISubject } from "../../domain/types";
 
 @Entity({ name: "subjects" })
-export class SubjectModel extends BaseModel implements ISubject {
+export class SubjectModel implements ISubject {
+  @PrimaryColumn("uuid")
+  id: string;
+
   @Column({ type: "varchar", length: 255 })
   name: string;
 
   @Column({ type: "text", nullable: true })
-  description?: string;
+  description: string | null;
 
   @Column({ type: "varchar", length: 7 })
   color: string;
@@ -17,8 +19,14 @@ export class SubjectModel extends BaseModel implements ISubject {
   isActive: boolean;
 
   @Column({ name: "organization_id", type: "uuid" })
-  organizationId!: string;
+  organizationId: string;
 
-  @Column({ name: "user_id", type: "uuid" })
-  userId: string;
+  @Column({ name: "created_by", type: "uuid" })
+  createdBy: string;
+
+  @Column({ name: "created_at", type: "timestamp", nullable: true })
+  createdAt: Date | null;
+
+  @Column({ name: "updated_at", type: "timestamp", nullable: true })
+  updatedAt: Date | null;
 }

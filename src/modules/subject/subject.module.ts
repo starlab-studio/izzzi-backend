@@ -6,58 +6,60 @@ import {
   ILoggerService,
   LoggerService,
   EventStore,
-  EventHandlerRegistry,
   TypeOrmUnitOfWork,
   IUnitOfWork,
 } from "src/core";
 import { CoreModule } from "src/core/core.module";
 import { NotificationModule } from "../notification/notification.module";
+import { OrganizationModule } from "src/modules/organization/organization.module";
 
 import { SubjectModel } from "./infrastructure/models/subject.model";
-import { SubjectDomainService } from "./domain/services/subject.domain.service";
 import { CreateSubjectUseCase } from "./application/use-cases/CreateSubject.use-case";
 import { SubjectController } from "./interface/controllers/subject.controller";
 import { ISubjectRepository } from "./domain/repositories/subject.repository";
 import { SubjectRepository } from "./infrastructure/repositories/subject.repository";
 import { SubjectFacade } from "./application/facades/subject.facade";
-import { SubjectCreatedEventHandler } from "./application/handlers/subject-created.handler";
-import { CreateEmailNotificationUseCase } from "../notification/application/use-cases/create-email-notification.use-case";
+import { MembershipModel } from "src/modules/organization/infrastructure/models/membership.model";
+import { MembershipRepository } from "src/modules/organization/infrastructure/repositories/membership.repository";
+import { IMembershipRepository } from "src/modules/organization/domain/repositories/membership.repository";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SubjectModel]),
+    TypeOrmModule.forFeature([SubjectModel, MembershipModel]),
     CoreModule,
     NotificationModule,
+    OrganizationModule,
   ],
   controllers: [SubjectController],
   providers: [
     { provide: "LOGGER_SERVICE", useClass: LoggerService },
-    { provide: "SUBJECT_DOMAIN_SERVICE", useClass: SubjectDomainService },
     {
       provide: "SUBJECT_REPOSITORY",
+      useFactory: (ormRepository: Repository<SubjectModel>) =>
+        new SubjectRepository(ormRepository),
+      inject: [getRepositoryToken(SubjectModel)],
+    },
+    {
+      provide: "MEMBERSHIP_REPOSITORY",
       useFactory: (
-        ormRepository: Repository<SubjectModel>,
+        ormRepository: Repository<MembershipModel>,
         unitOfWork: IUnitOfWork,
-      ) => new SubjectRepository(ormRepository, unitOfWork),
-      inject: [getRepositoryToken(SubjectModel), TypeOrmUnitOfWork],
+      ) => new MembershipRepository(ormRepository, unitOfWork),
+      inject: [getRepositoryToken(MembershipModel), TypeOrmUnitOfWork],
     },
     {
       provide: "CREATE_SUBJECT_USE_CASE",
       useFactory: (
         logger: ILoggerService,
-        subjectDomainService: SubjectDomainService,
         subjectRepository: ISubjectRepository,
+        membershipRepository: IMembershipRepository,
       ) =>
         new CreateSubjectUseCase(
           logger,
-          subjectDomainService,
           subjectRepository,
+          membershipRepository,
         ),
-      inject: [
-        "LOGGER_SERVICE",
-        "SUBJECT_DOMAIN_SERVICE",
-        "SUBJECT_REPOSITORY",
-      ],
+      inject: ["LOGGER_SERVICE", "SUBJECT_REPOSITORY", "MEMBERSHIP_REPOSITORY"],
     },
     {
       provide: SubjectFacade,
@@ -67,28 +69,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       ) => new SubjectFacade(createSubjectUseCase, eventStore),
       inject: ["CREATE_SUBJECT_USE_CASE", EventStore],
     },
-    {
-      provide: SubjectCreatedEventHandler,
-      useFactory: (
-        logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
-      ) =>
-        new SubjectCreatedEventHandler(logger, createEmailNotificationUseCase),
-      inject: [LoggerService, CreateEmailNotificationUseCase],
-    },
   ],
   exports: [SubjectFacade],
 })
-export class SubjectModule {
-  constructor(
-    private readonly eventHandlerRegistry: EventHandlerRegistry,
-    private readonly subjectCreatedEventHandler: SubjectCreatedEventHandler,
-  ) {}
-
-  onModuleInit() {
-    this.eventHandlerRegistry.registerHandler(
-      "subject.created",
-      this.subjectCreatedEventHandler,
-    );
-  }
-}
+export class SubjectModule {}

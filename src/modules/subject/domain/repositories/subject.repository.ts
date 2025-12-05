@@ -1,14 +1,16 @@
 import { IRepository } from "src/core";
-import { ISubject, ISubjectCreate } from "../types";
+import { SubjectEntity } from "../entities/subject.entity";
 
-export interface ISubjectRepository extends IRepository<ISubject> {
-  create(data: ISubjectCreate): Promise<ISubject>;
-  findById(id: string): Promise<ISubject | null>;
-  findByName(name: string, organizationId: string): Promise<ISubject | null>;
-  findByOrganization(organizationId: string): Promise<ISubject[]>;
-  findByUser(userId: string): Promise<ISubject[]>;
-  findAll(): Promise<ISubject[]>;
-  update(id: string, entity: Partial<ISubject>): Promise<ISubject>;
+export interface ISubjectRepository extends IRepository<SubjectEntity> {
+  create(entity: SubjectEntity): Promise<SubjectEntity>;
+  findById(id: string): Promise<SubjectEntity | null>;
+  findByName(
+    name: string,
+    organizationId: string,
+  ): Promise<SubjectEntity | null>;
+  findByOrganization(organizationId: string): Promise<SubjectEntity[]>;
+  findByUser(userId: string): Promise<SubjectEntity[]>;
+  findAll(): Promise<SubjectEntity[]>;
   delete(id: string): Promise<void>;
-  save(entity: ISubject): Promise<ISubject>;
+  save(entity: SubjectEntity): Promise<SubjectEntity>;
 }

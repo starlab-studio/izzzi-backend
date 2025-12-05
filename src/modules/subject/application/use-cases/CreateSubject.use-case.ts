@@ -4,51 +4,53 @@ import {
   ILoggerService,
   ApplicationError,
   ErrorCode,
+  Role,
+  DomainError,
 } from "src/core";
 
 import { ISubject, ISubjectCreate } from "../../domain/types";
 import { ISubjectRepository } from "../../domain/repositories/subject.repository";
-import { SubjectDomainService } from "../../domain/services/subject.domain.service";
+import { IMembershipRepository } from "src/modules/organization/domain/repositories/membership.repository";
+import { SubjectEntity } from "../../domain/entities/subject.entity";
 
 export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly subjectDomainService: SubjectDomainService,
     private readonly subjectRepository: ISubjectRepository,
+    private readonly membershipRepository: IMembershipRepository,
   ) {
     super(logger);
   }
 
   async execute(data: ISubjectCreate): Promise<ISubject> {
     try {
-      this.subjectDomainService.validateSubjectData(data);
-
-      const existingSubject = await this.subjectRepository.findByName(
-        data.name,
-        data.organizationId,
-      );
-      this.subjectDomainService.validateSubjectUniqueness(existingSubject);
-
-      const ormSubject = await this.subjectRepository.create({
-        name: data.name,
-        description: data.description,
-        color: data.color,
-        organizationId: data.organizationId,
-        userId: data.userId,
-      });
-
-      if (!ormSubject) {
-        throw new ApplicationError(
-          ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Erreur lors de la création du sujet. Veuillez réessayer plus tard.",
+      const membership =
+        await this.membershipRepository.findByUserAndOrganization(
+          data.createdBy,
+          data.organizationId,
+        );
+      if (!membership || membership.role !== Role.LEARNING_MANAGER) {
+        throw new DomainError(
+          ErrorCode.SUBJECT_CREATION_FORBIDDEN,
+          "You must have the LEARNING_MANAGER role to create a subject",
         );
       }
 
-      return ormSubject;
+      const subject = SubjectEntity.create(data);
+      const createdSubject = await this.subjectRepository.create(subject);
+
+      if (!createdSubject) {
+        throw new ApplicationError(
+          ErrorCode.APPLICATION_FAILED_TO_CREATE,
+          "An error occurred while creating the subject. Please try again later.",
+        );
+      }
+
+      return createdSubject;
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async withCompenstation(): Promise<void> {}
+  async withCompensation(): Promise<void> {}
 }

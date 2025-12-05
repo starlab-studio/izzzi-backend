@@ -21,4 +21,11 @@ export class GeneralUtils {
   static generateToken(length: number): string {
     return randomBytes(length).toString("hex");
   }
+
+  static parseEmails(emailsString: string): string[] {
+    return emailsString
+      .split(";")
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+  }
 }

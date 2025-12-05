@@ -76,7 +76,7 @@ export class NotificationModule {
     private readonly emailNotificationProvider: EmailProvider,
   ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     NotificationProviderFactory.register(
       NotificationMode.EMAIL,
       this.emailNotificationProvider,

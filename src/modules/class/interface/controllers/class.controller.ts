@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from "@nestjs/common";
+import { Controller, Post, Body, UseGuards, Req } from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -8,10 +8,10 @@ import {
 import {
   BaseController,
   AuthGuard,
+  RolesGuard,
   CurrentUser,
   Role,
-  DomainError,
-  ErrorCode,
+  Roles,
 } from "src/core";
 import { ClassFacade } from "../../application/facades/class.facade";
 import { CreateClassDto } from "../dto/class.dto";
@@ -27,29 +27,22 @@ export class ClassController extends BaseController {
   @Post()
   @ApiOperation({ summary: "Créer une nouvelle classe" })
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.LEARNING_MANAGER)
   @ApiResponse({ status: 201, description: "Classe créée avec succès" })
   @ApiResponse({ status: 400, description: "Données invalides" })
   @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
   async createClass(
     @Body() dto: CreateClassDto,
     @CurrentUser() user: JWTPayload,
+    @Req() request: any,
   ) {
-    const learningManagerRole = user.roles.find(
-      (r) => r.role === Role.LEARNING_MANAGER,
-    );
-
-    if (!learningManagerRole) {
-      throw new DomainError(
-        ErrorCode.INVALID_AUTH_DATA,
-        "Vous devez avoir le rôle LEARNING_MANAGER pour créer une classe",
-      );
-    }
-
     const createdClass = await this.classFacade.createClass(
       {
         ...dto,
-        organizationId: learningManagerRole.organizationId,
+        description: dto.description ?? null,
+        organizationId: request.organizationId,
         userId: user.userId,
       },
       user.username,

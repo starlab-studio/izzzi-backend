@@ -1,9 +1,11 @@
-import { Entity, Column } from "typeorm";
-import { BaseModel } from "src/core";
+import { Entity, Column, PrimaryColumn } from "typeorm";
 import { IClass } from "../../domain/types";
 
-@Entity({ name: "class" })
-export class ClassModel extends BaseModel implements IClass {
+@Entity({ name: "classes" })
+export class ClassModel implements IClass {
+  @PrimaryColumn("uuid")
+  id: string;
+
   @Column({ type: "varchar", length: 255 })
   name: string;
 
@@ -11,7 +13,7 @@ export class ClassModel extends BaseModel implements IClass {
   code: string;
 
   @Column({ type: "text", nullable: true })
-  description?: string;
+  description: string | null;
 
   @Column({ name: "number_of_students", type: "integer" })
   numberOfStudents: number;
@@ -31,4 +33,9 @@ export class ClassModel extends BaseModel implements IClass {
   @Column({ name: "user_id", type: "uuid" })
   userId: string;
 
+  @Column({ name: "created_at", type: "timestamp", nullable: true })
+  createdAt: Date | null;
+
+  @Column({ name: "updated_at", type: "timestamp", nullable: true })
+  updatedAt: Date | null;
 }

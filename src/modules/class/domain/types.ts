@@ -4,21 +4,22 @@ export interface IClass {
   readonly id: string;
   name: string;
   code: string;
-  description?: string;
+  description: string | null;
   numberOfStudents: number;
   studentEmails: string[];
   accessToken: string;
   isActive: boolean;
   organizationId: string;
   userId: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export type IClassCreate = Pick<
   IClass,
-  "name" | "description" | "organizationId" | "userId"
+  "name" | "organizationId" | "userId"
 > & {
+  description: string | null;
   numberOfStudents: number;
   studentEmails: string;
 };
@@ -27,7 +28,7 @@ export interface ClassCreatedPayload {
   id: string;
   name: string;
   code: string;
-  description?: string;
+  description: string | null;
   organizationId: string;
   userId: string;
   userEmail: string;

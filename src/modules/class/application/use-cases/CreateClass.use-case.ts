@@ -10,6 +10,8 @@ import { Class } from "../../domain/entities/class.entity";
 import { IClass, IClassCreate } from "../../domain/types";
 import { IClassRepository } from "../../domain/repositories/class.repository";
 import { ClassDomainService } from "../../domain/services/class.domain.service";
+import { Email } from "src/modules/auth/domain/value-objects/email.vo";
+import { GeneralUtils } from "src/utils/general.utils";
 
 export class CreateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -22,26 +24,38 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: IClassCreate): Promise<IClass> {
     try {
-      this.classDomainService.validateClassData(data);
-
       const existingClass = await this.classRepository.findByName(
         data.name,
         data.organizationId
       );
       this.classDomainService.validateClassUniqueness(existingClass);
 
-      // TODO: Vérifier limite d'abonnement
-      const classEntity = new Class(data);
-      const ormClass = await this.classRepository.create(classEntity);
+      const emailStrings = GeneralUtils.parseEmails(data.studentEmails);
 
-      if (!ormClass) {
+      const validatedEmails = emailStrings.map((emailString) => {
+        const email = Email.create(emailString);
+        return email.value;
+      });
+
+      const classEntity = Class.create(
+        data.name,
+        data.description ?? null,
+        data.numberOfStudents,
+        validatedEmails,
+        data.organizationId,
+        data.userId
+      );
+
+      const createdClass = await this.classRepository.create(classEntity);
+
+      if (!createdClass) {
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Erreur lors de la création de la classe. Veuillez réessayer plus tard."
+          "Failed to create class. Please try again later."
         );
       }
 
-      return ormClass;
+      return createdClass.toPersistence();
     } catch (error) {
       this.handleError(error);
     }

@@ -7,7 +7,6 @@ import {
   IEventStore,
   ILoggerService,
   IUseCase,
-  UserRole,
 } from "src/core";
 import { IInvitationRepository } from "../../domain/repositories/invitation.repository";
 

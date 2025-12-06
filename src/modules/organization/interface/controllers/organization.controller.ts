@@ -26,7 +26,7 @@ export class OrganizationController extends BaseController {
   async sendInvitation(
     @CurrentUser() authenticatedUser: JWTPayload,
     @Body() dto: InvitationDto,
-    @Param("organization_id") organizationId: string
+    @Param("organizationId") organizationId: string
   ) {
     const response = await this.sendInvitationUseCase.execute({
       ...dto,

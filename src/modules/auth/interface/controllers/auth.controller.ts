@@ -15,14 +15,14 @@ import {
   BaseController,
   AuthGuard,
   RolesGuard,
-  Role,
+  UserRole,
   Roles,
   CurrentUser,
+  type JWTPayload,
 } from "src/core";
 import { AuthFacade } from "../../application/facades/auth.facade";
 import { SignInDto, SignUpDto } from "../dto/auth.dto";
 import { ConfirmEmailDto } from "../dto/verification.dto";
-import { type JWTPayload } from "../../infrastructure/factories/custom.adapter";
 
 @ApiTags("auth")
 @Controller("v1/auth")
@@ -81,7 +81,7 @@ export class AuthController extends BaseController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.LEARNING_MANAGER)
+  @Roles(UserRole.LEARNING_MANAGER)
   @Get("me/orgs/:organizationId")
   async getCurrentOrganization(
     @CurrentUser() authenticatedUser: JWTPayload,

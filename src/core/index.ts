@@ -7,6 +7,7 @@ export * from "./domain/errors/application.error";
 export * from "./domain/events/event.contract";
 export * from "./domain/events/core.event";
 export * from "./domain/repositories/base.repository";
+export * from "./domain/value-objects/email.vo";
 
 // Application layer
 export * from "./application/services/logger.service";

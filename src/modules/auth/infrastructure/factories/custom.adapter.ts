@@ -13,23 +13,15 @@ import {
 
 import { GeneralUtils } from "src/utils/general.utils";
 import { AuthIdentityName } from "../../domain/types";
-import { Role, DomainError, ErrorCode } from "src/core";
+import { DomainError, ErrorCode, Email, JWTPayload } from "src/core";
 import type { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.repository";
 import type { IVerificationTokenRepository } from "../../domain/repositories/verificationToken.repository";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { AuthIdentityEntity } from "../../domain/entities/authIdentity.entity";
 import { VerificationTokenType } from "../../domain/types";
-import { Email } from "../../domain/value-objects/email.vo";
 import { Password } from "../../domain/value-objects/password.vo";
 import { VerificationTokenEntity } from "../../domain/entities/verificationToken.entity";
 import { AuthIdentityUniquenessService } from "../../domain/services/authIdentity-uniqueness.service";
-
-export type JWTPayload = {
-  sub: string;
-  userId: string;
-  username: string;
-  roles: { organizationId: string; role: Role }[];
-};
 
 @Injectable()
 export class CustomAuthAdapter implements IAuthStrategy {
@@ -115,7 +107,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
     const isAuthorized = await passwordVO.compare(data.password);
 
     if (!isAuthorized) {
-      authIdentityEntity.recordFailedLoginAttempt(5);
+      authIdentityEntity.recordFailedLoginAttempt(5); // TODO définir max attempts en configs
       await this.authIdentityRepository.save(authIdentityEntity);
 
       // TODO: Remove hardcoded max try value
@@ -129,14 +121,14 @@ export class CustomAuthAdapter implements IAuthStrategy {
     await this.authIdentityRepository.save(authIdentityEntity);
 
     const userDetails = await this.organizationFacade.getUserProfile(
-      authIdentityEntity.username!
+      authIdentityEntity.userId! // TODO: Check pour être sûr que userId exists
     );
 
     const payload: JWTPayload = {
       sub: authIdentityEntity.providerUserId,
       userId: authIdentityEntity.userId || userDetails.id,
       username: userDetails.email,
-      roles: userDetails.roles,
+      roles: userDetails.memberships,
     };
 
     const accessToken = await this.jwtService.signAsync<JWTPayload>(payload, {
@@ -237,7 +229,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
   }
 
   async deleteIdentity(username: string): Promise<void> {
-    await this.authIdentityRepository.findByUsername(username);
+    await this.authIdentityRepository.deleteByUsername(username);
   }
 
   private generateUserId(username: string): string {

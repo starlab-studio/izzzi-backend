@@ -5,7 +5,6 @@ import { AuthIdentityEntity } from "../entities/authIdentity.entity";
 export interface IAuthIdentityRepository
   extends IRepository<AuthIdentityEntity> {
   create(entity: AuthIdentityEntity): Promise<AuthIdentityEntity>;
-  save(entity: AuthIdentityEntity): Promise<AuthIdentityEntity>;
   findByUsername(username: string): Promise<AuthIdentityEntity | null>;
   findByProviderAndUsername(
     provider: AuthIdentityName,

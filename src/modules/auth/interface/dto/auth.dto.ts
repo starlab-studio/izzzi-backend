@@ -70,7 +70,6 @@ export class SignUpDto implements SignUpData {
 export class SignInDto implements SignInData {
   @ApiProperty()
   @IsEmail({}, { message: "Email must be a valid email address" })
-  @Transform(({ value }) => value.trim())
   email: string;
 
   @ApiProperty()

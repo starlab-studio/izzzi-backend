@@ -29,6 +29,14 @@ export class AuthIdentityEntity {
     });
   }
 
+  setUser(userId: string): void {
+    this.props = {
+      ...this.props,
+      userId,
+      updatedAt: new Date(),
+    };
+  }
+
   canChangePassword(provider: AuthIdentityName): boolean {
     return provider === AuthIdentityName.CUSTOM;
   }
@@ -92,8 +100,6 @@ export class AuthIdentityEntity {
   }
 
   verifyEmail(email: string): void {
-    console.log("EMAIL FROM USER ", email);
-    console.log("EMAIL FROM ENTITY ", this.props.username);
     if (email !== this.props.username) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,

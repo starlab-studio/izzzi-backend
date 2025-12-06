@@ -1,13 +1,17 @@
-import { IUseCase, BaseUseCase, ILoggerService } from "src/core";
+import {
+  IUseCase,
+  BaseUseCase,
+  ILoggerService,
+  DomainError,
+  ErrorCode,
+} from "src/core";
 
 import { IOrganization } from "../../domain/types";
-import { OrganizationDomainService } from "../../domain/services/organization.domain.service";
 import { IOrganizationRepository } from "../../domain/repositories/organization.repository";
 
 export class GetOrganizationUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly organizationDomainService: OrganizationDomainService,
     private readonly organizationRepository: IOrganizationRepository
   ) {
     super(logger);
@@ -16,8 +20,15 @@ export class GetOrganizationUseCase extends BaseUseCase implements IUseCase {
     try {
       const organisation =
         await this.organizationRepository.findById(organizationId);
-      this.organizationDomainService.validateOrganizationExists(organisation);
-      return organisation as IOrganization;
+
+      if (!organisation) {
+        throw new DomainError(
+          ErrorCode.ORGANIZATION_NOT_FOUND,
+          "Organization not found"
+        );
+      }
+
+      return organisation.toPersistence();
     } catch (error) {
       this.handleError(error);
     }

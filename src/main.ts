@@ -1,6 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { ConsoleLogger, ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import cookieParser from "cookie-parser";
 
 import { AppModule } from "./app.module";
 import {
@@ -35,9 +36,13 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: "*",
+    origin: ["http://localhost:3001", "http://www.localhost:3001"],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
+
+  app.use(cookieParser());
 
   // Add prefix
   app.setGlobalPrefix("api", { exclude: ["api"] });

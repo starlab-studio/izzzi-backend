@@ -1,13 +1,16 @@
 import { Repository } from "typeorm";
-import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
-
-import { IUser } from "../../domain/types";
-import { UserModel } from "../models/user.model";
-import { IUserRepository } from "../../domain/repositories/user.repository";
 import { InjectRepository } from "@nestjs/typeorm";
 
+import { UserModel } from "../models/user.model";
+import { UserEntity } from "../../domain/entities/user.entity";
+import { IUserRepository } from "../../domain/repositories/user.repository";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
+import { MembershipStatus } from "../../domain/types";
+import { MembershipModel } from "../models/membership.model";
+import { MembershipEntity } from "../../domain/entities/membership.entity";
+
 export class UserRepository
-  extends BaseTransactionalRepository<IUser>
+  extends BaseTransactionalRepository<UserEntity>
   implements IUserRepository
 {
   constructor(
@@ -23,28 +26,90 @@ export class UserRepository
     return typeOrmUow.getEntityManager().getRepository(UserModel);
   }
 
-  async create(data: IUser): Promise<IUser> {
+  async create(entity: UserEntity): Promise<UserEntity> {
     const repository = this.getTypeOrmRepository();
-    const entity = repository.create(data);
-    return await repository.save(entity);
+    const data = entity.toPersistence();
+    const ormEntity = repository.create(data);
+    const saved = await repository.save(ormEntity);
+    return UserEntity.reconstitute({ ...saved, memberships: [] });
   }
 
-  async findById(id: string): Promise<IUser | null> {
-    return await this.directRepository.findOne({ where: { id } });
+  async findById(id: string): Promise<UserEntity | null> {
+    const ormEntity = await this.directRepository.findOne({ where: { id } });
+    return this.toEntity(ormEntity, []);
   }
 
-  async findByEmail(email: string): Promise<IUser | null> {
-    return await this.directRepository.findOne({ where: { email } });
+  async findByIdWithActiveMemberships(
+    userId: string
+  ): Promise<UserEntity | null> {
+    const ormEntity = await this.directRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect(
+        "user.memberships",
+        "membership",
+        "membership.status = :status",
+        { status: MembershipStatus.ACTIVE }
+      )
+      .leftJoinAndSelect("membership.organization", "organization")
+      .where("user.id = :userId", { userId })
+      .getOne();
+
+    if (!ormEntity) return null;
+
+    const memberships = this.toMembershipEntities(ormEntity.memberships || []);
+    return this.toEntity(ormEntity, memberships);
   }
 
-  async findAll(): Promise<IUser[]> {
-    return await this.directRepository.find();
+  async findByEmailWithMemberships(email: string): Promise<UserEntity | null> {
+    const ormEntity = await this.directRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.memberships", "membership")
+      .leftJoinAndSelect("membership.organization", "organization")
+      .where("user.email = :email", { email })
+      .getOne();
+
+    if (!ormEntity) return null;
+
+    const memberships = this.toMembershipEntities(ormEntity.memberships || []);
+    return this.toEntity(ormEntity, memberships);
   }
 
-  async update(id: string, entity: IUser): Promise<IUser> {
+  async findByEmailWithActiveMemberships(
+    email: string
+  ): Promise<UserEntity | null> {
+    const ormEntity = await this.directRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect(
+        "user.memberships",
+        "membership",
+        "membership.status = :status",
+        { status: MembershipStatus.ACTIVE }
+      )
+      .leftJoinAndSelect("membership.organization", "organization")
+      .where("user.email = :email", { email })
+      .getOne();
+
+    if (!ormEntity) return null;
+
+    const memberships = this.toMembershipEntities(ormEntity.memberships || []);
+    return this.toEntity(ormEntity, memberships);
+  }
+
+  async findByEmail(email: string): Promise<UserEntity | null> {
+    const ormEntity = await this.directRepository.findOne({ where: { email } });
+    return this.toEntity(ormEntity, []);
+  }
+
+  async findAll(): Promise<UserEntity[]> {
+    const ormEntities = await this.directRepository.find();
+    return this.toEntities(ormEntities, []);
+  }
+
+  async save(entity: UserEntity): Promise<UserEntity> {
     const repository = this.getTypeOrmRepository();
-    await repository.update(id, entity);
-    return (await this.findById(id)) as IUser;
+    const data = entity.toPersistence();
+    const { memberships, ...ormEntity } = await repository.save(data);
+    return UserEntity.reconstitute(ormEntity);
   }
 
   async delete(id: string): Promise<void> {
@@ -52,8 +117,49 @@ export class UserRepository
     await repository.delete(id);
   }
 
-  async save(entity: IUser): Promise<IUser> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.save(entity);
+  private toEntity(
+    model: UserModel | null,
+    memberships: MembershipEntity[]
+  ): UserEntity | null {
+    if (!model) return null;
+
+    return UserEntity.reconstitute({
+      id: model.id,
+      firstName: model.firstName,
+      lastName: model.lastName,
+      email: model.email,
+      phoneNumber: model.phoneNumber,
+      avatarUrl: model.avatarUrl,
+      lastLogin: model.lastLogin,
+      status: model.status,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+      memberships: memberships,
+    });
+  }
+
+  private toEntities(
+    models: UserModel[],
+    memberships: MembershipEntity[]
+  ): UserEntity[] {
+    return models
+      .map((m) => this.toEntity(m, memberships))
+      .filter((entity): entity is UserEntity => entity !== null);
+  }
+
+  private toMembershipEntities(models: MembershipModel[]): MembershipEntity[] {
+    return models.map((m) =>
+      MembershipEntity.reconstitute({
+        id: m.id,
+        userId: m.userId,
+        organizationId: m.organizationId,
+        role: m.role,
+        status: m.status,
+        addedBy: m.addedBy,
+        createdAt: m.createdAt,
+        updatedAt: m.updatedAt,
+        leftAt: m.leftAt,
+      })
+    );
   }
 }

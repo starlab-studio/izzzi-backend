@@ -8,12 +8,12 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 
-import { Role } from "src/core/domain/types";
+import { UserRole } from "src/core/domain/types";
 import { ROLES_KEY } from "../decorators/role.decorator";
 import { type ICacheService } from "src/core/domain/services/cache.service";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 
-type UserRolesCache = { organizationId: string; role: Role }[];
+type UserRolesCache = { organizationId: string; role: UserRole }[];
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -28,10 +28,10 @@ export class RolesGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()]
+    );
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
@@ -84,7 +84,7 @@ export class RolesGuard implements CanActivate {
 
     try {
       const userProfile = await this.organizationFacade.getUserProfile(userId);
-      userRoles = userProfile.roles || [];
+      userRoles = userProfile.memberships || [];
 
       await this.cacheService.set(cacheKey, userRoles, this.CACHE_TTL);
 

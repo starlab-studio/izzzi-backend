@@ -21,8 +21,8 @@ export class OrganizationController extends BaseController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.LEARNING_MANAGER)
-  @Post(":organization_id/invitations")
+  @Roles(UserRole.ADMIN)
+  @Post("/:organizationId/invitations")
   async sendInvitation(
     @CurrentUser() authenticatedUser: JWTPayload,
     @Body() dto: InvitationDto,

@@ -144,7 +144,7 @@ export class UserEntity {
     return this.props.id;
   }
   get firstName(): string {
-    return this.props.lastName;
+    return this.props.firstName;
   }
   get lastName(): string {
     return this.props.lastName;

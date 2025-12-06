@@ -33,6 +33,7 @@ import { InvitationAuthorizationService } from "./domain/services/invitation-aut
 import { IInvitationRepository } from "./domain/repositories/invitation.repository";
 import { SendInvitationUseCase } from "./application/use-cases/send-invitation.use-case";
 import { InvitationRepository } from "./infrastructure/repositories/invitation.repository";
+import { OrganizationController } from "./interface/controllers/organization.controller";
 
 @Module({
   imports: [
@@ -44,7 +45,7 @@ import { InvitationRepository } from "./infrastructure/repositories/invitation.r
     ]),
     forwardRef(() => CoreModule),
   ],
-  controllers: [UserController],
+  controllers: [OrganizationController, UserController],
   providers: [
     { provide: "LOGGER_SERVICE", useClass: LoggerService },
     {
@@ -117,9 +118,8 @@ import { InvitationRepository } from "./infrastructure/repositories/invitation.r
       inject: ["LOGGER_SERVICE", "USER_REPOSITORY"],
     },
     InvitationAuthorizationService,
-
     {
-      provide: "SEND_INVITATION_USE_CASE",
+      provide: SendInvitationUseCase,
       useFactory: (
         logger: ILoggerService,
         eventStore: IEventStore,

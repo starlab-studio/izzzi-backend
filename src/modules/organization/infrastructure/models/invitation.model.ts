@@ -29,7 +29,7 @@ export class InvitationModel implements IInvitation {
   @Column({ name: "expires_at", type: "timestamp" })
   expiresAt: Date;
 
-  @Column({ name: "accepted_at", type: "timestamp" })
+  @Column({ name: "accepted_at", type: "timestamp", nullable: true })
   acceptedAt: Date | null;
 
   @Column({ name: "created_at", type: "timestamp" })

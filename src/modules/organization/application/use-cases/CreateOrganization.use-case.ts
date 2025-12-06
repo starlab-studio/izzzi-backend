@@ -2,6 +2,7 @@ import {
   IUseCase,
   BaseUseCase,
   ILoggerService,
+  DomainError,
   ApplicationError,
   EventStore,
   ErrorCode,
@@ -9,7 +10,6 @@ import {
 
 import { IOrganization, IOrganizationCreate } from "../../domain/types";
 import { OrganizationCreatedEvent } from "../../domain/events/organizationCreated.event";
-import { OrganizationDomainService } from "../../domain/services/organization.domain.service";
 import { IOrganizationRepository } from "../../domain/repositories/organization.repository";
 import { OrganizationEntity } from "../../domain/entities/organization.entity";
 
@@ -17,7 +17,6 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly eventStore: EventStore,
-    private readonly organizationDomainService: OrganizationDomainService,
     private readonly organizationRepository: IOrganizationRepository
   ) {
     super(logger);
@@ -30,15 +29,15 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
       const existingOrganization = await this.organizationRepository.findByName(
         data.name
       );
-      this.organizationDomainService.validateOrganizationUniqueness(
-        existingOrganization
-      );
-      const slug = await this.organizationDomainService.generateUniqueSlug(
-        data.name,
-        (slug) => this.organizationRepository.findBySlug(slug)
-      );
 
-      const organisation = new OrganizationEntity({ ...data, slug });
+      if (existingOrganization) {
+        throw new DomainError(
+          ErrorCode.ORGANIZATION_ALREADY_EXIST,
+          "Organization name is not available"
+        );
+      }
+
+      const organisation = OrganizationEntity.create({ ...data });
       const createdOrganization =
         await this.organizationRepository.create(organisation);
       if (!createdOrganization) {

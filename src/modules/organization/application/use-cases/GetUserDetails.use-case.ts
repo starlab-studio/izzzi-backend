@@ -1,39 +1,44 @@
-import { IUseCase, BaseUseCase, ILoggerService, Role } from "src/core";
+import {
+  IUseCase,
+  BaseUseCase,
+  ILoggerService,
+  DomainError,
+  ErrorCode,
+  UserRole,
+} from "src/core";
 
 import { IMembership, IUser } from "../../domain/types";
-import { IMembershipRepository } from "../../domain/repositories/membership.repository";
-import { MembershipDomainService } from "../../domain/services/membership.domain.service";
-import { UserDomainService } from "../../domain/services/user.domain.service";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 
 export class GetUserDetailsUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly userDomainService: UserDomainService,
-    private readonly userRepository: IUserRepository,
-    private readonly membershipDomainService: MembershipDomainService,
-    private readonly memberShipRepository: IMembershipRepository
+    private readonly userRepository: IUserRepository
   ) {
     super(logger);
   }
 
   async execute(
-    email: string
-  ): Promise<IUser & { roles: { organizationId: string; role: Role }[] }> {
+    userId: string
+  ): Promise<
+    IUser & { memberships: { organizationId: string; role: UserRole }[] }
+  > {
     try {
-      const user = await this.userRepository.findByEmail(email);
+      const user =
+        await this.userRepository.findByIdWithActiveMemberships(userId);
+      if (!user) {
+        throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+      }
 
-      const memberships = await this.memberShipRepository.findByUser(
-        user?.id as string
-      );
-      this.membershipDomainService.validateMembershipExsits(memberships);
-
-      const roles = memberships.map((m) => ({
-        organizationId: m.organizationId,
-        role: m.role,
+      const memberships = user.getOrganizationIds().map((organizationId) => ({
+        organizationId,
+        role: user.getRoleInOrganization(organizationId)!,
       }));
 
-      return { ...user!, roles };
+      return {
+        ...user.toPersistence(),
+        memberships,
+      };
     } catch (error) {
       this.handleError(error);
     }

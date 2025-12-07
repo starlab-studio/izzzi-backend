@@ -14,10 +14,13 @@ import { NotificationModule } from "../notification/notification.module";
 import { OrganizationModule } from "src/modules/organization/organization.module";
 
 import { SubjectModel } from "./infrastructure/models/subject.model";
+import { SubjectAssignmentModel } from "./infrastructure/models/subject-assignment.model";
 import { CreateSubjectUseCase } from "./application/use-cases/CreateSubject.use-case";
 import { SubjectController } from "./interface/controllers/subject.controller";
 import { ISubjectRepository } from "./domain/repositories/subject.repository";
+import { SubjectAssignmentRepository } from "./infrastructure/repositories/subject-assignment.repository";
 import { SubjectRepository } from "./infrastructure/repositories/subject.repository";
+
 import { SubjectFacade } from "./application/facades/subject.facade";
 import { MembershipModel } from "src/modules/organization/infrastructure/models/membership.model";
 import { MembershipRepository } from "src/modules/organization/infrastructure/repositories/membership.repository";
@@ -25,7 +28,11 @@ import { IMembershipRepository } from "src/modules/organization/domain/repositor
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SubjectModel, MembershipModel]),
+    TypeOrmModule.forFeature([
+      SubjectModel,
+      SubjectAssignmentModel,
+      MembershipModel,
+    ]),
     CoreModule,
     NotificationModule,
     OrganizationModule,
@@ -38,6 +45,12 @@ import { IMembershipRepository } from "src/modules/organization/domain/repositor
       useFactory: (ormRepository: Repository<SubjectModel>) =>
         new SubjectRepository(ormRepository),
       inject: [getRepositoryToken(SubjectModel)],
+    },
+    {
+      provide: "SUBJECT_ASSIGNMENT_REPOSITORY",
+      useFactory: (ormRepository: Repository<SubjectAssignmentModel>) =>
+        new SubjectAssignmentRepository(ormRepository),
+      inject: [getRepositoryToken(SubjectAssignmentModel)],
     },
     {
       provide: "MEMBERSHIP_REPOSITORY",

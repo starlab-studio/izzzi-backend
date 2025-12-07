@@ -28,3 +28,17 @@ export interface SubjectCreatedPayload {
 }
 
 export type ISubjectCreatedEvent = IDomainEvent<SubjectCreatedPayload>;
+
+export interface ISubjectAssignment {
+  readonly subjectId: string;
+  readonly classId: string;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export type ISubjectAssignmentCreate = {
+  subjectId: string;
+  classId: string;
+  orderIndex?: number;
+};

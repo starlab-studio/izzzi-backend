@@ -15,6 +15,7 @@ import { EmailProvider } from "./infrastructure/providers/email.provider";
 import { NotificationRepository } from "./infrastructure/repositories/notification.repository";
 import { INotificationProvider } from "./application/providers/notification.provider";
 import { NotificationModel } from "./infrastructure/models/notification.model";
+import { InvitationSentEventHandler } from "./application/handlers/invitation-sent.handler";
 
 @Module({
   imports: [
@@ -59,6 +60,15 @@ import { NotificationModel } from "./infrastructure/models/notification.model";
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
     {
+      provide: InvitationSentEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new InvitationSentEventHandler(logger, createEmailNotificationUseCase),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
+    {
       provide: ClassCreatedEventHandler,
       useFactory: (
         logger: ILoggerService,
@@ -72,8 +82,9 @@ export class NotificationModule {
   constructor(
     private readonly eventHandlerRegistry: EventHandlerRegistry,
     private readonly userCreatedEventHandler: UserCreatedEventHandler,
-    private readonly classCreatedEventHandler: ClassCreatedEventHandler,
+    private readonly invitationSentEventHandler: InvitationSentEventHandler,
     private readonly emailNotificationProvider: EmailProvider,
+    private readonly classCreatedEventHandler: ClassCreatedEventHandler,
   ) {}
 
   async onModuleInit() {
@@ -88,8 +99,13 @@ export class NotificationModule {
     );
 
     this.eventHandlerRegistry.registerHandler(
+      "invitation.sent",
+      this.invitationSentEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
       "class.created",
-      this.classCreatedEventHandler
+      this.classCreatedEventHandler,
     );
   }
 }

@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { IClass, IClassCreate } from "../types";
+import { IClass } from "../types";
 import { DomainError, ErrorCode } from "src/core";
 import { GeneralUtils } from "src/utils/general.utils";
 

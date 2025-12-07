@@ -1,13 +1,13 @@
 import { Repository } from "typeorm";
-import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
-
-import { MembershipModel } from "../models/membership.model";
-import { IMembershipRepository } from "../../domain/repositories/membership.repository";
-import { IMembership } from "../../domain/types";
 import { InjectRepository } from "@nestjs/typeorm";
 
+import { MembershipModel } from "../models/membership.model";
+import { MembershipEntity } from "../../domain/entities/membership.entity";
+import { IMembershipRepository } from "../../domain/repositories/membership.repository";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
+
 export class MembershipRepository
-  extends BaseTransactionalRepository<IMembership>
+  extends BaseTransactionalRepository<MembershipEntity>
   implements IMembershipRepository
 {
   constructor(
@@ -23,41 +23,52 @@ export class MembershipRepository
     return typeOrmUow.getEntityManager().getRepository(MembershipModel);
   }
 
-  async create(data: IMembership): Promise<IMembership> {
+  async create(entity: MembershipEntity): Promise<MembershipEntity> {
     const repository = this.getTypeOrmRepository();
-    const entity = repository.create(data);
-    return await repository.save(entity);
+    const data = entity.toPersistance();
+    const ormEntity = repository.create(data);
+    const saved = await repository.save(ormEntity);
+    return MembershipEntity.reconstitute(saved);
   }
 
-  async findByUser(userId: string): Promise<IMembership[]> {
-    return await this.directRepository.findBy({ userId });
+  async findByUser(userId: string): Promise<MembershipEntity[]> {
+    const ormEntities = await this.directRepository.findBy({ userId });
+    return this.toEntities(ormEntities);
   }
 
   async findByOrganization(
     organizationId: string
-  ): Promise<IMembership[] | []> {
-    return await this.directRepository.findBy({ organizationId });
+  ): Promise<MembershipEntity[] | []> {
+    const ormEntities = await this.directRepository.findBy({ organizationId });
+    return this.toEntities(ormEntities);
   }
 
   async findByUserAndOrganization(
     userId: string,
     organizationId: string
-  ): Promise<IMembership | null> {
-    return await this.directRepository.findOneBy({ userId, organizationId });
+  ): Promise<MembershipEntity | null> {
+    const ormEntity = await this.directRepository.findOneBy({
+      userId,
+      organizationId,
+    });
+    return this.toEntity(ormEntity);
   }
 
-  async findById(id: string): Promise<IMembership | null> {
-    return await this.directRepository.findOne({ where: { id } });
+  async findById(id: string): Promise<MembershipEntity | null> {
+    const ormEntity = await this.directRepository.findOne({ where: { id } });
+    return this.toEntity(ormEntity);
   }
 
-  async findAll(): Promise<IMembership[]> {
-    return await this.directRepository.find();
+  async findAll(): Promise<MembershipEntity[]> {
+    const ormEntities = await this.directRepository.find();
+    return this.toEntities(ormEntities);
   }
 
-  async update(id: string, entity: IMembership): Promise<IMembership> {
+  async save(entity: MembershipEntity): Promise<MembershipEntity> {
     const repository = this.getTypeOrmRepository();
-    await repository.update(id, entity);
-    return (await this.findById(id)) as IMembership;
+    const data = entity.toPersistance();
+    const ormEntity = await repository.save(data);
+    return MembershipEntity.reconstitute(ormEntity);
   }
 
   async delete(id: string): Promise<void> {
@@ -65,8 +76,11 @@ export class MembershipRepository
     await repository.delete(id);
   }
 
-  async save(entity: IMembership): Promise<IMembership> {
-    const repository = this.getTypeOrmRepository();
-    return await repository.save(entity);
+  private toEntity(model: MembershipModel | null): MembershipEntity | null {
+    return model ? MembershipEntity.reconstitute(model) : null;
+  }
+
+  private toEntities(models: MembershipModel[]): MembershipEntity[] {
+    return models.map((m) => MembershipEntity.reconstitute(m));
   }
 }

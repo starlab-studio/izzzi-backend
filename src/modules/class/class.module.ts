@@ -16,9 +16,16 @@ import { ClassController } from "./interface/controllers/class.controller";
 import { IClassRepository } from "./domain/repositories/class.repository";
 import { ClassRepository } from "./infrastructure/repositories/class.repository";
 import { ClassFacade } from "./application/facades/class.facade";
+import { OrganizationModule } from "../organization/organization.module";
+import { IMembershipRepository } from "src/modules/organization/domain/repositories/membership.repository";
+import { ClassService } from "./application/services/class.service";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ClassModel]), CoreModule],
+  imports: [
+    TypeOrmModule.forFeature([ClassModel]),
+    CoreModule,
+    OrganizationModule,
+  ],
   controllers: [ClassController],
   providers: [
     { provide: "LOGGER_SERVICE", useClass: LoggerService },
@@ -37,26 +44,40 @@ import { ClassFacade } from "./application/facades/class.facade";
         logger: LoggerService,
         classDomainService: ClassDomainService,
         classRepository: IClassRepository,
+        membershipRepository: IMembershipRepository,
       ) =>
         new CreateClassUseCase(
           logger,
           classDomainService,
           classRepository,
+          membershipRepository,
         ),
       inject: [
         "LOGGER_SERVICE",
         "CLASS_DOMAIN_SERVICE",
         "CLASS_REPOSITORY",
+        "MEMBERSHIP_REPOSITORY",
+      ],
+    },
+    {
+      provide: ClassService,
+      useFactory: (
+        logger: LoggerService,
+        eventStore: EventStore,
+        unitOfWork: IUnitOfWork,
+        createClassUseCase: CreateClassUseCase,
+      ) => new ClassService(logger, eventStore, unitOfWork, createClassUseCase),
+      inject: [
+        "LOGGER_SERVICE",
+        EventStore,
+        TypeOrmUnitOfWork,
+        "CREATE_CLASS_USE_CASE",
       ],
     },
     {
       provide: ClassFacade,
-      useFactory: (
-        createClassUseCase: CreateClassUseCase,
-        eventStore: EventStore,
-        unitOfWork: IUnitOfWork,
-      ) => new ClassFacade(createClassUseCase, eventStore, unitOfWork),
-      inject: ["CREATE_CLASS_USE_CASE", EventStore, TypeOrmUnitOfWork],
+      useFactory: (classService: ClassService) => new ClassFacade(classService),
+      inject: [ClassService],
     },
   ],
   exports: [ClassFacade],

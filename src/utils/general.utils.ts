@@ -22,6 +22,18 @@ export class GeneralUtils {
     return randomBytes(length).toString("hex");
   }
 
+  static generateSlug(text: string): string {
+    return text
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+  }
+
   static parseEmails(emailsString: string): string[] {
     return emailsString
       .split(";")

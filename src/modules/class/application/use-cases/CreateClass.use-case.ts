@@ -4,34 +4,48 @@ import {
   ILoggerService,
   ApplicationError,
   ErrorCode,
+  Email,
 } from "src/core";
 
 import { Class } from "../../domain/entities/class.entity";
 import { IClass, IClassCreate } from "../../domain/types";
 import { IClassRepository } from "../../domain/repositories/class.repository";
 import { ClassDomainService } from "../../domain/services/class.domain.service";
-import { Email } from "src/modules/auth/domain/value-objects/email.vo";
 import { GeneralUtils } from "src/utils/general.utils";
+import { IMembershipRepository } from "src/modules/organization/domain/repositories/membership.repository";
 
 export class CreateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly classDomainService: ClassDomainService,
-    private readonly classRepository: IClassRepository
+    private readonly classRepository: IClassRepository,
+    private readonly membershipRepository: IMembershipRepository,
   ) {
     super(logger);
   }
 
   async execute(data: IClassCreate): Promise<IClass> {
     try {
+
+      const membership =
+        await this.membershipRepository.findByUserAndOrganization(
+          data.userId,
+          data.organizationId,
+        );
+      this.classDomainService.validateUserCanCreateClass(
+        membership ? membership.toPersistance() : null,
+      );
+
+
       const existingClass = await this.classRepository.findByName(
         data.name,
-        data.organizationId
+        data.organizationId,
       );
-      this.classDomainService.validateClassUniqueness(existingClass);
+      this.classDomainService.validateClassUniqueness(
+        existingClass ? existingClass.toPersistence() : null,
+      );
 
       const emailStrings = GeneralUtils.parseEmails(data.studentEmails);
-
       const validatedEmails = emailStrings.map((emailString) => {
         const email = Email.create(emailString);
         return email.value;
@@ -43,15 +57,14 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
         data.numberOfStudents,
         validatedEmails,
         data.organizationId,
-        data.userId
+        data.userId,
       );
 
       const createdClass = await this.classRepository.create(classEntity);
-
       if (!createdClass) {
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Failed to create class. Please try again later."
+          "Failed to create class. Please try again later.",
         );
       }
 

@@ -10,7 +10,9 @@ import { Transform } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
 import { IClassCreate } from "../../domain/types";
 
-export class CreateClassDto implements Omit<IClassCreate, "organizationId" | "userId"> {
+export class CreateClassDto
+  implements Omit<IClassCreate, "organizationId" | "userId">
+{
   @ApiProperty({
     description: "Nom de la classe",
     example: "Terminale S1",
@@ -30,8 +32,10 @@ export class CreateClassDto implements Omit<IClassCreate, "organizationId" | "us
   numberOfStudents: number;
 
   @ApiProperty({
-    description: "Adresses email des étudiants (séparées par des point-virgules)",
-    example: "etudiant1@example.com;etudiant2@example.com;etudiant3@example.com",
+    description:
+      "Adresses email des étudiants (séparées par des point-virgules)",
+    example:
+      "etudiant1@example.com;etudiant2@example.com;etudiant3@example.com",
   })
   @IsString({ message: "Student emails must be a string" })
   @IsNotEmpty({ message: "Student emails are required" })
@@ -44,6 +48,6 @@ export class CreateClassDto implements Omit<IClassCreate, "organizationId" | "us
   })
   @IsString({ message: "Description must be a string" })
   @IsOptional()
-  @Transform(({ value }) => value ?? null)
+  @Transform(({ value }: { value: string | undefined }) => value ?? null)
   description: string | null;
 }

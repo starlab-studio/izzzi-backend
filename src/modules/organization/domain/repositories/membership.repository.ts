@@ -1,12 +1,12 @@
 import { IRepository } from "src/core";
-import { IMembership, IMembershipCreate } from "../types";
+import { MembershipEntity } from "../entities/membership.entity";
 
-export interface IMembershipRepository extends IRepository<IMembership> {
-  create(data: IMembershipCreate): Promise<IMembership>;
-  findByUser(userId: string): Promise<IMembership[]>;
-  findByOrganization(organizationId: string): Promise<IMembership[] | []>;
+export interface IMembershipRepository extends IRepository<MembershipEntity> {
+  create(data: MembershipEntity): Promise<MembershipEntity>;
+  findByUser(userId: string): Promise<MembershipEntity[] | []>;
+  findByOrganization(organizationId: string): Promise<MembershipEntity[] | []>;
   findByUserAndOrganization(
     userId: string,
     organizationId: string
-  ): Promise<IMembership | null>;
+  ): Promise<MembershipEntity | null>;
 }

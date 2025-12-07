@@ -1,9 +1,10 @@
 import { IRepository } from "src/core";
-import { IOrganization, IOrganizationCreate } from "../types";
+import { OrganizationEntity } from "../entities/organization.entity";
 
-export interface IOrganizationRepository extends IRepository<IOrganization> {
-  create(data: IOrganizationCreate): Promise<IOrganization>;
-  findByName(name: string): Promise<IOrganization | null>;
-  findBySlug(slug: string): Promise<IOrganization | null>;
-  findByOwner(ownerId: string): Promise<IOrganization[] | []>;
+export interface IOrganizationRepository
+  extends IRepository<OrganizationEntity> {
+  create(entity: OrganizationEntity): Promise<OrganizationEntity>;
+  findByName(name: string): Promise<OrganizationEntity | null>;
+  findBySlug(slug: string): Promise<OrganizationEntity | null>;
+  findByOwner(ownerId: string): Promise<OrganizationEntity[] | []>;
 }

@@ -1,29 +1,34 @@
-import { IDomainEvent, Role } from "src/core";
+import { IDomainEvent, UserRole } from "src/core";
+import { MembershipEntity } from "./entities/membership.entity";
 
 export enum UserStatus {
   PENDING = "pending",
   ACTIVE = "active",
-  FAILED = "failed",
-  DISABLED = "disabled",
+  SUSPENDED = "suspended",
+  DELETED = "deleted",
 }
 
 export interface IUser {
   readonly id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber?: string;
-  avatarUrl?: string;
-  lastLogin?: Date;
-  status: UserStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string;
+  readonly phoneNumber: string | null;
+  readonly avatarUrl: string | null;
+  readonly lastLogin: Date | null;
+  readonly status: UserStatus;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export type IUserCreate = Pick<IUser, "firstName" | "lastName" | "email"> & {
   organization: string;
   authIdentityId: string;
 };
+
+export interface IUserReconstitute extends IUser {
+  readonly memberships?: MembershipEntity[];
+}
 
 export type UserCreatedPayload = {
   id: string;
@@ -39,29 +44,33 @@ export type IUserFailedEvent = IDomainEvent<UserFailedPayload>;
 
 export interface IOrganization {
   readonly id: string;
-  name: string;
-  siren?: string | undefined;
-  siret?: string | undefined;
-  vatNumber?: string | undefined;
-  slug: string;
-  ownerId: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  readonly name: string;
+  readonly siren: string | null;
+  readonly siret: string | null;
+  readonly vatNumber: string | null;
+  readonly slug: string;
+  readonly ownerId: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
-export type IOrganizationCreate = Pick<
-  IOrganization,
-  "name" | "slug" | "ownerId"
->;
+export type IOrganizationCreate = Pick<IOrganization, "name" | "ownerId">;
 
+export enum MembershipStatus {
+  ACTIVE = "active",
+  SUSPENDED = "suspended",
+  DELETED = "deleted",
+}
 export interface IMembership {
   readonly id: string;
-  userId: string;
-  organizationId: string;
-  role: Role;
-  addedBy: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+  readonly userId: string;
+  readonly organizationId: string;
+  readonly role: UserRole;
+  readonly addedBy: string | null;
+  readonly status: MembershipStatus;
+  readonly leftAt: Date | null;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export type IMembershipCreate = Pick<
@@ -70,3 +79,45 @@ export type IMembershipCreate = Pick<
 >;
 
 export type UserCreatedEvent = IDomainEvent<UserCreatedPayload>;
+
+export enum InvitationStatus {
+  PENDING = "pending",
+  ACCEPDED = "accepted",
+  EXPIRED = "expired",
+  REVOKED = "revoked",
+}
+
+export interface IInvitation {
+  readonly id: string;
+  readonly email: string;
+  readonly organizationId: string;
+  readonly invitedBy: string;
+  readonly role: UserRole;
+  readonly token: string;
+  readonly status: InvitationStatus;
+  readonly expiresAt: Date;
+  readonly acceptedAt: Date | null;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+export type IInvitationCreate = Pick<
+  IInvitation,
+  "email" | "organizationId" | "invitedBy" | "role"
+>;
+
+export type InvitationSentPayload = {
+  email: string;
+  organizationName: string;
+  inviterName: string;
+  invitationLink: string;
+  role: UserRole;
+};
+export type IInvitationSentEvent = IDomainEvent<InvitationSentPayload>;
+
+export type InvitationAcceptedPayload = {
+  userId: string;
+  orgnaizationId: string;
+  email: string;
+};
+export type IInvitationAcceptedEvent = IDomainEvent<InvitationAcceptedPayload>;

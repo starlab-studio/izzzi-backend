@@ -2,13 +2,13 @@ import {
   IUseCase,
   BaseUseCase,
   ILoggerService,
+  DomainError,
   ApplicationError,
   ErrorCode,
-  Role,
+  UserRole,
 } from "src/core";
 
 import { IMembership } from "../../domain/types";
-import { MembershipDomainService } from "../../domain/services/membership.domain.service";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
 import { MembershipEntity } from "../../domain/entities/membership.entity";
 
@@ -18,7 +18,6 @@ export class AddUserToOrganizationUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly membershipDomainService: MembershipDomainService,
     private readonly memberShipRepository: IMembershipRepository
   ) {
     super(logger);
@@ -27,7 +26,7 @@ export class AddUserToOrganizationUseCase
   async execute(data: {
     userId: string;
     organizationId: string;
-    role: Role;
+    role: UserRole;
     addedBy: string | null;
   }): Promise<IMembership> {
     try {
@@ -36,11 +35,15 @@ export class AddUserToOrganizationUseCase
           data.userId,
           data.organizationId
         );
-      this.membershipDomainService.validateMembershipUniqueness(
-        existingMembership
-      );
 
-      const membership = new MembershipEntity(data);
+      if (existingMembership) {
+        throw new DomainError(
+          ErrorCode.USER_ORGANIZATION_ALREADY_EXISTS,
+          "User is already associated with this organization"
+        );
+      }
+
+      const membership = MembershipEntity.create({ ...data });
       const ormMembership = await this.memberShipRepository.create(membership);
       if (!ormMembership) {
         throw new ApplicationError(
@@ -48,7 +51,7 @@ export class AddUserToOrganizationUseCase
           "Something went wrong during creation. Please try again later."
         );
       }
-      return ormMembership;
+      return ormMembership.toPersistance();
     } catch (error) {
       this.handleError(error);
     }

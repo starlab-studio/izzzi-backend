@@ -10,4 +10,3 @@ export class ClassCreatedEvent implements IClassCreatedEvent {
     this.payload = payload;
   }
 }
-

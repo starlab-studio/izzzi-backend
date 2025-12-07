@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req } from "@nestjs/common";
+import { Controller, Post, Body, UseGuards, Param } from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -10,15 +10,15 @@ import {
   AuthGuard,
   RolesGuard,
   CurrentUser,
-  Role,
+  UserRole,
   Roles,
+  type JWTPayload,
 } from "src/core";
 import { ClassFacade } from "../../application/facades/class.facade";
 import { CreateClassDto } from "../dto/class.dto";
-import type { JWTPayload } from "src/modules/auth/infrastructure/factories/custom.adapter";
 
 @ApiTags("Classes")
-@Controller("v1/classes")
+@Controller("v1/organizations/:organizationId/classes")
 export class ClassController extends BaseController {
   constructor(private readonly classFacade: ClassFacade) {
     super();
@@ -28,7 +28,7 @@ export class ClassController extends BaseController {
   @ApiOperation({ summary: "Créer une nouvelle classe" })
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.LEARNING_MANAGER)
+  @Roles(UserRole.LEARNING_MANAGER)
   @ApiResponse({ status: 201, description: "Classe créée avec succès" })
   @ApiResponse({ status: 400, description: "Données invalides" })
   @ApiResponse({ status: 401, description: "Authentification requise" })
@@ -36,13 +36,12 @@ export class ClassController extends BaseController {
   async createClass(
     @Body() dto: CreateClassDto,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any,
+    @Param("organizationId") organizationId: string,
   ) {
     const createdClass = await this.classFacade.createClass(
       {
         ...dto,
-        description: dto.description ?? null,
-        organizationId: request.organizationId,
+        organizationId: organizationId,
         userId: user.userId,
       },
       user.username,

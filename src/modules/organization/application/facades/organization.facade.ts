@@ -1,4 +1,4 @@
-import { Role } from "src/core";
+import { UserRole } from "src/core";
 import { IUser, IUserCreate } from "../../domain/types";
 import { OrganizationService } from "../services/organization.service";
 import { GetUserDetailsUseCase } from "../use-cases/GetUserDetails.use-case";
@@ -19,9 +19,9 @@ export class OrganizationFacade {
 
   async getUserProfile(userId: string): Promise<
     IUser & {
-      roles: {
+      memberships: {
         organizationId: string;
-        role: Role;
+        role: UserRole;
       }[];
     }
   > {

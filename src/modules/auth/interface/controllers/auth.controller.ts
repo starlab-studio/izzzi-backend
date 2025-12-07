@@ -1,28 +1,12 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  UseGuards,
-  Param,
-  Res,
-} from "@nestjs/common";
 import { type Response } from "express";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { ApiTags } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
+import { Controller, Post, Body, Res } from "@nestjs/common";
 
-import {
-  BaseController,
-  AuthGuard,
-  RolesGuard,
-  Role,
-  Roles,
-  CurrentUser,
-} from "src/core";
+import { BaseController } from "src/core";
 import { AuthFacade } from "../../application/facades/auth.facade";
 import { SignInDto, SignUpDto } from "../dto/auth.dto";
 import { ConfirmEmailDto } from "../dto/verification.dto";
-import { type JWTPayload } from "../../infrastructure/factories/custom.adapter";
 
 @ApiTags("auth")
 @Controller("v1/auth")
@@ -70,23 +54,5 @@ export class AuthController extends BaseController {
   async confirmEmail(@Body() dto: ConfirmEmailDto) {
     const result = await this.authFacade.confirmEmail(dto);
     return this.success(result);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
-  @Get("me")
-  async getCurrentUserProfile(@CurrentUser() authenticatedUser: JWTPayload) {
-    return { data: authenticatedUser };
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.LEARNING_MANAGER)
-  @Get("me/orgs/:organizationId")
-  async getCurrentOrganization(
-    @CurrentUser() authenticatedUser: JWTPayload,
-    @Param("organizationId") organizationId: string
-  ) {
-    return { data: authenticatedUser };
   }
 }

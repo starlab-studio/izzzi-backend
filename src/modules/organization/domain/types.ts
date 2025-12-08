@@ -1,5 +1,6 @@
 import { IDomainEvent, UserRole } from "src/core";
 import { MembershipEntity } from "./entities/membership.entity";
+import { OrganizationEntity } from "./entities/organization.entity";
 
 export enum UserStatus {
   PENDING = "pending",
@@ -71,6 +72,23 @@ export interface IMembership {
   readonly leftAt: Date | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+}
+
+export type MembershipWithOrganizationData = {
+  id: string;
+  userId: string;
+  organizationId: string;
+  role: UserRole;
+  status: MembershipStatus;
+  addedBy: string | null;
+  leftAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  organization: IOrganization;
+};
+
+export interface IMembershipReconstitute extends IMembership {
+  organization?: OrganizationEntity;
 }
 
 export type IMembershipCreate = Pick<

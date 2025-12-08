@@ -1,4 +1,4 @@
-import { ApiBearerAuth } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { Controller, UseGuards, Get } from "@nestjs/common";
 
 import {
@@ -20,8 +20,24 @@ export class UserController extends BaseController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Get("/me")
+  @ApiOperation({ summary: "Get current user profile" })
   async getCurrentOrganization(@CurrentUser() authenticatedUser: JWTPayload) {
     const response = await this.facade.getUserProfile(authenticatedUser.userId);
+    return this.success(response);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get("/memberships")
+  @ApiOperation({ summary: "Get user memberships with organization details" })
+  @ApiResponse({
+    status: 200,
+    description: "List of user memberships with organization details",
+  })
+  async getUserMemberships(@CurrentUser() authenticatedUser: JWTPayload) {
+    const response = await this.facade.getUserMembershipsWithOrganizations(
+      authenticatedUser.userId
+    );
     return this.success(response);
   }
 }

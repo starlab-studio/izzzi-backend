@@ -1,13 +1,21 @@
 import { randomUUID } from "crypto";
 
 import { DomainError, ErrorCode, UserRole } from "src/core";
-import { IMembership, IMembershipCreate, MembershipStatus } from "../types";
+import {
+  IMembership,
+  IMembershipCreate,
+  MembershipStatus,
+  IMembershipReconstitute,
+} from "../types";
+import { OrganizationEntity } from "./organization.entity";
 
 export class MembershipEntity {
   private props: IMembership;
+  private _organization?: OrganizationEntity;
 
-  private constructor(props: IMembership) {
+  private constructor(props: IMembership, organization?: OrganizationEntity) {
     this.props = props;
+    this._organization = organization;
   }
 
   public static create(data: IMembershipCreate) {
@@ -54,18 +62,24 @@ export class MembershipEntity {
   get addedBy(): string | null {
     return this.props.addedBy;
   }
+  get leftAt(): Date | null {
+    return this.props.leftAt;
+  }
   get createdAt(): Date {
     return this.props.createdAt;
   }
   get updated(): Date {
     return this.props.updatedAt;
   }
+  get organization(): OrganizationEntity | undefined {
+    return this._organization;
+  }
 
-  toPersistance(): IMembership {
+  toPersistence(): IMembership {
     return { ...this.props };
   }
 
-  static reconstitute(data: IMembership): MembershipEntity {
-    return new MembershipEntity(data);
+  static reconstitute(data: IMembershipReconstitute): MembershipEntity {
+    return new MembershipEntity(data, data.organization || undefined);
   }
 }

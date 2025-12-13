@@ -34,6 +34,7 @@ import { IInvitationRepository } from "./domain/repositories/invitation.reposito
 import { SendInvitationUseCase } from "./application/use-cases/send-invitation.use-case";
 import { InvitationRepository } from "./infrastructure/repositories/invitation.repository";
 import { OrganizationController } from "./interface/controllers/organization.controller";
+import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-membership.use-case";
 
 @Module({
   imports: [
@@ -47,9 +48,9 @@ import { OrganizationController } from "./interface/controllers/organization.con
   ],
   controllers: [OrganizationController, UserController],
   providers: [
-    { provide: "LOGGER_SERVICE", useClass: LoggerService },
+    LoggerService,
     {
-      provide: "USER_REPOSITORY",
+      provide: UserRepository,
       useFactory: (
         ormRepository: Repository<UserModel>,
         unitOfWork: IUnitOfWork
@@ -57,7 +58,7 @@ import { OrganizationController } from "./interface/controllers/organization.con
       inject: [getRepositoryToken(UserModel), TypeOrmUnitOfWork],
     },
     {
-      provide: "ORGANIZATION_REPOSITORY",
+      provide: OrganizationRepository,
       useFactory: (
         ormRepository: Repository<OrganizationModel>,
         unitOfWork: IUnitOfWork
@@ -65,7 +66,7 @@ import { OrganizationController } from "./interface/controllers/organization.con
       inject: [getRepositoryToken(OrganizationModel), TypeOrmUnitOfWork],
     },
     {
-      provide: "MEMBERSHIP_REPOSITORY",
+      provide: MembershipRepository,
       useFactory: (
         ormRepository: Repository<MembershipModel>,
         unitOfWork: IUnitOfWork
@@ -73,7 +74,7 @@ import { OrganizationController } from "./interface/controllers/organization.con
       inject: [getRepositoryToken(MembershipModel), TypeOrmUnitOfWork],
     },
     {
-      provide: "INVITATION_REPOSITORY",
+      provide: InvitationRepository,
       useFactory: (
         ormRepository: Repository<InvitationModel>,
         unitOfWork: IUnitOfWork
@@ -81,16 +82,16 @@ import { OrganizationController } from "./interface/controllers/organization.con
       inject: [getRepositoryToken(InvitationModel), TypeOrmUnitOfWork],
     },
     {
-      provide: "CREATE_USER_USE_CASE",
+      provide: CreateUserUseCase,
       useFactory: (
         logger: LoggerService,
         eventStore: EventStore,
         userRepository: IUserRepository
       ) => new CreateUserUseCase(logger, eventStore, userRepository),
-      inject: ["LOGGER_SERVICE", EventStore, "USER_REPOSITORY"],
+      inject: [LoggerService, EventStore, UserRepository],
     },
     {
-      provide: "CREATE_ORGANIZATION_USE_CASE",
+      provide: CreateOrganizationUseCase,
       useFactory: (
         logger: ILoggerService,
         eventStore: EventStore,
@@ -101,21 +102,29 @@ import { OrganizationController } from "./interface/controllers/organization.con
           eventStore,
           organizationRepository
         ),
-      inject: ["LOGGER_SERVICE", EventStore, "ORGANIZATION_REPOSITORY"],
+      inject: [LoggerService, EventStore, OrganizationRepository],
     },
     {
-      provide: "ADD_USER_TO_ORGANIZATION_USE_CASE",
+      provide: AddUserToOrganizationUseCase,
       useFactory: (
         logger: ILoggerService,
         membershipRepository: IMembershipRepository
       ) => new AddUserToOrganizationUseCase(logger, membershipRepository),
-      inject: ["LOGGER_SERVICE", "MEMBERSHIP_REPOSITORY"],
+      inject: [LoggerService, MembershipRepository],
     },
     {
-      provide: "GET_USER_DETAILS_USE_CASE",
+      provide: GetUserDetailsUseCase,
       useFactory: (logger: ILoggerService, userRepository: IUserRepository) =>
         new GetUserDetailsUseCase(logger, userRepository),
-      inject: ["LOGGER_SERVICE", "USER_REPOSITORY"],
+      inject: [LoggerService, UserRepository],
+    },
+    {
+      provide: GetUserMembershipsUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository
+      ) => new GetUserMembershipsUseCase(logger, membershipRepository),
+      inject: [LoggerService, MembershipRepository],
     },
     InvitationAuthorizationService,
     {
@@ -137,16 +146,16 @@ import { OrganizationController } from "./interface/controllers/organization.con
           invitationRepository
         ),
       inject: [
-        "LOGGER_SERVICE",
+        LoggerService,
         EventStore,
         InvitationAuthorizationService,
-        "USER_REPOSITORY",
-        "ORGANIZATION_REPOSITORY",
-        "INVITATION_REPOSITORY",
+        UserRepository,
+        OrganizationRepository,
+        InvitationRepository,
       ],
     },
     {
-      provide: "ORGANIZATION_SERVICE",
+      provide: OrganizationService,
       useFactory: (
         logger: ILoggerService,
         eventStore: IEventStore,
@@ -164,27 +173,38 @@ import { OrganizationController } from "./interface/controllers/organization.con
           addUserToOrganizationUseCase
         ),
       inject: [
-        "LOGGER_SERVICE",
+        LoggerService,
         EventStore,
         TypeOrmUnitOfWork,
-        "CREATE_USER_USE_CASE",
-        "CREATE_ORGANIZATION_USE_CASE",
-        "ADD_USER_TO_ORGANIZATION_USE_CASE",
+        CreateUserUseCase,
+        CreateOrganizationUseCase,
+        AddUserToOrganizationUseCase,
       ],
     },
     {
       provide: OrganizationFacade,
       useFactory: (
         organizationService: OrganizationService,
-        getUserDetailsUseCase: GetUserDetailsUseCase
-      ) => new OrganizationFacade(organizationService, getUserDetailsUseCase),
-      inject: ["ORGANIZATION_SERVICE", "GET_USER_DETAILS_USE_CASE"],
+        getUserDetailsUseCase: GetUserDetailsUseCase,
+        getUserMembershipsUseCase: GetUserMembershipsUseCase
+      ) =>
+        new OrganizationFacade(
+          organizationService,
+          getUserDetailsUseCase,
+          getUserMembershipsUseCase
+        ),
+      inject: [
+        OrganizationService,
+        GetUserDetailsUseCase,
+        GetUserMembershipsUseCase,
+        GetUserMembershipsUseCase,
+      ],
     },
     {
       provide: "EVENT_HANDLER_REGISTRY",
       useFactory: (logger: ILoggerService, eventStore: IEventStore) =>
         new EventHandlerRegistry(eventStore, logger),
-      inject: ["LOGGER_SERVICE", EventStore],
+      inject: [LoggerService, EventStore],
     },
   ],
   exports: [OrganizationFacade, "MEMBERSHIP_REPOSITORY", "USER_REPOSITORY"],

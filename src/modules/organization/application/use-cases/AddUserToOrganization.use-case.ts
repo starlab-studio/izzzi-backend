@@ -51,7 +51,7 @@ export class AddUserToOrganizationUseCase
           "Something went wrong during creation. Please try again later."
         );
       }
-      return ormMembership.toPersistance();
+      return ormMembership.toPersistence();
     } catch (error) {
       this.handleError(error);
     }

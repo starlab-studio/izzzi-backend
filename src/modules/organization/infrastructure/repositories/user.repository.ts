@@ -8,6 +8,7 @@ import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { MembershipStatus } from "../../domain/types";
 import { MembershipModel } from "../models/membership.model";
 import { MembershipEntity } from "../../domain/entities/membership.entity";
+import { OrganizationEntity } from "../../domain/entities/organization.entity";
 
 export class UserRepository
   extends BaseTransactionalRepository<UserEntity>
@@ -148,8 +149,12 @@ export class UserRepository
   }
 
   private toMembershipEntities(models: MembershipModel[]): MembershipEntity[] {
-    return models.map((m) =>
-      MembershipEntity.reconstitute({
+    return models.map((m) => {
+      const organization = m.organization
+        ? OrganizationEntity.reconstitute(m.organization)
+        : undefined;
+
+      return MembershipEntity.reconstitute({
         id: m.id,
         userId: m.userId,
         organizationId: m.organizationId,
@@ -159,7 +164,8 @@ export class UserRepository
         createdAt: m.createdAt,
         updatedAt: m.updatedAt,
         leftAt: m.leftAt,
-      })
-    );
+        organization,
+      });
+    });
   }
 }

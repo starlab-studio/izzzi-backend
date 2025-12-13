@@ -29,15 +29,14 @@ export class ClassRepository
   }
 
   async create(data: ClassEntity): Promise<ClassEntity> {
-    const repository = this.getTypeOrmRepository();
     const persistenceData = data.toPersistence();
     const entityData = {
       ...persistenceData,
       createdAt: persistenceData.createdAt ?? undefined,
       updatedAt: persistenceData.updatedAt ?? undefined,
     };
-    const entity = repository.create(entityData);
-    const saved = await repository.save(entity);
+    const entity = this.directRepository.create(entityData);
+    const saved = await this.directRepository.save(entity);
     return ClassEntity.reconstitute(saved);
   }
 

@@ -58,6 +58,14 @@ import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-memb
       inject: [getRepositoryToken(UserModel), TypeOrmUnitOfWork],
     },
     {
+      provide: "USER_REPOSITORY",
+      useFactory: (
+        ormRepository: Repository<UserModel>,
+        unitOfWork: IUnitOfWork
+      ) => new UserRepository(ormRepository, unitOfWork),
+      inject: [getRepositoryToken(UserModel), TypeOrmUnitOfWork],
+    },
+    {
       provide: OrganizationRepository,
       useFactory: (
         ormRepository: Repository<OrganizationModel>,
@@ -66,7 +74,15 @@ import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-memb
       inject: [getRepositoryToken(OrganizationModel), TypeOrmUnitOfWork],
     },
     {
-      provide: MembershipRepository,
+      provide: MembershipRepository, 
+      useFactory: (
+        ormRepository: Repository<MembershipModel>,
+        unitOfWork: IUnitOfWork
+      ) => new MembershipRepository(ormRepository, unitOfWork),
+      inject: [getRepositoryToken(MembershipModel), TypeOrmUnitOfWork],
+    },
+    {
+      provide: "MEMBERSHIP_REPOSITORY",
       useFactory: (
         ormRepository: Repository<MembershipModel>,
         unitOfWork: IUnitOfWork

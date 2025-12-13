@@ -9,10 +9,10 @@ import {
 import { IClass } from "../../domain/types";
 import { ClassModel } from "../models/class.model";
 import { IClassRepository } from "../../domain/repositories/class.repository";
-import { Class } from "../../domain/entities/class.entity";
+import { ClassEntity } from "../../domain/entities/class.entity";
 
 export class ClassRepository
-  extends BaseTransactionalRepository<Class>
+  extends BaseTransactionalRepository<ClassEntity>
   implements IClassRepository
 {
   constructor(
@@ -28,7 +28,7 @@ export class ClassRepository
     return typeOrmUow.getEntityManager().getRepository(ClassModel);
   }
 
-  async create(data: Class): Promise<Class> {
+  async create(data: ClassEntity): Promise<ClassEntity> {
     const repository = this.getTypeOrmRepository();
     const persistenceData = data.toPersistence();
     const entityData = {
@@ -38,52 +38,52 @@ export class ClassRepository
     };
     const entity = repository.create(entityData);
     const saved = await repository.save(entity);
-    return Class.reconstitute(saved);
+    return ClassEntity.reconstitute(saved);
   }
 
-  async findById(id: string): Promise<Class | null> {
+  async findById(id: string): Promise<ClassEntity | null> {
     const result = await this.directRepository.findOne({ where: { id } });
     if (!result) return null;
-    return Class.reconstitute(result);
+    return ClassEntity.reconstitute(result);
   }
 
   async findByName(
     name: string,
     organizationId: string
-  ): Promise<Class | null> {
+  ): Promise<ClassEntity | null> {
     const result = await this.directRepository.findOne({
       where: { name, organizationId },
     });
     if (!result) return null;
-    return Class.reconstitute(result);
+    return ClassEntity.reconstitute(result);
   }
 
-  async findByCode(code: string): Promise<Class | null> {
+  async findByCode(code: string): Promise<ClassEntity | null> {
     const result = await this.directRepository.findOne({ where: { code } });
     if (!result) return null;
-    return Class.reconstitute(result);
+    return ClassEntity.reconstitute(result);
   }
 
-  async findByOrganization(organizationId: string): Promise<Class[]> {
+  async findByOrganization(organizationId: string): Promise<ClassEntity[]> {
     const results = await this.directRepository.find({
       where: { organizationId },
     });
-    return results.map((result) => Class.reconstitute(result));
+    return results.map((result) => ClassEntity.reconstitute(result));
   }
 
-  async findByUser(userId: string): Promise<Class[]> {
+  async findByUser(userId: string): Promise<ClassEntity[]> {
     const results = await this.directRepository.find({
       where: { userId },
     });
-    return results.map((result) => Class.reconstitute(result));
+    return results.map((result) => ClassEntity.reconstitute(result));
   }
 
-  async findAll(): Promise<Class[]> {
+  async findAll(): Promise<ClassEntity[]> {
     const results = await this.directRepository.find();
-    return results.map((result) => Class.reconstitute(result));
+    return results.map((result) => ClassEntity.reconstitute(result));
   }
 
-  async update(id: string, entity: Partial<IClass>): Promise<Class> {
+  async update(id: string, entity: Partial<IClass>): Promise<ClassEntity> {
     const repository = this.getTypeOrmRepository();
     const entityData = {
       ...entity,
@@ -103,7 +103,7 @@ export class ClassRepository
     await repository.delete(id);
   }
 
-  async save(entity: Class): Promise<Class> {
+  async save(entity: ClassEntity): Promise<ClassEntity> {
     const repository = this.getTypeOrmRepository();
     const persistenceData = entity.toPersistence();
     const entityData = {
@@ -112,6 +112,6 @@ export class ClassRepository
       updatedAt: persistenceData.updatedAt ?? undefined,
     };
     const saved = await repository.save(entityData);
-    return Class.reconstitute(saved);
+    return ClassEntity.reconstitute(saved);
   }
 }

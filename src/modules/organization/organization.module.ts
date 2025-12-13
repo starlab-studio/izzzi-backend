@@ -187,6 +187,6 @@ import { OrganizationController } from "./interface/controllers/organization.con
       inject: ["LOGGER_SERVICE", EventStore],
     },
   ],
-  exports: [OrganizationFacade, "MEMBERSHIP_REPOSITORY"],
+  exports: [OrganizationFacade, "MEMBERSHIP_REPOSITORY", "USER_REPOSITORY"],
 })
 export class OrganizationModule {}

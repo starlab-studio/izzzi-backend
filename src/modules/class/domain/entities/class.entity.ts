@@ -1,36 +1,50 @@
 import { randomUUID } from "crypto";
 import { IClass } from "../types";
-import { DomainError, ErrorCode } from "src/core";
+import { DomainError, ErrorCode, BaseEntity } from "src/core";
 import { GeneralUtils } from "src/utils/general.utils";
 
-export class Class {
+export class ClassEntity extends BaseEntity {
   private props: IClass;
 
   private constructor(props: IClass) {
+    super();
     this.props = props;
   }
 
   public static create(
     name: string,
-    description: string | null,
+    description: string | null | undefined, // Accepter undefined temporairement
     numberOfStudents: number,
     studentEmails: string[],
     organizationId: string,
     userId: string
-  ): Class {
-    Class.validateName(name);
-    Class.validateNumberOfStudents(numberOfStudents);
-    Class.validateStudentEmails(studentEmails, numberOfStudents);
+  ): ClassEntity {
+    ClassEntity.validateRequiredString(
+      name,
+      "Class name",
+      ErrorCode.INVALID_CLASS_NAME,
+    );
+    ClassEntity.validateMinLength(
+      name.trim(),
+      1,
+      "Class name",
+      ErrorCode.INVALID_CLASS_NAME,
+    );
+
+    ClassEntity.validateNumberOfStudents(numberOfStudents);
+    ClassEntity.validateStudentEmails(studentEmails, numberOfStudents);
+
+    const normalizedDescription = description ?? null;
 
     const now = new Date();
 
-    return new Class({
+    return new ClassEntity({
       id: randomUUID(),
       name: name.trim(),
-      code: Class.generateCode(name),
+      code: ClassEntity.generateCode(name),
       numberOfStudents: numberOfStudents,
       studentEmails: studentEmails,
-      description: description,
+      description: normalizedDescription, // Utiliser la valeur normalisée
       accessToken: GeneralUtils.generateToken(32),
       isActive: true,
       organizationId: organizationId,
@@ -40,21 +54,7 @@ export class Class {
     });
   }
 
-  private static validateName(name: string): void {
-    if (!name || name.trim().length === 0) {
-      throw new DomainError(
-        ErrorCode.INVALID_CLASS_NAME,
-        "Class name is required",
-      );
-    }
-
-    if (name.trim().length < 1) {
-      throw new DomainError(
-        ErrorCode.INVALID_CLASS_NAME,
-        "Class name must contain at least 1 character",
-      );
-    }
-  }
+  // Supprimer validateName - remplacé par BaseEntity.validateRequiredString et validateMinLength
 
   private static validateNumberOfStudents(numberOfStudents: number): void {
     if (numberOfStudents === undefined || numberOfStudents === null) {
@@ -162,7 +162,7 @@ export class Class {
     return { ...this.props };
   }
 
-  static reconstitute(data: IClass): Class {
-    return new Class(data);
+  static reconstitute(data: IClass): ClassEntity {
+    return new ClassEntity(data);
   }
 }

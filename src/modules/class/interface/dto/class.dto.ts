@@ -45,6 +45,7 @@ export class CreateClassDto
     description: "Description de la classe",
     example: "Classe de Terminale S spécialité Mathématiques",
     required: false,
+    nullable: true,
   })
   @IsString({ message: "Description must be a string" })
   @IsOptional()

@@ -5,45 +5,65 @@ import {
   ApplicationError,
   ErrorCode,
   Email,
+  IEventStore,
+  DomainError,
+  UserRole,
 } from "src/core";
 
-import { Class } from "../../domain/entities/class.entity";
+import { ClassEntity } from "../../domain/entities/class.entity";
 import { IClass, IClassCreate } from "../../domain/types";
 import { IClassRepository } from "../../domain/repositories/class.repository";
-import { ClassDomainService } from "../../domain/services/class.domain.service";
 import { GeneralUtils } from "src/utils/general.utils";
-import { IMembershipRepository } from "src/modules/organization/domain/repositories/membership.repository";
+import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
+import { ClassCreatedEvent } from "../../domain/events/classCreated.event";
 
 export class CreateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly classDomainService: ClassDomainService,
     private readonly classRepository: IClassRepository,
-    private readonly membershipRepository: IMembershipRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly eventStore: IEventStore,
   ) {
     super(logger);
   }
 
-  async execute(data: IClassCreate): Promise<IClass> {
+  async execute(data: IClassCreate & { userEmail: string }): Promise<IClass> {
     try {
+      const user = await this.userRepository.findByIdWithActiveMemberships(data.userId);
+      if (!user) {
+        throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+      }
 
-      const membership =
-        await this.membershipRepository.findByUserAndOrganization(
-          data.userId,
-          data.organizationId,
+      if (!user.belongsToOrganization(data.organizationId)) {
+        throw new DomainError(
+          ErrorCode.USER_HAS_NO_ORGANIZATION,
+          "User is not a member of this organization",
         );
-      this.classDomainService.validateUserCanCreateClass(
-        membership ? membership.toPersistance() : null,
-      );
+      }
 
+      if (
+        !user.hasAnyRoleInOrganization(data.organizationId, [
+          UserRole.LEARNING_MANAGER,
+          UserRole.ADMIN,
+        ])
+      ) {
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ROLE,
+          "User must have LEARNING_MANAGER or ADMIN role to create a class",
+        );
+      }
 
       const existingClass = await this.classRepository.findByName(
         data.name,
         data.organizationId,
       );
-      this.classDomainService.validateClassUniqueness(
-        existingClass ? existingClass.toPersistence() : null,
-      );
+
+      if (existingClass) {
+        throw new DomainError(
+          ErrorCode.CLASS_ALREADY_EXISTS,
+          "A class with this name already exists in this organization",
+        );
+      }
 
       const emailStrings = GeneralUtils.parseEmails(data.studentEmails);
       const validatedEmails = emailStrings.map((emailString) => {
@@ -51,7 +71,7 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
         return email.value;
       });
 
-      const classEntity = Class.create(
+      const classEntity = ClassEntity.create(
         data.name,
         data.description ?? null,
         data.numberOfStudents,
@@ -67,6 +87,18 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
           "Failed to create class. Please try again later.",
         );
       }
+
+      this.eventStore.publish(
+        new ClassCreatedEvent({
+          id: createdClass.id,
+          name: createdClass.name,
+          code: createdClass.code,
+          description: createdClass.description,
+          organizationId: createdClass.organizationId,
+          userId: createdClass.userId,
+          userEmail: data.userEmail,
+        }),
+      );
 
       return createdClass.toPersistence();
     } catch (error) {

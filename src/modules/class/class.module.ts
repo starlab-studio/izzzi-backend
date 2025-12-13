@@ -10,15 +10,13 @@ import {
 } from "src/core";
 import { CoreModule } from "src/core/core.module";
 import { ClassModel } from "./infrastructure/models/class.model";
-import { ClassDomainService } from "./domain/services/class.domain.service";
 import { CreateClassUseCase } from "./application/use-cases/CreateClass.use-case";
 import { ClassController } from "./interface/controllers/class.controller";
 import { IClassRepository } from "./domain/repositories/class.repository";
 import { ClassRepository } from "./infrastructure/repositories/class.repository";
 import { ClassFacade } from "./application/facades/class.facade";
 import { OrganizationModule } from "../organization/organization.module";
-import { IMembershipRepository } from "src/modules/organization/domain/repositories/membership.repository";
-import { ClassService } from "./application/services/class.service";
+import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
 
 @Module({
   imports: [
@@ -29,7 +27,6 @@ import { ClassService } from "./application/services/class.service";
   controllers: [ClassController],
   providers: [
     { provide: "LOGGER_SERVICE", useClass: LoggerService },
-    { provide: "CLASS_DOMAIN_SERVICE", useClass: ClassDomainService },
     {
       provide: "CLASS_REPOSITORY",
       useFactory: (
@@ -42,42 +39,28 @@ import { ClassService } from "./application/services/class.service";
       provide: "CREATE_CLASS_USE_CASE",
       useFactory: (
         logger: LoggerService,
-        classDomainService: ClassDomainService,
         classRepository: IClassRepository,
-        membershipRepository: IMembershipRepository,
+        userRepository: IUserRepository,
+        eventStore: EventStore,
       ) =>
         new CreateClassUseCase(
           logger,
-          classDomainService,
           classRepository,
-          membershipRepository,
+          userRepository,
+          eventStore,
         ),
       inject: [
         "LOGGER_SERVICE",
-        "CLASS_DOMAIN_SERVICE",
         "CLASS_REPOSITORY",
-        "MEMBERSHIP_REPOSITORY",
-      ],
-    },
-    {
-      provide: ClassService,
-      useFactory: (
-        logger: LoggerService,
-        eventStore: EventStore,
-        unitOfWork: IUnitOfWork,
-        createClassUseCase: CreateClassUseCase,
-      ) => new ClassService(logger, eventStore, unitOfWork, createClassUseCase),
-      inject: [
-        "LOGGER_SERVICE",
+        "USER_REPOSITORY",
         EventStore,
-        TypeOrmUnitOfWork,
-        "CREATE_CLASS_USE_CASE",
       ],
     },
     {
       provide: ClassFacade,
-      useFactory: (classService: ClassService) => new ClassFacade(classService),
-      inject: [ClassService],
+      useFactory: (createClassUseCase: CreateClassUseCase) =>
+        new ClassFacade(createClassUseCase),
+      inject: ["CREATE_CLASS_USE_CASE"],
     },
   ],
   exports: [ClassFacade],

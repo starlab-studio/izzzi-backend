@@ -41,6 +41,7 @@ export class ClassController extends BaseController {
     const createdClass = await this.classFacade.createClass(
       {
         ...dto,
+        description: dto.description ?? null,
         organizationId: organizationId,
         userId: user.userId,
       },

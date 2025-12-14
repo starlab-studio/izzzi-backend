@@ -14,14 +14,14 @@ import { ClassEntity } from "../../domain/entities/class.entity";
 import { IClass, IClassCreate } from "../../domain/types";
 import { IClassRepository } from "../../domain/repositories/class.repository";
 import { GeneralUtils } from "src/utils/general.utils";
-import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
+import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { ClassCreatedEvent } from "../../domain/events/classCreated.event";
 
 export class CreateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly classRepository: IClassRepository,
-    private readonly userRepository: IUserRepository,
+    private readonly organizationFacade: OrganizationFacade,
     private readonly eventStore: IEventStore,
   ) {
     super(logger);
@@ -29,31 +29,13 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: IClassCreate & { userEmail: string }): Promise<IClass> {
     try {
-      const user = await this.userRepository.findByIdWithActiveMemberships(data.userId);
-      if (!user) {
-        throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
-      }
+      await this.organizationFacade.validateUserCanCreateClass(
+        data.userId,
+        data.organizationId,
+        [UserRole.LEARNING_MANAGER, UserRole.ADMIN]
+      );
 
-      if (!user.belongsToOrganization(data.organizationId)) {
-        throw new DomainError(
-          ErrorCode.USER_HAS_NO_ORGANIZATION,
-          "User is not a member of this organization",
-        );
-      }
-
-      if (
-        !user.hasAnyRoleInOrganization(data.organizationId, [
-          UserRole.LEARNING_MANAGER,
-          UserRole.ADMIN,
-        ])
-      ) {
-        throw new DomainError(
-          ErrorCode.UNAUTHORIZED_ROLE,
-          "User must have LEARNING_MANAGER or ADMIN role to create a class",
-        );
-      }
-
-      const existingClass = await this.classRepository.findByName(
+      const existingClass = await this.classRepository.findByNameAndOrganization(
         data.name,
         data.organizationId,
       );

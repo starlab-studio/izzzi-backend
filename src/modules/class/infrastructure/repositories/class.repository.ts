@@ -46,7 +46,7 @@ export class ClassRepository
     return ClassEntity.reconstitute(result);
   }
 
-  async findByName(
+  async findByNameAndOrganization( // Renommé
     name: string,
     organizationId: string
   ): Promise<ClassEntity | null> {

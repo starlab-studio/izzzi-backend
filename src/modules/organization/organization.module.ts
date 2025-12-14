@@ -202,18 +202,20 @@ import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-memb
       useFactory: (
         organizationService: OrganizationService,
         getUserDetailsUseCase: GetUserDetailsUseCase,
-        getUserMembershipsUseCase: GetUserMembershipsUseCase
+        getUserMembershipsUseCase: GetUserMembershipsUseCase,
+        userRepository: IUserRepository
       ) =>
         new OrganizationFacade(
           organizationService,
           getUserDetailsUseCase,
-          getUserMembershipsUseCase
+          getUserMembershipsUseCase,
+          userRepository
         ),
       inject: [
         OrganizationService,
         GetUserDetailsUseCase,
         GetUserMembershipsUseCase,
-        GetUserMembershipsUseCase,
+        UserRepository,
       ],
     },
     {
@@ -223,6 +225,6 @@ import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-memb
       inject: [LoggerService, EventStore],
     },
   ],
-  exports: [OrganizationFacade, "MEMBERSHIP_REPOSITORY", "USER_REPOSITORY"],
+  exports: [OrganizationFacade],
 })
 export class OrganizationModule {}

@@ -13,7 +13,7 @@ export class ClassEntity extends BaseEntity {
 
   public static create(
     name: string,
-    description: string | null | undefined, // Accepter undefined temporairement
+    description: string | null,
     numberOfStudents: number,
     studentEmails: string[],
     organizationId: string,
@@ -44,7 +44,7 @@ export class ClassEntity extends BaseEntity {
       code: ClassEntity.generateCode(name),
       numberOfStudents: numberOfStudents,
       studentEmails: studentEmails,
-      description: normalizedDescription, // Utiliser la valeur normalisée
+      description: normalizedDescription,
       accessToken: GeneralUtils.generateToken(32),
       isActive: true,
       organizationId: organizationId,
@@ -54,7 +54,6 @@ export class ClassEntity extends BaseEntity {
     });
   }
 
-  // Supprimer validateName - remplacé par BaseEntity.validateRequiredString et validateMinLength
 
   private static validateNumberOfStudents(numberOfStudents: number): void {
     if (numberOfStudents === undefined || numberOfStudents === null) {

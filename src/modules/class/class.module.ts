@@ -16,7 +16,7 @@ import { IClassRepository } from "./domain/repositories/class.repository";
 import { ClassRepository } from "./infrastructure/repositories/class.repository";
 import { ClassFacade } from "./application/facades/class.facade";
 import { OrganizationModule } from "../organization/organization.module";
-import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
+import { OrganizationFacade } from "../organization/application/facades/organization.facade";
 
 @Module({
   imports: [
@@ -40,19 +40,19 @@ import { IUserRepository } from "src/modules/organization/domain/repositories/us
       useFactory: (
         logger: LoggerService,
         classRepository: IClassRepository,
-        userRepository: IUserRepository,
+        organizationFacade: OrganizationFacade,
         eventStore: EventStore,
       ) =>
         new CreateClassUseCase(
           logger,
           classRepository,
-          userRepository,
+          organizationFacade,
           eventStore,
         ),
       inject: [
         "LOGGER_SERVICE",
         "CLASS_REPOSITORY",
-        "USER_REPOSITORY",
+        OrganizationFacade,
         EventStore,
       ],
     },

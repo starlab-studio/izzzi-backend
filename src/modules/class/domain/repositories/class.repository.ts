@@ -3,7 +3,7 @@ import { ClassEntity } from "../entities/class.entity";
 
 export interface IClassRepository extends IRepository<ClassEntity> {
   create(data: ClassEntity): Promise<ClassEntity>;
-  findByName(name: string, organizationId: string): Promise<ClassEntity | null>;
+  findByNameAndOrganization(name: string, organizationId: string): Promise<ClassEntity | null>;
   findByCode(code: string): Promise<ClassEntity | null>;
   findByOrganization(organizationId: string): Promise<ClassEntity[]>;
   findByUser(userId: string): Promise<ClassEntity[]>;

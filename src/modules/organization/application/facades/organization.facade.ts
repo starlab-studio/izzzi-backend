@@ -1,8 +1,16 @@
 import { UserRole, DomainError, ErrorCode } from "src/core";
-import { IUser, IUserCreate } from "../../domain/types";
+import {
+  IInvitation,
+  IInvitationCreate,
+  IOrganization,
+  IUser,
+  IUserCreate,
+} from "../../domain/types";
 import { OrganizationService } from "../services/organization.service";
 import { GetUserDetailsUseCase } from "../use-cases/GetUserDetails.use-case";
 import { GetUserMembershipsUseCase } from "../use-cases/get-user-membership.use-case";
+import { GetOrganizationUseCase } from "../use-cases/GetOrganization.use-case";
+import { SendInvitationUseCase } from "../use-cases/send-invitation.use-case";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 
 export class OrganizationFacade {
@@ -10,7 +18,9 @@ export class OrganizationFacade {
     private readonly organizationService: OrganizationService,
     private readonly getUserDetailsUseCase: GetUserDetailsUseCase,
     private readonly getUserMembershipsUseCase: GetUserMembershipsUseCase,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly getOrganizationUseCase: GetOrganizationUseCase,
+    private readonly sendInvitationUseCase: SendInvitationUseCase
   ) {}
 
   async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
@@ -66,6 +76,28 @@ export class OrganizationFacade {
         ErrorCode.UNAUTHORIZED_ROLE,
         `User must have one of the following roles: ${requiredRoles.join(", ")}`
       );
+    }
+  }
+
+  async getOneOrganization(
+    organizationId: string,
+    userId: string
+  ): Promise<IOrganization | null> {
+    try {
+      return await this.getOrganizationUseCase.execute({
+        organizationId,
+        userId,
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async sendUserInvitation(data: IInvitationCreate): Promise<IInvitation> {
+    try {
+      return await this.sendInvitationUseCase.execute(data);
+    } catch (error) {
+      throw error;
     }
   }
 }

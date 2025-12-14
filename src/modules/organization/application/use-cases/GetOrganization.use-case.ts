@@ -8,18 +8,29 @@ import {
 
 import { IOrganization } from "../../domain/types";
 import { IOrganizationRepository } from "../../domain/repositories/organization.repository";
+import { OrganizationAuthorizationService } from "../../domain/services/organization-authorization.service";
 
 export class GetOrganizationUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly organizationRepository: IOrganizationRepository
+    private readonly organizationRepository: IOrganizationRepository,
+    private readonly organizationAuthorizationService: OrganizationAuthorizationService
   ) {
     super(logger);
   }
-  async execute(organizationId: string): Promise<IOrganization> {
+  async execute(data: {
+    organizationId: string;
+    userId: string;
+  }): Promise<IOrganization> {
     try {
-      const organisation =
-        await this.organizationRepository.findById(organizationId);
+      await this.organizationAuthorizationService.assertCanAccess(
+        data.userId,
+        data.organizationId
+      );
+
+      const organisation = await this.organizationRepository.findById(
+        data.organizationId
+      );
 
       if (!organisation) {
         throw new DomainError(

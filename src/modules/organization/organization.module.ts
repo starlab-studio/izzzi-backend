@@ -35,6 +35,8 @@ import { SendInvitationUseCase } from "./application/use-cases/send-invitation.u
 import { InvitationRepository } from "./infrastructure/repositories/invitation.repository";
 import { OrganizationController } from "./interface/controllers/organization.controller";
 import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-membership.use-case";
+import { GetOrganizationUseCase } from "./application/use-cases/GetOrganization.use-case";
+import { OrganizationAuthorizationService } from "./domain/services/organization-authorization.service";
 
 @Module({
   imports: [
@@ -126,6 +128,30 @@ import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-memb
       ) => new GetUserMembershipsUseCase(logger, membershipRepository),
       inject: [LoggerService, MembershipRepository],
     },
+    {
+      provide: OrganizationAuthorizationService,
+      useFactory: (userRepository: IUserRepository) =>
+        new OrganizationAuthorizationService(userRepository),
+      inject: [UserRepository],
+    },
+    {
+      provide: GetOrganizationUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        organizationRepository: OrganizationRepository,
+        organizationAuthorizationService: OrganizationAuthorizationService
+      ) =>
+        new GetOrganizationUseCase(
+          logger,
+          organizationRepository,
+          organizationAuthorizationService
+        ),
+      inject: [
+        LoggerService,
+        OrganizationRepository,
+        OrganizationAuthorizationService,
+      ],
+    },
     InvitationAuthorizationService,
     {
       provide: SendInvitationUseCase,
@@ -186,18 +212,23 @@ import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-memb
       useFactory: (
         organizationService: OrganizationService,
         getUserDetailsUseCase: GetUserDetailsUseCase,
-        getUserMembershipsUseCase: GetUserMembershipsUseCase
+        getUserMembershipsUseCase: GetUserMembershipsUseCase,
+        getOrganizationUseCase: GetOrganizationUseCase,
+        sendUserInvitaionUsecase: SendInvitationUseCase
       ) =>
         new OrganizationFacade(
           organizationService,
           getUserDetailsUseCase,
-          getUserMembershipsUseCase
+          getUserMembershipsUseCase,
+          getOrganizationUseCase,
+          sendUserInvitaionUsecase
         ),
       inject: [
         OrganizationService,
         GetUserDetailsUseCase,
         GetUserMembershipsUseCase,
-        GetUserMembershipsUseCase,
+        GetOrganizationUseCase,
+        SendInvitationUseCase,
       ],
     },
     {

@@ -1,5 +1,11 @@
 import { randomUUID } from "crypto";
-import { IUser, IUserCreate, IUserReconstitute, UserStatus } from "../types";
+import {
+  GlobalRole,
+  IUser,
+  IUserCreate,
+  IUserReconstitute,
+  UserStatus,
+} from "../types";
 import { MembershipEntity } from "./membership.entity";
 import { DomainError, UserRole } from "src/core";
 
@@ -22,6 +28,7 @@ export class UserEntity {
       avatarUrl: null,
       lastLogin: null,
       status: UserStatus.PENDING,
+      role: null,
       createdAt: now,
       updatedAt: now,
     });
@@ -120,9 +127,7 @@ export class UserEntity {
   }
 
   isSuperAdmin(): boolean {
-    return this.memberships.some(
-      (m) => m.role === UserRole.SUPER_ADMIN && m.isActive()
-    );
+    return this.props.role === GlobalRole.SUPER_ADMIN;
   }
 
   private findActiveMembership(
@@ -169,6 +174,9 @@ export class UserEntity {
   }
   get updatedAt(): Date {
     return this.props.updatedAt;
+  }
+  get role(): GlobalRole | null {
+    return this.props.role;
   }
 
   toPersistence(): IUser {

@@ -133,6 +133,7 @@ export class UserRepository
       avatarUrl: model.avatarUrl,
       lastLogin: model.lastLogin,
       status: model.status,
+      role: model.role,
       createdAt: model.createdAt,
       updatedAt: model.updatedAt,
       memberships: memberships,

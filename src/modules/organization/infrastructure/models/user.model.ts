@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn, OneToMany } from "typeorm";
 
-import { IUser, UserStatus } from "../../domain/types";
+import { GlobalRole, IUser, UserStatus } from "../../domain/types";
 import { MembershipModel } from "./membership.model";
 
 @Entity({ name: "users" })
@@ -28,6 +28,9 @@ export class UserModel implements IUser {
 
   @Column({ type: "enum", enum: UserStatus, default: UserStatus.PENDING })
   status: UserStatus;
+
+  @Column({ type: "enum", enum: GlobalRole, default: null })
+  role: GlobalRole | null;
 
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;

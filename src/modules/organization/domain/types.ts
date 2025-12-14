@@ -9,6 +9,11 @@ export enum UserStatus {
   DELETED = "deleted",
 }
 
+export enum GlobalRole {
+  SUPER_ADMIN = "SUPER_ADMIN",
+  PLATFORM_ADMIN = "PLATFORM_ADMIN",
+}
+
 export interface IUser {
   readonly id: string;
   readonly firstName: string;
@@ -18,6 +23,7 @@ export interface IUser {
   readonly avatarUrl: string | null;
   readonly lastLogin: Date | null;
   readonly status: UserStatus;
+  readonly role: GlobalRole | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -56,6 +62,10 @@ export interface IOrganization {
 }
 
 export type IOrganizationCreate = Pick<IOrganization, "name" | "ownerId">;
+
+export interface IOrganizationReconstitute extends IOrganization {
+  readonly memberships?: MembershipEntity[];
+}
 
 export enum MembershipStatus {
   ACTIVE = "active",

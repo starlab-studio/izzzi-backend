@@ -5,19 +5,18 @@ import {
   ApplicationError,
   EventStore,
   ErrorCode,
+  DomainError,
 } from "src/core";
 
-import { User } from "../../domain/entities/user.entity";
+import { UserEntity } from "../../domain/entities/user.entity";
 import { IUser, IUserCreate } from "../../domain/types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
-import { UserDomainService } from "../../domain/services/user.domain.service";
 import { UserFailedEvent } from "../../domain/events/userFailed.event";
 
 export class CreateUserUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly eventStore: EventStore,
-    private readonly userDomaineService: UserDomainService,
     private readonly userRepository: IUserRepository
   ) {
     super(logger);
@@ -26,9 +25,13 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
   async execute(data: IUserCreate): Promise<IUser> {
     try {
       const existingUser = await this.userRepository.findByEmail(data.email);
-      this.userDomaineService.validateUserUniqueness(existingUser);
+      if (existingUser)
+        throw new DomainError(
+          ErrorCode.USER_ALREADY_EXISTS,
+          "User already exist"
+        );
 
-      const user = new User(data);
+      const user = UserEntity.create({ ...data });
       const ormUser = await this.userRepository.create(user);
       if (!ormUser)
         throw new ApplicationError(

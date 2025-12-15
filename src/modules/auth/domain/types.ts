@@ -104,6 +104,7 @@ export interface UserFailedPayload {
 export type IUserFailedEvent = IDomainEvent<UserFailedPayload>;
 
 export interface SignUpSucceedPayload {
+  id: string;
   firstName: string;
   lastName: string;
   email: string;

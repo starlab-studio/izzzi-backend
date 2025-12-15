@@ -1,4 +1,4 @@
-import { IEventStore, ILoggerService, IUnitOfWork, Role } from "src/core";
+import { IEventStore, ILoggerService, IUnitOfWork, UserRole } from "src/core";
 
 import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
 import { CreateOrganizationUseCase } from "../use-cases/CreateOrganization.use-case";
@@ -26,7 +26,7 @@ export class OrganizationService {
         await this.addUserToOrganizationUseCase.execute({
           userId: user.id,
           organizationId: organization.id,
-          role: Role.ADMIN,
+          role: UserRole.ADMIN,
           addedBy: null,
         });
 

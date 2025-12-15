@@ -1,5 +1,5 @@
 import { Reflector } from "@nestjs/core";
-import { Inject } from "@nestjs/common";
+import { Inject, forwardRef } from "@nestjs/common";
 import {
   Injectable,
   CanActivate,
@@ -8,12 +8,13 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 
-import { Role } from "src/core/domain/types";
+import { UserRole } from "src/core/domain/types";
 import { ROLES_KEY } from "../decorators/role.decorator";
 import { type ICacheService } from "src/core/domain/services/cache.service";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
+import { GlobalRole } from "src/modules/organization/domain/types";
 
-type UserRolesCache = { organizationId: string; role: Role }[];
+type UserRolesCache = { organizationId: string; role: UserRole }[];
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -24,14 +25,15 @@ export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     @Inject("CACHE_SERVICE") private cacheService: ICacheService,
+    @Inject(forwardRef(() => OrganizationFacade))
     private organizationFacade: OrganizationFacade
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()]
+    );
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
@@ -42,6 +44,17 @@ export class RolesGuard implements CanActivate {
 
     if (!user?.userId) {
       throw new UnauthorizedException("User not authenticated");
+    }
+
+    const userProfile = await this.getUserProfile(user.userId);
+
+    if (userProfile.role === GlobalRole.SUPER_ADMIN) {
+      const organizationId = this.extractOrganizationId(request);
+      if (organizationId) {
+        request.organizationId = organizationId;
+      }
+      request.userRoles = [];
+      return true;
     }
 
     const organizationId = this.extractOrganizationId(request);
@@ -73,6 +86,27 @@ export class RolesGuard implements CanActivate {
     return true;
   }
 
+  private async getUserProfile(userId: string) {
+    const cacheKey = `${this.CACHE_PREFIX}profile:${userId}`;
+
+    let userProfile =
+      await this.cacheService.get<
+        Awaited<ReturnType<OrganizationFacade["getUserProfile"]>>
+      >(cacheKey);
+
+    if (userProfile) {
+      return userProfile;
+    }
+
+    try {
+      userProfile = await this.organizationFacade.getUserProfile(userId);
+      await this.cacheService.set(cacheKey, userProfile, this.CACHE_TTL);
+      return userProfile;
+    } catch (error) {
+      throw new UnauthorizedException("Failed to retrieve user profile");
+    }
+  }
+
   private async getUserRoles(userId: string): Promise<UserRolesCache> {
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;
 
@@ -84,7 +118,7 @@ export class RolesGuard implements CanActivate {
 
     try {
       const userProfile = await this.organizationFacade.getUserProfile(userId);
-      userRoles = userProfile.roles || [];
+      userRoles = userProfile.memberships || [];
 
       await this.cacheService.set(cacheKey, userRoles, this.CACHE_TTL);
 

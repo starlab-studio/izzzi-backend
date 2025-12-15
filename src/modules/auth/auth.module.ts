@@ -36,6 +36,7 @@ import { CognitoAdapter } from "./infrastructure/factories/cognito.adapter";
 import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
 import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
 import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-case";
+import { UserCreatedEventHandler } from "./application/handlers/UserCreated.handler";
 
 @Module({
   imports: [
@@ -198,6 +199,14 @@ import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-
       inject: [LoggerService, EventStore, SignUpUseCase],
     },
     {
+      provide: UserCreatedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        authIdentityRepository: AuthIdentityRepository
+      ) => new UserCreatedEventHandler(logger, authIdentityRepository),
+      inject: [LoggerService, AuthIdentityRepository],
+    },
+    {
       provide: ConfirmSignUpUseCase,
       useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
         new ConfirmSignUpUseCase(logger, authProvider),
@@ -210,6 +219,7 @@ export class AuthModule {
   constructor(
     private readonly eventHandlerRegistry: EventHandlerRegistry,
     private readonly authIdentityFailedHandler: AuthIdentityFailedHandler,
+    private readonly userCreatedHandler: UserCreatedEventHandler,
     private readonly userFailedHandler: UserFailedHandler
   ) {}
 
@@ -221,6 +231,10 @@ export class AuthModule {
     this.eventHandlerRegistry.registerHandler(
       "user.failed",
       this.userFailedHandler
+    );
+    this.eventHandlerRegistry.registerHandler(
+      "signup.succeed",
+      this.userCreatedHandler
     );
   }
 }

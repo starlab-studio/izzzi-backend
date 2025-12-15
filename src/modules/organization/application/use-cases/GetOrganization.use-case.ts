@@ -1,23 +1,45 @@
-import { IUseCase, BaseUseCase, ILoggerService } from "src/core";
+import {
+  IUseCase,
+  BaseUseCase,
+  ILoggerService,
+  DomainError,
+  ErrorCode,
+} from "src/core";
 
 import { IOrganization } from "../../domain/types";
-import { OrganizationDomainService } from "../../domain/services/organization.domain.service";
 import { IOrganizationRepository } from "../../domain/repositories/organization.repository";
+import { OrganizationAuthorizationService } from "../../domain/services/organization-authorization.service";
 
 export class GetOrganizationUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly organizationDomainService: OrganizationDomainService,
-    private readonly organizationRepository: IOrganizationRepository
+    private readonly organizationRepository: IOrganizationRepository,
+    private readonly organizationAuthorizationService: OrganizationAuthorizationService
   ) {
     super(logger);
   }
-  async execute(organizationId: string): Promise<IOrganization> {
+  async execute(data: {
+    organizationId: string;
+    userId: string;
+  }): Promise<IOrganization> {
     try {
-      const organisation =
-        await this.organizationRepository.findById(organizationId);
-      this.organizationDomainService.validateOrganizationExists(organisation);
-      return organisation as IOrganization;
+      await this.organizationAuthorizationService.assertCanAccess(
+        data.userId,
+        data.organizationId
+      );
+
+      const organisation = await this.organizationRepository.findById(
+        data.organizationId
+      );
+
+      if (!organisation) {
+        throw new DomainError(
+          ErrorCode.ORGANIZATION_NOT_FOUND,
+          "Organization not found"
+        );
+      }
+
+      return organisation.toPersistence();
     } catch (error) {
       this.handleError(error);
     }

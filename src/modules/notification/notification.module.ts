@@ -16,7 +16,6 @@ import { NotificationRepository } from "./infrastructure/repositories/notificati
 import { INotificationProvider } from "./application/providers/notification.provider";
 import { NotificationModel } from "./infrastructure/models/notification.model";
 import { InvitationSentEventHandler } from "./application/handlers/invitation-sent.handler";
-import { SubjectCreatedEventHandler } from "../subject/application/handlers/subject-created.handler";
 
 @Module({
   imports: [
@@ -60,13 +59,32 @@ import { SubjectCreatedEventHandler } from "../subject/application/handlers/subj
       ) => new UserCreatedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
+    {
+      provide: InvitationSentEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new InvitationSentEventHandler(logger, createEmailNotificationUseCase),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
+    {
+      provide: ClassCreatedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+      ) => new ClassCreatedEventHandler(logger, createEmailNotificationUseCase),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
   ],
 })
 export class NotificationModule {
   constructor(
     private readonly eventHandlerRegistry: EventHandlerRegistry,
     private readonly userCreatedEventHandler: UserCreatedEventHandler,
-    private readonly emailNotificationProvider: EmailProvider
+    private readonly invitationSentEventHandler: InvitationSentEventHandler,
+    private readonly emailNotificationProvider: EmailProvider,
+    private readonly classCreatedEventHandler: ClassCreatedEventHandler,
   ) {}
 
   async onModuleInit() {
@@ -78,6 +96,16 @@ export class NotificationModule {
     this.eventHandlerRegistry.registerHandler(
       "signup.succeed",
       this.userCreatedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "invitation.sent",
+      this.invitationSentEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "class.created",
+      this.classCreatedEventHandler,
     );
   }
 }

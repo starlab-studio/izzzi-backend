@@ -33,4 +33,11 @@ export class GeneralUtils {
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
   }
+
+  static parseEmails(emailsString: string): string[] {
+    return emailsString
+      .split(";")
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+  }
 }

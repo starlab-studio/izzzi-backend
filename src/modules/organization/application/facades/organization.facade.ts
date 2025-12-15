@@ -1,4 +1,4 @@
-import { UserRole } from "src/core";
+import { UserRole, DomainError, ErrorCode } from "src/core";
 import {
   IInvitation,
   IInvitationCreate,
@@ -11,12 +11,14 @@ import { GetUserDetailsUseCase } from "../use-cases/GetUserDetails.use-case";
 import { GetUserMembershipsUseCase } from "../use-cases/get-user-membership.use-case";
 import { GetOrganizationUseCase } from "../use-cases/GetOrganization.use-case";
 import { SendInvitationUseCase } from "../use-cases/send-invitation.use-case";
+import { IUserRepository } from "../../domain/repositories/user.repository";
 
 export class OrganizationFacade {
   constructor(
     private readonly organizationService: OrganizationService,
     private readonly getUserDetailsUseCase: GetUserDetailsUseCase,
     private readonly getUserMembershipsUseCase: GetUserMembershipsUseCase,
+    private readonly userRepository: IUserRepository,
     private readonly getOrganizationUseCase: GetOrganizationUseCase,
     private readonly sendInvitationUseCase: SendInvitationUseCase
   ) {}
@@ -49,6 +51,31 @@ export class OrganizationFacade {
       return await this.getUserMembershipsUseCase.execute(userId);
     } catch (error) {
       throw error;
+    }
+  }
+
+  async validateUserCanCreateClass(
+    userId: string,
+    organizationId: string,
+    requiredRoles: UserRole[]
+  ): Promise<void> {
+    const user = await this.userRepository.findByIdWithActiveMemberships(userId);
+    if (!user) {
+      throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+    }
+
+    if (!user.belongsToOrganization(organizationId)) {
+      throw new DomainError(
+        ErrorCode.USER_HAS_NO_ORGANIZATION,
+        "User is not a member of this organization"
+      );
+    }
+
+    if (!user.hasAnyRoleInOrganization(organizationId, requiredRoles)) {
+      throw new DomainError(
+        ErrorCode.UNAUTHORIZED_ROLE,
+        `User must have one of the following roles: ${requiredRoles.join(", ")}`
+      );
     }
   }
 

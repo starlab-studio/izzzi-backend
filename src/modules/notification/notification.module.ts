@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { CoreModule } from "src/core/core.module";
 import { EventHandlerRegistry, ILoggerService, LoggerService } from "src/core";
 import { UserCreatedEventHandler } from "./application/handlers/user-created.handler";
+import { ClassCreatedEventHandler } from "./application/handlers/class-created.handler";
 import { CreateEmailNotificationUseCase } from "./application/use-cases/create-email-notification.use-case";
 import { NotificationDomainService } from "./domain/services/notification.service";
 import { INotificationRespository } from "./domain/repositories/notification.repository";
@@ -37,12 +38,12 @@ import { InvitationSentEventHandler } from "./application/handlers/invitation-se
       useFactory: (
         notificationDomainService: NotificationDomainService,
         notificationRepository: INotificationRespository,
-        notificationProvider: INotificationProvider
+        notificationProvider: INotificationProvider,
       ) =>
         new CreateEmailNotificationUseCase(
           notificationDomainService,
           notificationRepository,
-          notificationProvider
+          notificationProvider,
         ),
       inject: [
         NotificationDomainService,
@@ -54,7 +55,7 @@ import { InvitationSentEventHandler } from "./application/handlers/invitation-se
       provide: UserCreatedEventHandler,
       useFactory: (
         logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
       ) => new UserCreatedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
@@ -67,6 +68,14 @@ import { InvitationSentEventHandler } from "./application/handlers/invitation-se
         new InvitationSentEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
+    {
+      provide: ClassCreatedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+      ) => new ClassCreatedEventHandler(logger, createEmailNotificationUseCase),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
   ],
 })
 export class NotificationModule {
@@ -74,13 +83,14 @@ export class NotificationModule {
     private readonly eventHandlerRegistry: EventHandlerRegistry,
     private readonly userCreatedEventHandler: UserCreatedEventHandler,
     private readonly invitationSentEventHandler: InvitationSentEventHandler,
-    private readonly emailNotificationProvider: EmailProvider
+    private readonly emailNotificationProvider: EmailProvider,
+    private readonly classCreatedEventHandler: ClassCreatedEventHandler,
   ) {}
 
   async onModuleInit() {
     NotificationProviderFactory.register(
       NotificationMode.EMAIL,
-      this.emailNotificationProvider
+      this.emailNotificationProvider,
     );
 
     this.eventHandlerRegistry.registerHandler(
@@ -91,6 +101,11 @@ export class NotificationModule {
     this.eventHandlerRegistry.registerHandler(
       "invitation.sent",
       this.invitationSentEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "class.created",
+      this.classCreatedEventHandler,
     );
   }
 }

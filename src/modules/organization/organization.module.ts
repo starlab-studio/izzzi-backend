@@ -60,6 +60,14 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
       inject: [getRepositoryToken(UserModel), TypeOrmUnitOfWork],
     },
     {
+      provide: "USER_REPOSITORY",
+      useFactory: (
+        ormRepository: Repository<UserModel>,
+        unitOfWork: IUnitOfWork
+      ) => new UserRepository(ormRepository, unitOfWork),
+      inject: [getRepositoryToken(UserModel), TypeOrmUnitOfWork],
+    },
+    {
       provide: OrganizationRepository,
       useFactory: (
         ormRepository: Repository<OrganizationModel>,
@@ -68,7 +76,15 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
       inject: [getRepositoryToken(OrganizationModel), TypeOrmUnitOfWork],
     },
     {
-      provide: MembershipRepository,
+      provide: MembershipRepository, 
+      useFactory: (
+        ormRepository: Repository<MembershipModel>,
+        unitOfWork: IUnitOfWork
+      ) => new MembershipRepository(ormRepository, unitOfWork),
+      inject: [getRepositoryToken(MembershipModel), TypeOrmUnitOfWork],
+    },
+    {
+      provide: "MEMBERSHIP_REPOSITORY",
       useFactory: (
         ormRepository: Repository<MembershipModel>,
         unitOfWork: IUnitOfWork
@@ -213,6 +229,7 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         organizationService: OrganizationService,
         getUserDetailsUseCase: GetUserDetailsUseCase,
         getUserMembershipsUseCase: GetUserMembershipsUseCase,
+        userRepository: IUserRepository,
         getOrganizationUseCase: GetOrganizationUseCase,
         sendUserInvitaionUsecase: SendInvitationUseCase
       ) =>
@@ -220,6 +237,7 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
           organizationService,
           getUserDetailsUseCase,
           getUserMembershipsUseCase,
+          userRepository,
           getOrganizationUseCase,
           sendUserInvitaionUsecase
         ),
@@ -227,6 +245,7 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         OrganizationService,
         GetUserDetailsUseCase,
         GetUserMembershipsUseCase,
+        UserRepository,
         GetOrganizationUseCase,
         SendInvitationUseCase,
       ],
@@ -240,6 +259,4 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
   ],
   exports: [OrganizationFacade],
 })
-export class OrganizationModule {
-  constructor() {}
-}
+export class OrganizationModule {}

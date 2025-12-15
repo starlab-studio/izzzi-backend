@@ -157,6 +157,58 @@ export class ClassEntity extends BaseEntity {
     return this.props.updatedAt;
   }
 
+  update(data: {
+    name?: string;
+    description?: string | null;
+    numberOfStudents?: number;
+    studentEmails?: string[];
+  }): void {
+    if (data.name !== undefined) {
+      ClassEntity.validateRequiredString(
+        data.name,
+        "Class name",
+        ErrorCode.INVALID_CLASS_NAME,
+      );
+      ClassEntity.validateMinLength(
+        data.name.trim(),
+        1,
+        "Class name",
+        ErrorCode.INVALID_CLASS_NAME,
+      );
+      this.props.name = data.name.trim();
+    }
+
+    if (data.description !== undefined) {
+      this.props.description = data.description ?? null;
+    }
+
+    if (data.numberOfStudents !== undefined) {
+      ClassEntity.validateNumberOfStudents(data.numberOfStudents);
+      this.props.numberOfStudents = data.numberOfStudents;
+    }
+
+    if (data.studentEmails !== undefined) {
+      ClassEntity.validateStudentEmails(
+        data.studentEmails,
+        data.numberOfStudents ?? this.props.numberOfStudents,
+      );
+      this.props.studentEmails = data.studentEmails;
+    }
+
+    this.props.updatedAt = new Date();
+  }
+
+  archive(): void {
+    if (!this.props.isActive) {
+      throw new DomainError(
+        ErrorCode.CLASS_ALREADY_ARCHIVED,
+        "Class is already archived",
+      );
+    }
+    this.props.isActive = false;
+    this.props.updatedAt = new Date();
+  }
+
   toPersistence(): IClass {
     return { ...this.props };
   }

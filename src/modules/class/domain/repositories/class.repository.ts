@@ -6,5 +6,6 @@ export interface IClassRepository extends IRepository<ClassEntity> {
   findByNameAndOrganization(name: string, organizationId: string): Promise<ClassEntity | null>;
   findByCode(code: string): Promise<ClassEntity | null>;
   findByOrganization(organizationId: string): Promise<ClassEntity[]>;
+  findByOrganizationAndStatus(organizationId: string, isActive: boolean): Promise<ClassEntity[]>;
   findByUser(userId: string): Promise<ClassEntity[]>;
 }

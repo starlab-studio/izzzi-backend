@@ -57,3 +57,23 @@ export interface INotificationQueue {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface IEmailLog {
+  readonly id: string;
+  type: 
+    | "registration_confirmation"
+    | "password_reset"
+    | "class_created"
+    | "class_archived"
+    | "quiz_reminder"
+    | "ai_alert";
+  recipientEmail: string;
+  recipientUserId: string | null;
+  subject: string;
+  status: "pending" | "sent" | "failed" | "bounced";
+  providerMessageId: string | null;
+  errorMessage: string | null;
+  metadata: Record<string, any> | null;
+  sentAt: Date | null;
+  createdAt: Date;
+}

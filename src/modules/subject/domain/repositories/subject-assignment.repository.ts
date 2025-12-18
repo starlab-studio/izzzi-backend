@@ -8,6 +8,7 @@ export interface ISubjectAssignmentRepository
     subjectId: string,
     classId: string,
   ): Promise<SubjectAssignmentEntity | null>;
+  findBySubject(subjectId: string): Promise<SubjectAssignmentEntity[]>;
   findByClass(classId: string): Promise<SubjectAssignmentEntity[]>;
   updateOrder(
     subjectId: string,

@@ -1,14 +1,30 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
+import {
+  type IUnitOfWork,
+  BaseTransactionalRepository,
+  TypeOrmUnitOfWork,
+} from "src/core";
 import { SubjectModel } from "../models/subject.model";
 import { ISubjectRepository } from "../../domain/repositories/subject.repository";
 import { SubjectEntity } from "../../domain/entities/subject.entity";
 
-export class SubjectRepository implements ISubjectRepository {
+export class SubjectRepository
+  extends BaseTransactionalRepository<SubjectEntity>
+  implements ISubjectRepository
+{
   constructor(
     @InjectRepository(SubjectModel)
     private readonly directRepository: Repository<SubjectModel>,
-  ) {}
+    readonly unitOfWork: IUnitOfWork,
+  ) {
+    super(unitOfWork);
+  }
+
+  private getTypeOrmRepository(): Repository<SubjectModel> {
+    const typeOrmUow = this.unitOfWork as TypeOrmUnitOfWork;
+    return typeOrmUow.getEntityManager().getRepository(SubjectModel);
+  }
 
   async create(entity: SubjectEntity): Promise<SubjectEntity> {
     const data = entity.toPersistence();

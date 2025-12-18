@@ -1,16 +1,34 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
+import {
+  type IUnitOfWork,
+  BaseTransactionalRepository,
+  TypeOrmUnitOfWork,
+} from "src/core";
 import { SubjectAssignmentModel } from "../models/subject-assignment.model";
 import { ISubjectAssignmentRepository } from "../../domain/repositories/subject-assignment.repository";
 import { SubjectAssignmentEntity } from "../../domain/entities/subject-assignment.entity";
 
 export class SubjectAssignmentRepository
+  extends BaseTransactionalRepository<SubjectAssignmentEntity>
   implements ISubjectAssignmentRepository
 {
   constructor(
     @InjectRepository(SubjectAssignmentModel)
     private readonly directRepository: Repository<SubjectAssignmentModel>,
-  ) {}
+    readonly unitOfWork: IUnitOfWork,
+  ) {
+    super(unitOfWork);
+  }
+
+  private getTypeOrmRepository(): Repository<SubjectAssignmentModel> {
+    const typeOrmUow = this.unitOfWork as TypeOrmUnitOfWork;
+    return typeOrmUow.getEntityManager().getRepository(SubjectAssignmentModel);
+  }
+
+  async create(entity: SubjectAssignmentEntity): Promise<SubjectAssignmentEntity> {
+    return this.assign(entity);
+  }
 
   async assign(
     entity: SubjectAssignmentEntity,
@@ -39,6 +57,13 @@ export class SubjectAssignmentRepository
       where: { subjectId, classId },
     });
     return ormEntity ? SubjectAssignmentEntity.reconstitute(ormEntity) : null;
+  }
+
+  async findBySubject(subjectId: string): Promise<SubjectAssignmentEntity[]> {
+    const list = await this.directRepository.find({
+      where: { subjectId },
+    });
+    return list.map((orm) => SubjectAssignmentEntity.reconstitute(orm));
   }
 
   async findByClass(classId: string): Promise<SubjectAssignmentEntity[]> {
@@ -99,5 +124,12 @@ export class SubjectAssignmentRepository
     const [subjectId, classId] = (id || "").split(":");
     if (!subjectId || !classId) return;
     await this.directRepository.delete({ subjectId, classId });
+  }
+
+  async save(entity: SubjectAssignmentEntity): Promise<SubjectAssignmentEntity> {
+    const data = entity.toPersistence();
+    const ormEntity = this.directRepository.create(data);
+    const saved = await this.directRepository.save(ormEntity);
+    return SubjectAssignmentEntity.reconstitute(saved);
   }
 }

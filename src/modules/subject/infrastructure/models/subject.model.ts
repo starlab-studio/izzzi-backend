@@ -9,14 +9,20 @@ export class SubjectModel implements ISubject {
   @Column({ type: "varchar", length: 255 })
   name: string;
 
-  @Column({ type: "text", nullable: true })
-  description: string | null;
-
-  @Column({ type: "varchar", length: 7 })
-  color: string;
-
   @Column({ name: "is_active", type: "boolean", default: true })
   isActive: boolean;
+
+  @Column({ name: "instructor_name", type: "varchar", length: 255, nullable: true })
+  instructorName: string | null;
+
+  @Column({ name: "instructor_email", type: "varchar", length: 255, nullable: true })
+  instructorEmail: string | null;
+
+  @Column({ name: "first_course_date", type: "date", nullable: true })
+  firstCourseDate: Date | null;
+
+  @Column({ name: "last_course_date", type: "date", nullable: true })
+  lastCourseDate: Date | null;
 
   @Column({ name: "organization_id", type: "uuid" })
   organizationId: string;

@@ -1,7 +1,6 @@
 import { ISubject, ISubjectCreate } from "../types";
 import { ErrorCode } from "src/core";
 import { randomUUID } from "crypto";
-import { Color } from "../value-objects/color.vo";
 import { BaseEntity } from "src/core/domain/entities/base.entity";
 
 export class SubjectEntity extends BaseEntity {
@@ -20,9 +19,6 @@ export class SubjectEntity extends BaseEntity {
       ErrorCode.INVALID_SUBJECT_NAME,
     );
 
-    const colorVO = Color.create(data.color ?? "");
-    const color = colorVO.value;
-
     const organizationId = (data.organizationId ?? "").trim();
 
     const createdBy = (data.createdBy ?? "").trim();
@@ -30,14 +26,52 @@ export class SubjectEntity extends BaseEntity {
     return new SubjectEntity({
       id: randomUUID(),
       name,
-      description: data.description,
-      color,
       isActive: true,
+      instructorName: data.instructorName ?? null,
+      instructorEmail: data.instructorEmail ?? null,
+      firstCourseDate: data.firstCourseDate ?? null,
+      lastCourseDate: data.lastCourseDate ?? null,
       organizationId,
       createdBy,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+  }
+
+  update(data: {
+    name?: string;
+    instructorName?: string | null;
+    instructorEmail?: string | null;
+    firstCourseDate?: Date | null;
+    lastCourseDate?: Date | null;
+  }): void {
+    if (data.name !== undefined) {
+      const name = data.name.trim();
+      SubjectEntity.validateRequiredString(
+        name,
+        "Subject name",
+        ErrorCode.INVALID_SUBJECT_NAME,
+      );
+      this.props.name = name;
+    }
+
+    if (data.instructorName !== undefined) {
+      this.props.instructorName = data.instructorName;
+    }
+
+    if (data.instructorEmail !== undefined) {
+      this.props.instructorEmail = data.instructorEmail;
+    }
+
+    if (data.firstCourseDate !== undefined) {
+      this.props.firstCourseDate = data.firstCourseDate;
+    }
+
+    if (data.lastCourseDate !== undefined) {
+      this.props.lastCourseDate = data.lastCourseDate;
+    }
+
+    this.props.updatedAt = new Date();
   }
 
   get id(): string {
@@ -46,14 +80,20 @@ export class SubjectEntity extends BaseEntity {
   get name(): string {
     return this.props.name;
   }
-  get description(): string | null {
-    return this.props.description;
-  }
-  get color(): string {
-    return this.props.color;
-  }
   get isActive(): boolean {
     return this.props.isActive;
+  }
+  get instructorName(): string | null {
+    return this.props.instructorName;
+  }
+  get instructorEmail(): string | null {
+    return this.props.instructorEmail;
+  }
+  get firstCourseDate(): Date | null {
+    return this.props.firstCourseDate;
+  }
+  get lastCourseDate(): Date | null {
+    return this.props.lastCourseDate;
   }
   get organizationId(): string {
     return this.props.organizationId;

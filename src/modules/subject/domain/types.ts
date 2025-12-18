@@ -3,9 +3,11 @@ import { IDomainEvent } from "src/core";
 export interface ISubject {
   readonly id: string;
   name: string;
-  description: string | null;
-  color: string;
   isActive: boolean;
+  instructorName: string | null;
+  instructorEmail: string | null;
+  firstCourseDate: Date | null;
+  lastCourseDate: Date | null;
   organizationId: string;
   createdBy: string;
   createdAt: Date | null;
@@ -14,14 +16,17 @@ export interface ISubject {
 
 export type ISubjectCreate = Pick<
   ISubject,
-  "name" | "description" | "color" | "organizationId" | "createdBy"
->;
+  "name" | "organizationId" | "createdBy"
+> & {
+  instructorName?: string | null;
+  instructorEmail?: string | null;
+  firstCourseDate?: Date | null;
+  lastCourseDate?: Date | null;
+};
 
 export interface SubjectCreatedPayload {
   id: string;
   name: string;
-  description: string | null;
-  color: string;
   organizationId: string;
   createdBy: string;
   userEmail: string;
@@ -42,3 +47,93 @@ export type ISubjectAssignmentCreate = {
   classId: string;
   orderIndex?: number;
 };
+
+export type ISubjectUpdate = Partial<
+  Pick<
+    ISubject,
+    | "name"
+    | "instructorName"
+    | "instructorEmail"
+    | "firstCourseDate"
+    | "lastCourseDate"
+  >
+>;
+
+export interface CreateSubjectInput {
+  classId: string;
+  organizationId: string;
+  userId: string;
+  userEmail: string;
+  name: string;
+  instructorName?: string | null;
+  instructorEmail?: string | null;
+  firstCourseDate?: string | null; // ISO date string (YYYY-MM-DD)
+  lastCourseDate?: string | null; // ISO date string (YYYY-MM-DD)
+}
+
+export interface CreateSubjectOutput {
+  subjectId: string;
+  assignmentId: string;
+  subject: ISubject;
+}
+
+export interface UpdateSubjectInput {
+  subjectId: string;
+  organizationId: string;
+  userId: string;
+  name?: string;
+  instructorName?: string | null;
+  instructorEmail?: string | null;
+  firstCourseDate?: string | null; // ISO date string (YYYY-MM-DD)
+  lastCourseDate?: string | null; // ISO date string (YYYY-MM-DD)
+}
+
+export interface UpdateSubjectOutput {
+  subject: ISubject;
+}
+
+export interface GetSubjectsByClassInput {
+  classId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface ClassSubjectDetailsResponse {
+  id: string;
+  name: string;
+  instructorName: string | null;
+  instructorEmail: string | null;
+  firstCourseDate: string | null;
+  lastCourseDate: string | null;
+  formType: {
+    id: string;
+    name: string;
+    description?: string;
+  } | null;
+  feedbackMoments: Array<{
+    id: string;
+    type: "during" | "end";
+    label: string;
+    icon: "clock" | "check";
+    formLink: string;
+    qrCodeUrl?: string;
+    feedbackStats: {
+      received: number;
+      total: number;
+      visible?: number;
+      hidden?: number;
+    };
+    canEdit: boolean;
+    lastReminderSent?: string | null;
+  }>;
+}
+
+export interface GetSubjectsByClassOutput {
+  subjects: ClassSubjectDetailsResponse[];
+}
+
+export interface DeleteSubjectInput {
+  subjectId: string;
+  organizationId: string;
+  userId: string;
+}

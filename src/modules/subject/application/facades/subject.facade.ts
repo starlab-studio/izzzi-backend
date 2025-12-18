@@ -1,32 +1,47 @@
-import { ISubject, ISubjectCreate } from "../../domain/types";
+import {
+  ISubject,
+  CreateSubjectInput,
+  CreateSubjectOutput,
+  GetSubjectsByClassInput,
+  GetSubjectsByClassOutput,
+  UpdateSubjectInput,
+  UpdateSubjectOutput,
+  DeleteSubjectInput,
+} from "../../domain/types";
 import { CreateSubjectUseCase } from "../use-cases/CreateSubject.use-case";
-import { IEventStore } from "src/core";
-import { SubjectCreatedEvent } from "../../domain/events/subjectCreated.event";
+import { GetSubjectsByClassUseCase } from "../use-cases/GetSubjectsByClass.use-case";
+import { UpdateSubjectUseCase } from "../use-cases/UpdateSubject.use-case";
+import { DeleteSubjectUseCase } from "../use-cases/DeleteSubject.use-case";
 
 export class SubjectFacade {
   constructor(
     private readonly createSubjectUseCase: CreateSubjectUseCase,
-    private readonly eventStore: IEventStore,
+    private readonly getSubjectsByClassUseCase: GetSubjectsByClassUseCase,
+    private readonly updateSubjectUseCase: UpdateSubjectUseCase,
+    private readonly deleteSubjectUseCase: DeleteSubjectUseCase,
   ) {}
 
   async createSubject(
-    data: ISubjectCreate,
-    userEmail: string,
-  ): Promise<ISubject> {
-    const createdSubject = await this.createSubjectUseCase.execute(data);
+    data: CreateSubjectInput,
+  ): Promise<CreateSubjectOutput> {
+    return await this.createSubjectUseCase.execute(data);
+  }
 
-    this.eventStore.publish(
-      new SubjectCreatedEvent({
-        id: createdSubject.id,
-        name: createdSubject.name,
-        description: createdSubject.description,
-        color: createdSubject.color,
-        organizationId: createdSubject.organizationId,
-        createdBy: createdSubject.createdBy,
-        userEmail,
-      }),
-    );
+  async getSubjectsByClass(
+    data: GetSubjectsByClassInput,
+  ): Promise<GetSubjectsByClassOutput> {
+    return await this.getSubjectsByClassUseCase.execute(data);
+  }
 
-    return createdSubject;
+  async updateSubject(
+    data: UpdateSubjectInput,
+  ): Promise<UpdateSubjectOutput> {
+    return await this.updateSubjectUseCase.execute(data);
+  }
+
+  async deleteSubject(
+    data: DeleteSubjectInput,
+  ): Promise<void> {
+    return await this.deleteSubjectUseCase.execute(data);
   }
 }

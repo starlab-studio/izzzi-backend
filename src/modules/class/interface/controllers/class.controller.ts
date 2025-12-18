@@ -314,6 +314,7 @@ export class ClassController extends BaseController {
       classId,
       organizationId,
       user.userId,
+      user.username,
     );
 
     return this.success(archivedClass);

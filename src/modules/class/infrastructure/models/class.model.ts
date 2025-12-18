@@ -31,6 +31,17 @@ export class ClassModel implements IClass {
   @Column({ name: "is_active", type: "boolean", default: true })
   isActive: boolean;
 
+  @Column({ 
+    type: "enum", 
+    enum: ["active", "archived"],
+    enumName: "classes_status_enum",
+    default: "active" 
+  })
+  status: "active" | "archived";
+
+  @Column({ name: "archived_at", type: "timestamp", nullable: true })
+  archivedAt: Date | null;
+
   @Column({ name: "organization_id", type: "uuid" })
   organizationId: string;
 

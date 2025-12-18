@@ -70,9 +70,9 @@ export class ClassRepository
     return results.map((result) => ClassEntity.reconstitute(result));
   }
 
-  async findByOrganizationAndStatus(organizationId: string, isActive: boolean): Promise<ClassEntity[]> {
+  async findByOrganizationAndStatus(organizationId: string, status: "active" | "archived"): Promise<ClassEntity[]> {
     const results = await this.directRepository.find({
-      where: { organizationId, isActive },
+      where: { organizationId, status },
     });
     return results.map((result) => ClassEntity.reconstitute(result));
   }

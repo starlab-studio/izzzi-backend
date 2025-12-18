@@ -1,4 +1,14 @@
-import { IClass, IClassCreate } from "../../domain/types";
+import {
+  IClass,
+  IClassCreate,
+  CreateClassInput,
+  GetClassesByOrganizationInput,
+  ClassListItemResponse,
+  GetClassByIdInput,
+  ClassDetailResponse,
+  UpdateClassInput,
+  ArchiveClassInput,
+} from "../../domain/types";
 import { CreateClassUseCase } from "../use-cases/CreateClass.use-case";
 import { GetClassesByOrganizationUseCase } from "../use-cases/GetClassesByOrganization.use-case";
 import { GetClassByIdUseCase } from "../use-cases/GetClassById.use-case";
@@ -16,10 +26,11 @@ export class ClassFacade {
 
   async createClass(data: IClassCreate, userEmail: string): Promise<IClass> {
     try {
-      return await this.createClassUseCase.execute({
+      const input: CreateClassInput = {
         ...data,
         userEmail,
-      });
+      };
+      return await this.createClassUseCase.execute(input);
     } catch (error) {
       throw error;
     }
@@ -29,13 +40,14 @@ export class ClassFacade {
     organizationId: string,
     userId: string,
     archived?: boolean,
-  ): Promise<IClass[]> {
+  ): Promise<ClassListItemResponse[]> {
     try {
-      return await this.getClassesByOrganizationUseCase.execute({
+      const input: GetClassesByOrganizationInput = {
         organizationId,
         userId,
         archived,
-      });
+      };
+      return await this.getClassesByOrganizationUseCase.execute(input);
     } catch (error) {
       throw error;
     }
@@ -45,13 +57,14 @@ export class ClassFacade {
     classId: string,
     organizationId: string,
     userId: string,
-  ): Promise<IClass> {
+  ): Promise<ClassDetailResponse> {
     try {
-      return await this.getClassByIdUseCase.execute({
+      const input: GetClassByIdInput = {
         classId,
         organizationId,
         userId,
-      });
+      };
+      return await this.getClassByIdUseCase.execute(input);
     } catch (error) {
       throw error;
     }
@@ -69,12 +82,13 @@ export class ClassFacade {
     },
   ): Promise<IClass> {
     try {
-      return await this.updateClassUseCase.execute({
+      const input: UpdateClassInput = {
         classId,
         organizationId,
         userId,
         ...data,
-      });
+      };
+      return await this.updateClassUseCase.execute(input);
     } catch (error) {
       throw error;
     }
@@ -84,13 +98,16 @@ export class ClassFacade {
     classId: string,
     organizationId: string,
     userId: string,
+    userEmail: string,
   ): Promise<IClass> {
     try {
-      return await this.archiveClassUseCase.execute({
+      const input: ArchiveClassInput = {
         classId,
         organizationId,
         userId,
-      });
+        userEmail,
+      };
+      return await this.archiveClassUseCase.execute(input);
     } catch (error) {
       throw error;
     }

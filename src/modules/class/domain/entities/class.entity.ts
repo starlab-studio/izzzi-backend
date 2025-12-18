@@ -47,6 +47,8 @@ export class ClassEntity extends BaseEntity {
       description: normalizedDescription,
       accessToken: GeneralUtils.generateToken(32),
       isActive: true,
+      status: "active",
+      archivedAt: null,
       organizationId: organizationId,
       userId: userId,
       createdAt: now,
@@ -141,6 +143,14 @@ export class ClassEntity extends BaseEntity {
     return this.props.isActive;
   }
 
+  get status(): "active" | "archived" {
+    return this.props.status;
+  }
+
+  get archivedAt(): Date | null {
+    return this.props.archivedAt;
+  }
+
   get organizationId(): string {
     return this.props.organizationId;
   }
@@ -199,13 +209,15 @@ export class ClassEntity extends BaseEntity {
   }
 
   archive(): void {
-    if (!this.props.isActive) {
+    if (this.props.status === "archived") {
       throw new DomainError(
         ErrorCode.CLASS_ALREADY_ARCHIVED,
         "Class is already archived",
       );
     }
     this.props.isActive = false;
+    this.props.status = "archived";
+    this.props.archivedAt = new Date();
     this.props.updatedAt = new Date();
   }
 

@@ -8,8 +8,10 @@ import {
   DomainError,
   Email,
 } from "src/core";
-import { IClass } from "../../domain/types";
+import { IClass, UpdateClassInput } from "../../domain/types";
 import { IClassRepository } from "../../domain/repositories/class.repository";
+import { IClassStudentRepository } from "../../domain/repositories/class-student.repository";
+import { ClassStudentEntity } from "../../domain/entities/class-student.entity";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { GeneralUtils } from "src/utils/general.utils";
 
@@ -17,20 +19,13 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly classRepository: IClassRepository,
+    private readonly classStudentRepository: IClassStudentRepository,
     private readonly organizationFacade: OrganizationFacade,
   ) {
     super(logger);
   }
 
-  async execute(data: {
-    classId: string;
-    organizationId: string;
-    userId: string;
-    name?: string;
-    description?: string | null;
-    numberOfStudents?: number;
-    studentEmails?: string;
-  }): Promise<IClass> {
+  async execute(data: UpdateClassInput): Promise<IClass> {
     try {
       await this.organizationFacade.validateUserCanCreateClass(
         data.userId,
@@ -54,7 +49,7 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
         );
       }
 
-      if (!classEntity.isActive) {
+      if (classEntity.status === "archived") {
         throw new DomainError(
           ErrorCode.CLASS_ALREADY_ARCHIVED,
           "Cannot update an archived class",
@@ -103,6 +98,42 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
           return email.value;
         });
         updateData.studentEmails = validatedEmails;
+
+        // Update ClassStudent entities
+        const existingStudents = await this.classStudentRepository.findByClass(data.classId);
+        const existingEmails = new Set(existingStudents.map((s) => s.email.toLowerCase()));
+        const newEmails = new Set(validatedEmails.map((e) => e.toLowerCase()));
+
+        // Deactivate students that are no longer in the list
+        for (const student of existingStudents) {
+          if (!newEmails.has(student.email.toLowerCase())) {
+            student.deactivate();
+            await this.classStudentRepository.save(student);
+          }
+        }
+
+        // Create new students or reactivate existing ones
+        for (const email of validatedEmails) {
+          const existingStudent = await this.classStudentRepository.findByEmailAndClass(
+            email,
+            data.classId,
+          );
+
+          if (existingStudent) {
+            if (!existingStudent.isActive) {
+              existingStudent.activate();
+              await this.classStudentRepository.save(existingStudent);
+            }
+          } else {
+            // Create new student
+            const newStudent = ClassStudentEntity.create({
+              classId: data.classId,
+              email,
+              isActive: true,
+            });
+            await this.classStudentRepository.create(newStudent);
+          }
+        }
       }
 
       // Mettre à jour l'entité

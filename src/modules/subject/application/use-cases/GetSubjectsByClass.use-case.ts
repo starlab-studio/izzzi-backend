@@ -29,13 +29,11 @@ export class GetSubjectsByClassUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: GetSubjectsByClassInput): Promise<GetSubjectsByClassOutput> {
     try {
-      // Validate user belongs to organization
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
         data.organizationId,
       );
 
-      // Verify class exists and belongs to organization
       const classEntity = await this.classRepository.findById(data.classId);
       if (!classEntity) {
         throw new DomainError(ErrorCode.CLASS_NOT_FOUND, "Class not found");
@@ -45,20 +43,21 @@ export class GetSubjectsByClassUseCase extends BaseUseCase implements IUseCase {
         throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to class");
       }
 
-      // Get all subject assignments for this class
+      const isClassArchived = classEntity.status === "archived";
+
       const subjectAssignments = await this.subjectAssignmentRepository.findByClass(data.classId);
 
-      // Filter only active assignments and create a map for quick lookup
-      const activeAssignments = subjectAssignments.filter((assignment) => assignment.isActive);
+      const assignmentsToProcess = isClassArchived
+        ? subjectAssignments
+        : subjectAssignments.filter((assignment) => assignment.isActive);
+      
       const assignmentOrderMap = new Map<string, number>();
-      activeAssignments.forEach((assignment) => {
+      assignmentsToProcess.forEach((assignment) => {
         assignmentOrderMap.set(assignment.subjectId, assignment.orderIndex);
       });
 
-      // Get all subjects for these assignments and map to frontend format
       const classSubjects: ClassSubjectDetailsResponse[] = [];
       
-      // Helper function to convert date to YYYY-MM-DD string format
       const formatDateToString = (date: Date | string | null | undefined): string | null => {
         if (!date) return null;
         if (date instanceof Date) {
@@ -78,10 +77,10 @@ export class GetSubjectsByClassUseCase extends BaseUseCase implements IUseCase {
         return null;
       };
       
-      for (const assignment of activeAssignments) {
+      for (const assignment of assignmentsToProcess) {
         const subjectEntity = await this.subjectRepository.findById(assignment.subjectId);
         
-        if (subjectEntity && subjectEntity.isActive) {
+        if (subjectEntity && (isClassArchived || subjectEntity.isActive)) {
           const subjectData = subjectEntity.toPersistence();
           
           classSubjects.push({
@@ -97,7 +96,6 @@ export class GetSubjectsByClassUseCase extends BaseUseCase implements IUseCase {
         }
       }
 
-      // Sort by orderIndex from assignment using the map
       classSubjects.sort((a, b) => {
         const orderA = assignmentOrderMap.get(a.id) ?? 0;
         const orderB = assignmentOrderMap.get(b.id) ?? 0;

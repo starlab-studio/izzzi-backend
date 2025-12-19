@@ -491,6 +491,24 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       ],
     },
     {
+      provide: CheckQuizResponseStatusUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        quizRepository: IQuizRepository,
+        responseRepository: IResponseRepository,
+      ) =>
+        new CheckQuizResponseStatusUseCase(
+          logger,
+          quizRepository,
+          responseRepository,
+        ),
+      inject: [
+        LoggerService,
+        "QUIZ_REPOSITORY",
+        "RESPONSE_REPOSITORY",
+      ],
+    },
+    {
       provide: QuizFacade,
       useFactory: (
         getQuizTemplatePairsUseCase: GetQuizTemplatePairsUseCase,

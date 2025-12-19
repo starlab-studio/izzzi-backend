@@ -40,7 +40,6 @@ export class GetClassesByOrganizationUseCase extends BaseUseCase implements IUse
         classes = await this.classRepository.findByOrganization(data.organizationId);
       }
       
-      // Fetch students for all classes in parallel
       const classesWithStudents = await Promise.all(
         classes.map(async (classEntity) => {
           const classData = classEntity.toPersistence();

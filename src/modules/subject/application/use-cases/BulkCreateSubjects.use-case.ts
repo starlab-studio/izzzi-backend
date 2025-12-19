@@ -28,10 +28,9 @@ export class BulkCreateSubjectsUseCase extends BaseUseCase implements IUseCase {
         subjects: [],
       };
 
-      // Process each subject
       for (let i = 0; i < input.subjects.length; i++) {
         const subjectInput = input.subjects[i];
-        const rowNumber = i + 1; // 1-based row number
+        const rowNumber = i + 1;
 
         try {
           const createInput: CreateSubjectInput = {
@@ -50,7 +49,6 @@ export class BulkCreateSubjectsUseCase extends BaseUseCase implements IUseCase {
           results.subjects.push(result.subject);
           results.createdCount++;
         } catch (error: any) {
-          // Collect error for this row
           const errorMessage = error?.message || error?.errors?.[0]?.message || "Unknown error";
           results.errors.push({
             row: rowNumber,
@@ -60,7 +58,6 @@ export class BulkCreateSubjectsUseCase extends BaseUseCase implements IUseCase {
         }
       }
 
-      // If no subjects were created, mark as failed
       if (results.createdCount === 0 && results.errors.length > 0) {
         results.success = false;
       }
@@ -71,7 +68,5 @@ export class BulkCreateSubjectsUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(): Promise<void> {
-    // No compensation needed - each subject creation is independent
-  }
+  async withCompensation(): Promise<void> {}
 }

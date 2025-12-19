@@ -27,30 +27,26 @@ export class DeleteSubjectUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: DeleteSubjectInput): Promise<void> {
     try {
-      // Validate user belongs to organization
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
         data.organizationId,
       );
 
-      // Get subject
       const subjectEntity = await this.subjectRepository.findById(data.subjectId);
       if (!subjectEntity) {
         throw new DomainError(ErrorCode.SUBJECT_NOT_FOUND, "Subject not found");
       }
 
-      // Verify subject belongs to organization
       if (subjectEntity.organizationId !== data.organizationId) {
         throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to subject");
       }
 
-      // Delete all assignments for this subject
+      // Supprime toutes les assignations de cette matière avant de supprimer la matière
       const assignments = await this.subjectAssignmentRepository.findBySubject(data.subjectId);
       for (const assignment of assignments) {
         await this.subjectAssignmentRepository.remove(assignment.subjectId, assignment.classId);
       }
 
-      // Delete the subject
       await this.subjectRepository.delete(data.subjectId);
     } catch (error) {
       this.handleError(error);

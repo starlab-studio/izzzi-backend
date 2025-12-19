@@ -56,7 +56,7 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
         );
       }
 
-      // Vérifier si le nom existe déjà (si on change le nom)
+      // Vérifie si le nom existe déjà dans l'organisation (uniquement si le nom change)
       if (data.name && data.name !== classEntity.name) {
         const existingClass = await this.classRepository.findByNameAndOrganization(
           data.name,
@@ -71,7 +71,6 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
         }
       }
 
-      // Préparer les données de mise à jour
       const updateData: {
         name?: string;
         description?: string | null;
@@ -99,12 +98,11 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
         });
         updateData.studentEmails = validatedEmails;
 
-        // Update ClassStudent entities
+        // Met à jour les étudiants : désactive ceux qui ne sont plus dans la liste
         const existingStudents = await this.classStudentRepository.findByClass(data.classId);
         const existingEmails = new Set(existingStudents.map((s) => s.email.toLowerCase()));
         const newEmails = new Set(validatedEmails.map((e) => e.toLowerCase()));
 
-        // Deactivate students that are no longer in the list
         for (const student of existingStudents) {
           if (!newEmails.has(student.email.toLowerCase())) {
             student.deactivate();
@@ -112,7 +110,7 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
           }
         }
 
-        // Create new students or reactivate existing ones
+        // Crée de nouveaux étudiants ou réactive ceux qui existent déjà
         for (const email of validatedEmails) {
           const existingStudent = await this.classStudentRepository.findByEmailAndClass(
             email,
@@ -125,7 +123,6 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
               await this.classStudentRepository.save(existingStudent);
             }
           } else {
-            // Create new student
             const newStudent = ClassStudentEntity.create({
               classId: data.classId,
               email,
@@ -136,10 +133,7 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
         }
       }
 
-      // Mettre à jour l'entité
       classEntity.update(updateData);
-
-      // Sauvegarder
       const updatedClass = await this.classRepository.save(classEntity);
 
       return updatedClass.toPersistence();

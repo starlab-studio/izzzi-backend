@@ -64,11 +64,11 @@ export class GetSubjectsByClassUseCase extends BaseUseCase implements IUseCase {
           return date.toISOString().split("T")[0];
         }
         if (typeof date === "string") {
-          // If it's already in YYYY-MM-DD format, return as is
+          // Si la date est déjà au format YYYY-MM-DD, on la retourne telle quelle
           if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
             return date;
           }
-          // Otherwise, try to parse it
+          // Sinon, on essaie de la parser
           const parsed = new Date(date);
           if (!isNaN(parsed.getTime())) {
             return parsed.toISOString().split("T")[0];

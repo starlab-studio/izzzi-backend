@@ -51,13 +51,10 @@ export class GetClassByIdUseCase extends BaseUseCase implements IUseCase {
 
       const classData = classEntity.toPersistence();
 
-      // Get students
       const classStudents = await this.classStudentRepository.findByClassAndActive(
         data.classId,
         true,
       );
-
-      // Format response - subjects are retrieved separately via GetSubjectsByClassUseCase
       return {
         id: classData.id,
         name: classData.name,

@@ -30,14 +30,12 @@ export class GetPricingTiersUseCase extends BaseUseCase implements IUseCase<GetP
       return tiers.map((tier) => ({
         minClasses: tier.minClasses,
         maxClasses: tier.maxClasses,
-        pricePerClass: tier.pricePerClassCents / 100, // Convert cents to euros
+        pricePerClass: tier.pricePerClassCents / 100,
       }));
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async withCompensation(): Promise<void> {
-    // No compensation needed for read-only operation
-  }
+  async withCompensation(): Promise<void> {}
 }

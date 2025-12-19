@@ -55,7 +55,6 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
             .filter((f) => f.section === "additional")
             .sort((a, b) => a.displayOrder - b.displayOrder);
 
-          // Map plan name to display values
           const displayValues = this.getDisplayValues(plan.name);
 
           const response: PricingPlanResponse = {
@@ -72,7 +71,7 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
           };
 
           if (additionalFeatures.length > 0) {
-            // The first feature is the title, the rest are features
+            // La première feature avec displayOrder === 1 est le titre, les autres sont les features
             const titleFeature = additionalFeatures.find(
               (f) => f.displayOrder === 1
             );
@@ -101,9 +100,7 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(): Promise<void> {
-    // No compensation needed for read-only operation
-  }
+  async withCompensation(): Promise<void> {}
 
   private getDisplayValues(planName: string): {
     title: string;

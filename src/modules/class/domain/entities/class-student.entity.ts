@@ -17,7 +17,6 @@ export class ClassStudentEntity extends BaseEntity {
       ErrorCode.INVALID_STUDENT_EMAILS,
     );
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email.trim())) {
       throw new DomainError(

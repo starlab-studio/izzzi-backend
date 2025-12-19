@@ -47,7 +47,6 @@ export class SubjectController extends BaseController {
     @CurrentUser() user: JWTPayload,
     @Req() request: any,
   ) {
-    // organizationId is validated by RolesGuard and set in request.organizationId
     const organizationId = request.organizationId;
     
     if (!organizationId) {

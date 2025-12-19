@@ -24,24 +24,19 @@ export class UpdateSubjectUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: UpdateSubjectInput): Promise<UpdateSubjectOutput> {
     try {
-      // Validate user belongs to organization
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
         data.organizationId,
       );
 
-      // Get subject
       const subjectEntity = await this.subjectRepository.findById(data.subjectId);
       if (!subjectEntity) {
         throw new DomainError(ErrorCode.SUBJECT_NOT_FOUND, "Subject not found");
       }
 
-      // Verify subject belongs to organization
       if (subjectEntity.organizationId !== data.organizationId) {
         throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to subject");
       }
-
-      // Update subject
       const updateData: {
         name?: string;
         instructorName?: string | null;

@@ -34,13 +34,11 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
 
   async execute(data: CreateSubjectInput): Promise<CreateSubjectOutput> {
     try {
-      // Validate user belongs to organization
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
         data.organizationId,
       );
 
-      // Verify class exists and belongs to organization
       const classEntity = await this.classRepository.findById(data.classId);
       if (!classEntity) {
         throw new DomainError(ErrorCode.CLASS_NOT_FOUND, "Class not found");
@@ -50,7 +48,7 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
         throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to class");
       }
 
-      // Check if subject already exists in organization (by name)
+      // Vérifie si la matière existe déjà dans l'organisation (par nom)
       let subjectEntity = await this.subjectRepository.findByName(
         data.name.trim(),
         data.organizationId,
@@ -58,7 +56,6 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
 
       let isNewSubject = false;
 
-      // If subject doesn't exist, create it
       if (!subjectEntity) {
         isNewSubject = true;
         subjectEntity = SubjectEntity.create({
@@ -72,7 +69,7 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
         });
         subjectEntity = await this.subjectRepository.create(subjectEntity);
       } else {
-        // Update existing subject with new instructor data if provided
+        // Met à jour la matière existante avec les nouvelles données d'instructeur si fournies
         if (data.instructorName !== undefined || data.instructorEmail !== undefined || 
             data.firstCourseDate !== undefined || data.lastCourseDate !== undefined) {
           subjectEntity.update({
@@ -85,7 +82,6 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
         }
       }
 
-      // Check if assignment already exists
       const existingAssignment = await this.subjectAssignmentRepository.findBySubjectAndClass(
         subjectEntity.id,
         data.classId,
@@ -93,7 +89,7 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
 
       if (existingAssignment) {
         if (!existingAssignment.isActive) {
-          // Reactivate the assignment
+          // Réactive l'assignation si elle était désactivée
           await this.subjectAssignmentRepository.toggleActive(
             subjectEntity.id,
             data.classId,
@@ -107,7 +103,6 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
         };
       }
 
-      // Create new assignment
       const assignmentEntity = SubjectAssignmentEntity.create({
         subjectId: subjectEntity.id,
         classId: data.classId,
@@ -115,7 +110,7 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
 
       const createdAssignment = await this.subjectAssignmentRepository.assign(assignmentEntity);
 
-      // Publish event only when a new subject is created (not when reusing existing)
+      // Publie l'événement uniquement lors de la création d'une nouvelle matière (pas lors de la réutilisation)
       if (isNewSubject) {
         this.eventStore.publish(
           new SubjectCreatedEvent({

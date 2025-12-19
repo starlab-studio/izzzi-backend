@@ -3,6 +3,7 @@ import { IResponse } from "../../domain/types";
 
 @Entity({ name: "responses" })
 @Index(["quizId"])
+@Index(["quizId", "fingerprint"])
 export class ResponseModel implements IResponse {
   @PrimaryColumn("uuid")
   id: string;

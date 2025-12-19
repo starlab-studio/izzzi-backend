@@ -101,3 +101,267 @@ export interface IQuizReminder {
   createdAt: Date;
 }
 
+// Use Case Input/Output Types
+export interface GetQuizTemplatePairsInput {
+  organizationId: string;
+  userId: string;
+}
+
+export interface QuizTemplatePairResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  duringCourse: {
+    id: string;
+    name: string;
+    type: "during_course";
+    previewImageUrl: string | null;
+    questionsCount: number;
+  };
+  afterCourse: {
+    id: string;
+    name: string;
+    type: "after_course";
+    previewImageUrl: string | null;
+    questionsCount: number;
+  };
+}
+
+export interface GetQuizTemplatePairsOutput {
+  pairs: QuizTemplatePairResponse[];
+}
+
+export interface GetQuizTemplateByIdInput {
+  templateId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface QuizTemplateQuestionResponse {
+  id: string;
+  text: string;
+  type: "stars" | "radio" | "checkbox" | "textarea";
+  options: string[] | null;
+  validationRules: {
+    required?: boolean;
+    min_length?: number;
+    max_length?: number;
+  } | null;
+  orderIndex: number;
+}
+
+export interface GetQuizTemplateByIdOutput {
+  id: string;
+  name: string;
+  type: "during_course" | "after_course";
+  description: string | null;
+  previewImageUrl: string | null;
+  questions: QuizTemplateQuestionResponse[];
+}
+
+export interface CreateQuizTemplateInput {
+  name: string;
+  type: "during_course" | "after_course";
+  description?: string | null;
+  previewImageUrl?: string | null;
+  questions: {
+    text: string;
+    type: "stars" | "radio" | "checkbox" | "textarea";
+    options: string[] | null;
+    validationRules: {
+      required?: boolean;
+      min_length?: number;
+      max_length?: number;
+    } | null;
+    orderIndex: number;
+  }[];
+  organizationId: string;
+  userId: string;
+}
+
+export interface CreateQuizTemplateOutput {
+  id: string;
+  name: string;
+  type: "during_course" | "after_course";
+  description: string | null;
+  previewImageUrl: string | null;
+  questions: QuizTemplateQuestionResponse[];
+}
+
+export interface AssignQuizPairToSubjectInput {
+  subjectId: string;
+  templatePairId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface QuizResponse {
+  id: string;
+  type: "during_course" | "after_course";
+  status: "draft" | "active" | "closed";
+  accessToken: string;
+  publicUrl: string | null;
+  qrCodeUrl: string | null;
+  responseCount?: number;
+  template: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface AssignQuizPairToSubjectOutput {
+  duringCourse: QuizResponse;
+  afterCourse: QuizResponse;
+}
+
+export interface ReassignQuizPairToSubjectInput {
+  subjectId: string;
+  templatePairId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface ReassignQuizPairToSubjectOutput {
+  duringCourse: QuizResponse;
+  afterCourse: QuizResponse;
+}
+
+export interface GetQuizzesBySubjectInput {
+  subjectId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface GetQuizzesBySubjectOutput {
+  quizzes: QuizResponse[];
+}
+
+export interface GetQuizByIdInput {
+  quizId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface GetQuizByIdOutput {
+  id: string;
+  type: "during_course" | "after_course";
+  status: "draft" | "active" | "closed";
+  accessToken: string;
+  publicUrl: string | null;
+  qrCodeUrl: string | null;
+  responseCount: number;
+  subject: {
+    id: string;
+    name: string;
+    class: {
+      id: string;
+      name: string;
+    };
+  };
+  template: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface GetQuizLinkInput {
+  quizId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface GetQuizLinkOutput {
+  publicUrl: string;
+  qrCodeUrl: string | null;
+}
+
+export interface SendQuizToStudentsInput {
+  quizId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface SendQuizToStudentsOutput {
+  sentCount: number;
+  alreadySentCount: number;
+}
+
+export interface RemindQuizToStudentsInput {
+  quizId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface RemindQuizToStudentsOutput {
+  remindedCount: number;
+  alreadyRespondedCount: number;
+}
+
+export interface GetQuizByAccessTokenInput {
+  accessToken: string;
+}
+
+export interface GetQuizByAccessTokenOutput {
+  id: string;
+  type: "during_course" | "after_course";
+  status: "draft" | "active" | "closed";
+  subject: {
+    id: string;
+    name: string;
+    class: {
+      id: string;
+      name: string;
+    };
+    organization: {
+      id: string;
+      name: string;
+    };
+  };
+  template: {
+    id: string;
+    name: string;
+    questions: Array<{
+      id: string;
+      text: string;
+      type: "stars" | "radio" | "checkbox" | "textarea";
+      options: string[] | null;
+      validationRules: {
+        required?: boolean;
+        min_length?: number;
+        max_length?: number;
+      } | null;
+      orderIndex: number;
+    }>;
+  };
+}
+
+export interface SubmitQuizResponseInput {
+  quizId: string;
+  responses: Array<{
+    questionId: string;
+    valueText?: string;
+    valueNumber?: number;
+    valueJson?: any;
+  }>;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  completionTimeSeconds?: number | null;
+}
+
+export interface SubmitQuizResponseOutput {
+  responseId: string;
+  success: boolean;
+  message: string;
+}
+
+export interface CheckQuizResponseStatusInput {
+  quizId: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+export interface CheckQuizResponseStatusOutput {
+  hasResponded: boolean;
+  responseId: string | null;
+}
+

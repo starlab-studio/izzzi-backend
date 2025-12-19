@@ -26,7 +26,7 @@ export class QuizModel implements IQuiz {
   @Column({ name: "access_token", type: "varchar", length: 255, unique: true })
   accessToken: string;
 
-  @Column({ name: "qr_code_url", type: "varchar", length: 500, nullable: true })
+  @Column({ name: "qr_code_url", type: "text", nullable: true })
   qrCodeUrl: string | null;
 
   @Column({ name: "public_url", type: "varchar", length: 500, nullable: true })

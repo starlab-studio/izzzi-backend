@@ -8,6 +8,7 @@ import { OrganizationModule } from "./modules/organization";
 import { NotificationModule } from "./modules/notification";
 import { ClassModule } from "./modules/class";
 import { SubjectModule } from "./modules/subject";
+import { QuizModule } from "./modules/quiz/quiz.module";
 
 import AppConfig from "./core/interfaces/config.global";
 
@@ -40,6 +41,7 @@ import AppConfig from "./core/interfaces/config.global";
     NotificationModule,
     ClassModule,
     SubjectModule,
+    QuizModule,
   ],
 })
 export class AppModule {}

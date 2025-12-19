@@ -15,6 +15,7 @@ import { ISubjectRepository } from "src/modules/subject/domain/repositories/subj
 import { IQuizTemplateRepository } from "../../domain/repositories/quiz-template.repository";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { QRCodeService } from "../../infrastructure/services/qr-code.service";
+import { IStudentQuizTokenRepository } from "../../domain/repositories/student-quiz-token.repository";
 
 export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -23,6 +24,7 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
     private readonly subjectRepository: ISubjectRepository,
     private readonly quizTemplateRepository: IQuizTemplateRepository,
     private readonly organizationFacade: OrganizationFacade,
+    private readonly studentQuizTokenRepository: IStudentQuizTokenRepository,
   ) {
     super(logger);
   }
@@ -62,6 +64,10 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
             await this.quizRepository.save(quiz);
           }
           
+          // Vérifier si le quiz a été envoyé aux étudiants (au moins un token avec emailSentAt)
+          const tokens = await this.studentQuizTokenRepository.findByQuiz(quiz.id);
+          const hasBeenSent = tokens.some((token) => token.emailSentAt !== null);
+          
           return {
             id: quiz.id,
             type: quiz.type,
@@ -70,6 +76,7 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
             publicUrl: quiz.publicUrl,
             qrCodeUrl: qrCodeUrl,
             responseCount: quiz.responseCount,
+            hasBeenSent,
             template: {
               id: template?.id || quiz.templateId,
               name: template?.name || "Unknown Template",

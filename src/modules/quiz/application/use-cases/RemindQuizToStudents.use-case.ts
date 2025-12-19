@@ -59,14 +59,28 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject is not assigned to any class");
       }
 
+      const allTokens = await this.studentQuizTokenRepository.findByQuiz(data.quizId);
       const tokens = await this.studentQuizTokenRepository.findByQuizAndNotResponded(
         data.quizId,
       );
 
-      if (tokens.length === 0) {
+      if (allTokens.length === 0) {
+        // No tokens created yet - quiz hasn't been sent to students
         return {
           remindedCount: 0,
           alreadyRespondedCount: 0,
+          message: "Aucun étudiant n'a encore reçu ce questionnaire. Veuillez d'abord l'envoyer aux étudiants.",
+        };
+      }
+
+      const respondedCount = allTokens.filter((t) => t.hasResponded).length;
+      
+      if (tokens.length === 0) {
+        // All students have already responded
+        return {
+          remindedCount: 0,
+          alreadyRespondedCount: respondedCount,
+          message: "Tous les étudiants ont déjà répondu à ce questionnaire.",
         };
       }
 
@@ -77,7 +91,6 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
       const studentMap = new Map(students.map((s) => [s.id, s]));
 
       let remindedCount = 0;
-      let alreadyRespondedCount = 0;
 
       for (const token of tokens) {
         const student = studentMap.get(token.classStudentId);
@@ -114,8 +127,7 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
         }
       }
 
-      const allTokens = await this.studentQuizTokenRepository.findByQuiz(data.quizId);
-      alreadyRespondedCount = allTokens.filter((t) => t.hasResponded).length;
+      const alreadyRespondedCount = allTokens.filter((t) => t.hasResponded).length;
 
       return {
         remindedCount,

@@ -19,6 +19,7 @@ import { CreateSubjectUseCase } from "./application/use-cases/CreateSubject.use-
 import { GetSubjectsByClassUseCase } from "./application/use-cases/GetSubjectsByClass.use-case";
 import { UpdateSubjectUseCase } from "./application/use-cases/UpdateSubject.use-case";
 import { DeleteSubjectUseCase } from "./application/use-cases/DeleteSubject.use-case";
+import { BulkCreateSubjectsUseCase } from "./application/use-cases/BulkCreateSubjects.use-case";
 import { SubjectController } from "./interface/controllers/subject.controller";
 import { ISubjectRepository } from "./domain/repositories/subject.repository";
 import { SubjectAssignmentRepository } from "./infrastructure/repositories/subject-assignment.repository";
@@ -174,23 +175,41 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
       ],
     },
     {
+      provide: BulkCreateSubjectsUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        createSubjectUseCase: CreateSubjectUseCase,
+      ) =>
+        new BulkCreateSubjectsUseCase(
+          logger,
+          createSubjectUseCase,
+        ),
+      inject: [
+        LoggerService,
+        CreateSubjectUseCase,
+      ],
+    },
+    {
       provide: SubjectFacade,
       useFactory: (
         createSubjectUseCase: CreateSubjectUseCase,
         getSubjectsByClassUseCase: GetSubjectsByClassUseCase,
         updateSubjectUseCase: UpdateSubjectUseCase,
         deleteSubjectUseCase: DeleteSubjectUseCase,
+        bulkCreateSubjectsUseCase: BulkCreateSubjectsUseCase,
       ) => new SubjectFacade(
         createSubjectUseCase,
         getSubjectsByClassUseCase,
         updateSubjectUseCase,
         deleteSubjectUseCase,
+        bulkCreateSubjectsUseCase,
       ),
       inject: [
         CreateSubjectUseCase,
         GetSubjectsByClassUseCase,
         UpdateSubjectUseCase,
         DeleteSubjectUseCase,
+        BulkCreateSubjectsUseCase,
       ],
     },
     {

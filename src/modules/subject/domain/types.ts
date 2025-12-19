@@ -137,3 +137,18 @@ export interface DeleteSubjectInput {
   organizationId: string;
   userId: string;
 }
+
+export interface BulkCreateSubjectsInput {
+  classId: string;
+  organizationId: string;
+  userId: string;
+  userEmail: string;
+  subjects: CreateSubjectInput[];
+}
+
+export interface BulkCreateSubjectsOutput {
+  success: boolean;
+  createdCount: number;
+  errors: Array<{ row: number; error: string }>;
+  subjects: ISubject[];
+}

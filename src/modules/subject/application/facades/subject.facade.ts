@@ -7,11 +7,14 @@ import {
   UpdateSubjectInput,
   UpdateSubjectOutput,
   DeleteSubjectInput,
+  BulkCreateSubjectsInput,
+  BulkCreateSubjectsOutput,
 } from "../../domain/types";
 import { CreateSubjectUseCase } from "../use-cases/CreateSubject.use-case";
 import { GetSubjectsByClassUseCase } from "../use-cases/GetSubjectsByClass.use-case";
 import { UpdateSubjectUseCase } from "../use-cases/UpdateSubject.use-case";
 import { DeleteSubjectUseCase } from "../use-cases/DeleteSubject.use-case";
+import { BulkCreateSubjectsUseCase } from "../use-cases/BulkCreateSubjects.use-case";
 
 export class SubjectFacade {
   constructor(
@@ -19,6 +22,7 @@ export class SubjectFacade {
     private readonly getSubjectsByClassUseCase: GetSubjectsByClassUseCase,
     private readonly updateSubjectUseCase: UpdateSubjectUseCase,
     private readonly deleteSubjectUseCase: DeleteSubjectUseCase,
+    private readonly bulkCreateSubjectsUseCase: BulkCreateSubjectsUseCase,
   ) {}
 
   async createSubject(
@@ -43,5 +47,11 @@ export class SubjectFacade {
     data: DeleteSubjectInput,
   ): Promise<void> {
     return await this.deleteSubjectUseCase.execute(data);
+  }
+
+  async bulkCreateSubjects(
+    data: BulkCreateSubjectsInput,
+  ): Promise<BulkCreateSubjectsOutput> {
+    return await this.bulkCreateSubjectsUseCase.execute(data);
   }
 }

@@ -7,7 +7,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { SubjectFacade } from "../../application/facades/subject.facade";
-import { CreateSubjectDto, UpdateSubjectDto } from "../dto/subject.dto";
+import { CreateSubjectDto, UpdateSubjectDto, BulkCreateSubjectsDto } from "../dto/subject.dto";
 import {
   BaseController,
   UserRole,
@@ -58,6 +58,57 @@ export class SubjectController extends BaseController {
       classId,
       organizationId,
       userId: user.userId,
+    });
+
+    return this.success(result);
+  }
+
+  @Post("bulk")
+  @ApiOperation({
+    summary: "Créer plusieurs matières en lot pour une classe",
+    description: "Crée plusieurs matières et les assigne à une classe spécifique. \
+    Si une matière existe déjà dans l'organisation, elle sera réutilisée. \
+    Retourne un rapport avec le nombre de créations réussies et les erreurs éventuelles par ligne. \
+    Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @ApiBearerAuth()
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 201,
+    description: "Résultat de la création en lot avec décompte et erreurs éventuelles",
+  })
+  @ApiResponse({ status: 400, description: "Données invalides" })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  @ApiResponse({ status: 404, description: "Classe non trouvée" })
+  async bulkCreateSubjects(
+    @Body() dto: BulkCreateSubjectsDto,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any,
+  ) {
+    // organizationId is validated by RolesGuard and set in request.organizationId
+    const organizationId = request.organizationId || dto.organizationId;
+    
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.subjectFacade.bulkCreateSubjects({
+      classId: dto.classId,
+      organizationId,
+      userId: user.userId,
+      userEmail: user.username,
+      subjects: dto.subjects.map((subject) => ({
+        classId: dto.classId,
+        organizationId,
+        userId: user.userId,
+        userEmail: user.username,
+        name: subject.name,
+        instructorName: subject.instructorName,
+        instructorEmail: subject.instructorEmail,
+        firstCourseDate: subject.firstCourseDate,
+        lastCourseDate: subject.lastCourseDate,
+      })),
     });
 
     return this.success(result);

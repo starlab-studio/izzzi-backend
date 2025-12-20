@@ -521,6 +521,10 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         responseRepository: IResponseRepository,
         answerRepository: IAnswerRepository,
         organizationFacade: OrganizationFacade,
+        subjectRepository: ISubjectRepository,
+        subjectAssignmentRepository: ISubjectAssignmentRepository,
+        classRepository: IClassRepository,
+        organizationRepository: IOrganizationRepository,
       ) =>
         new GetQuizStatisticsUseCase(
           logger,
@@ -529,6 +533,10 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           responseRepository,
           answerRepository,
           organizationFacade,
+          subjectRepository,
+          subjectAssignmentRepository,
+          classRepository,
+          organizationRepository,
         ),
       inject: [
         LoggerService,
@@ -537,6 +545,10 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         "RESPONSE_REPOSITORY",
         "ANSWER_REPOSITORY",
         OrganizationFacade,
+        SubjectRepository,
+        SubjectAssignmentRepository,
+        ClassRepository,
+        OrganizationRepository,
       ],
     },
     {

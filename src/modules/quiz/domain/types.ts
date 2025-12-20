@@ -405,5 +405,17 @@ export interface GetQuizStatisticsOutput {
   totalResponses: number;
   questions: QuestionStatistics[];
   temporalEvolution: TemporalDataPoint[];
+  subject?: {
+    id: string;
+    name: string;
+    class: {
+      id: string;
+      name: string;
+    };
+    organization: {
+      id: string;
+      name: string;
+    };
+  };
 }
 

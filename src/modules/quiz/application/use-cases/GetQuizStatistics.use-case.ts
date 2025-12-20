@@ -16,6 +16,10 @@ import { IQuizTemplateRepository } from "../../domain/repositories/quiz-template
 import { IResponseRepository } from "../../domain/repositories/response.repository";
 import { IAnswerRepository } from "../../domain/repositories/answer.repository";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
+import { ISubjectRepository } from "src/modules/subject/domain/repositories/subject.repository";
+import { ISubjectAssignmentRepository } from "src/modules/subject/domain/repositories/subject-assignment.repository";
+import { IClassRepository } from "src/modules/class/domain/repositories/class.repository";
+import { IOrganizationRepository } from "src/modules/organization/domain/repositories/organization.repository";
 
 export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -25,6 +29,10 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
     private readonly responseRepository: IResponseRepository,
     private readonly answerRepository: IAnswerRepository,
     private readonly organizationFacade: OrganizationFacade,
+    private readonly subjectRepository: ISubjectRepository,
+    private readonly subjectAssignmentRepository: ISubjectAssignmentRepository,
+    private readonly classRepository: IClassRepository,
+    private readonly organizationRepository: IOrganizationRepository,
   ) {
     super(logger);
   }
@@ -43,13 +51,10 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Quiz not found");
       }
 
-      // Get all responses for this quiz
       const responses = await this.responseRepository.findByQuiz(data.quizId);
 
-      // Get all answers for this quiz
       const allAnswers = await this.answerRepository.findByQuiz(data.quizId);
 
-      // Get template with questions
       const template = await this.quizTemplateRepository.findById(
         quiz.templateId,
       );
@@ -60,7 +65,6 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
         );
       }
 
-      // Calculate statistics for each question
       const questionsStats: QuestionStatistics[] = template.questionsList.map(
         (question) => {
           const questionAnswers = allAnswers.filter(
@@ -127,7 +131,6 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
         },
       );
 
-      // Calculate temporal evolution
       const temporalMap = new Map<string, { count: number; starsSum: number; starsCount: number }>();
       
       responses.forEach((response) => {
@@ -135,7 +138,6 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
         const existing = temporalMap.get(dateKey) || { count: 0, starsSum: 0, starsCount: 0 };
         existing.count += 1;
 
-        // Get average stars for this response (first stars question answer)
         const responseAnswers = allAnswers.filter((a) => a.responseId === response.id);
         const starsAnswer = responseAnswers.find((a) => {
           const q = template.questionsList.find((q) => q.id === a.questionId);
@@ -160,11 +162,39 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
 
+      const subject = await this.subjectRepository.findById(quiz.subjectId);
+      let subjectInfo;
+      if (subject) {
+        const assignments = await this.subjectAssignmentRepository.findBySubject(subject.id);
+        const activeAssignment = assignments.find((a) => a.isActive);
+        if (activeAssignment) {
+          const classEntity = await this.classRepository.findById(activeAssignment.classId);
+          if (classEntity) {
+            const organization = await this.organizationRepository.findById(classEntity.organizationId);
+            if (organization) {
+              subjectInfo = {
+                id: subject.id,
+                name: subject.name,
+                class: {
+                  id: classEntity.id,
+                  name: classEntity.name,
+                },
+                organization: {
+                  id: organization.id,
+                  name: organization.name,
+                },
+              };
+            }
+          }
+        }
+      }
+
       return {
         quizId: quiz.id,
         totalResponses: responses.length,
         questions: questionsStats.sort((a, b) => a.orderIndex - b.orderIndex),
         temporalEvolution,
+        subject: subjectInfo,
       };
     } catch (error) {
       this.handleError(error);

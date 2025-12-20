@@ -62,10 +62,6 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
       }
 
       const allTokens = await this.studentQuizTokenRepository.findByQuiz(data.quizId);
-      const tokens = await this.studentQuizTokenRepository.findByQuizAndNotResponded(
-        data.quizId,
-      );
-
       const students = await this.classStudentRepository.findByClassAndActive(
         activeAssignment.classId,
         true,
@@ -84,10 +80,8 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
         };
       }
 
+      const tokensToRemind = allTokens.filter((t) => !t.hasResponded);
       const respondedCount = allTokens.filter((t) => t.hasResponded).length;
-      const tokensToRemind = await this.studentQuizTokenRepository.findByQuizAndNotResponded(
-        data.quizId,
-      );
 
       if (tokensToRemind.length === 0 && newStudents.length === 0) {
         return {

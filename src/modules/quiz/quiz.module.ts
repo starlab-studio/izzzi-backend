@@ -484,6 +484,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         quizTemplateRepository: IQuizTemplateRepository,
         responseRepository: IResponseRepository,
         answerRepository: IAnswerRepository,
+        studentQuizTokenRepository: IStudentQuizTokenRepository,
       ) =>
         new SubmitQuizResponseUseCase(
           logger,
@@ -491,6 +492,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           quizTemplateRepository,
           responseRepository,
           answerRepository,
+          studentQuizTokenRepository,
         ),
       inject: [
         LoggerService,
@@ -498,6 +500,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         "QUIZ_TEMPLATE_REPOSITORY",
         "RESPONSE_REPOSITORY",
         "ANSWER_REPOSITORY",
+        "STUDENT_QUIZ_TOKEN_REPOSITORY",
       ],
     },
     {

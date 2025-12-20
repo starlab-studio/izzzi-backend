@@ -356,6 +356,7 @@ export interface SubmitQuizResponseInput {
   ipAddress?: string | null;
   userAgent?: string | null;
   completionTimeSeconds?: number | null;
+  studentToken?: string | null;
 }
 
 export interface SubmitQuizResponseOutput {

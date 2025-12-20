@@ -13,6 +13,7 @@ import { IQuizRepository } from "../../domain/repositories/quiz.repository";
 import { IQuizTemplateRepository } from "../../domain/repositories/quiz-template.repository";
 import { IResponseRepository } from "../../domain/repositories/response.repository";
 import { IAnswerRepository } from "../../domain/repositories/answer.repository";
+import { IStudentQuizTokenRepository } from "../../domain/repositories/student-quiz-token.repository";
 import { ResponseEntity } from "../../domain/entities/response.entity";
 import { AnswerEntity } from "../../domain/entities/answer.entity";
 import { createHash } from "crypto";
@@ -24,6 +25,7 @@ export class SubmitQuizResponseUseCase extends BaseUseCase implements IUseCase {
     private readonly quizTemplateRepository: IQuizTemplateRepository,
     private readonly responseRepository: IResponseRepository,
     private readonly answerRepository: IAnswerRepository,
+    private readonly studentQuizTokenRepository: IStudentQuizTokenRepository,
   ) {
     super(logger);
   }
@@ -112,6 +114,15 @@ export class SubmitQuizResponseUseCase extends BaseUseCase implements IUseCase {
       // Increment response count on quiz
       quiz.incrementResponseCount();
       await this.quizRepository.save(quiz);
+
+      // Mark student token as responded if token is provided
+      if (data.studentToken) {
+        const studentToken = await this.studentQuizTokenRepository.findByToken(data.studentToken);
+        if (studentToken && studentToken.quizId === data.quizId && !studentToken.hasResponded) {
+          studentToken.markAsResponded();
+          await this.studentQuizTokenRepository.save(studentToken);
+        }
+      }
 
       return {
         responseId: savedResponse.id,

@@ -48,15 +48,26 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
         throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to class");
       }
 
-      // Vérifie si la matière existe déjà dans l'organisation (par nom)
-      let subjectEntity = await this.subjectRepository.findByName(
-        data.name.trim(),
-        data.organizationId,
-      );
+      const assignmentsForClass = await this.subjectAssignmentRepository.findByClass(data.classId);
+      
+      let existingSubjectId: string | null = null;
+      for (const assignment of assignmentsForClass) {
+        const subjectEntity = await this.subjectRepository.findById(assignment.subjectId);
+        if (subjectEntity && subjectEntity.name.trim().toLowerCase() === data.name.trim().toLowerCase()) {
+          existingSubjectId = subjectEntity.id;
+          break;
+        }
+      }
 
+      let subjectEntity;
       let isNewSubject = false;
 
-      if (!subjectEntity) {
+      if (existingSubjectId) {
+        subjectEntity = await this.subjectRepository.findById(existingSubjectId);
+        if (!subjectEntity) {
+          throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject not found");
+        }
+      } else {
         isNewSubject = true;
         subjectEntity = SubjectEntity.create({
           name: data.name.trim(),
@@ -68,18 +79,6 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
           lastCourseDate: data.lastCourseDate ? new Date(data.lastCourseDate) : null,
         });
         subjectEntity = await this.subjectRepository.create(subjectEntity);
-      } else {
-        // Met à jour la matière existante avec les nouvelles données d'instructeur si fournies
-        if (data.instructorName !== undefined || data.instructorEmail !== undefined || 
-            data.firstCourseDate !== undefined || data.lastCourseDate !== undefined) {
-          subjectEntity.update({
-            instructorName: data.instructorName ?? null,
-            instructorEmail: data.instructorEmail ?? null,
-            firstCourseDate: data.firstCourseDate ? new Date(data.firstCourseDate) : null,
-            lastCourseDate: data.lastCourseDate ? new Date(data.lastCourseDate) : null,
-          });
-          subjectEntity = await this.subjectRepository.save(subjectEntity);
-        }
       }
 
       const existingAssignment = await this.subjectAssignmentRepository.findBySubjectAndClass(

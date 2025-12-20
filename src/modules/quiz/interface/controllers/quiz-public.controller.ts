@@ -97,7 +97,7 @@ export class QuizPublicSubmitController extends BaseController {
   @ApiResponse({ status: 404, description: "Quiz non trouvé" })
   async submitQuizResponse(
     @Param("id") quizId: string,
-    @Body() body: { responses: Array<{ questionId: string; valueText?: string; valueNumber?: number; valueJson?: any }> },
+    @Body() body: { responses: Array<{ questionId: string; valueText?: string; valueNumber?: number; valueJson?: any }>; studentToken?: string | null },
     @Req() request: any,
   ) {
     const ipAddress = request.ip || request.headers["x-forwarded-for"] || request.connection.remoteAddress;
@@ -108,7 +108,8 @@ export class QuizPublicSubmitController extends BaseController {
       responses: body.responses,
       ipAddress: ipAddress || null,
       userAgent,
-      completionTimeSeconds: null, // Can be calculated on frontend if needed
+      completionTimeSeconds: null,
+      studentToken: body.studentToken || null,
     });
 
     return this.success(result);

@@ -31,6 +31,13 @@ export class QuizTemplateQuestionModel implements IQuizTemplateQuestion {
   @Column({ name: "order_index", type: "integer", default: 0 })
   orderIndex: number;
 
+  @Column({ 
+    type: "enum", 
+    enum: ["global", "course", "instructor"],
+    default: "course"
+  })
+  category: "global" | "course" | "instructor";
+
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }

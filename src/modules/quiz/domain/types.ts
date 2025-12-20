@@ -22,6 +22,7 @@ export interface IQuizTemplateQuestion {
     max_length?: number;
   } | null;
   orderIndex: number;
+  category: "global" | "course" | "instructor";
   createdAt: Date;
 }
 
@@ -148,6 +149,7 @@ export interface QuizTemplateQuestionResponse {
     max_length?: number;
   } | null;
   orderIndex: number;
+  category: "global" | "course" | "instructor";
 }
 
 export interface GetQuizTemplateByIdOutput {
@@ -174,6 +176,7 @@ export interface CreateQuizTemplateInput {
       max_length?: number;
     } | null;
     orderIndex: number;
+    category: "global" | "course" | "instructor";
   }[];
   organizationId: string;
   userId: string;
@@ -333,6 +336,7 @@ export interface GetQuizByAccessTokenOutput {
         max_length?: number;
       } | null;
       orderIndex: number;
+      category: "global" | "course" | "instructor";
     }>;
   };
 }
@@ -365,5 +369,40 @@ export interface CheckQuizResponseStatusInput {
 export interface CheckQuizResponseStatusOutput {
   hasResponded: boolean;
   responseId: string | null;
+}
+
+export interface GetQuizStatisticsInput {
+  quizId: string;
+  organizationId: string;
+  userId: string;
+}
+
+export interface QuestionStatistics {
+  questionId: string;
+  questionText: string;
+  questionType: "stars" | "radio" | "checkbox" | "textarea";
+  orderIndex: number;
+  // For stars
+  starsAverage?: number;
+  starsDistribution?: Record<number, number>; // { 1: 2, 2: 3, ... }
+  // For radio/checkbox
+  optionsDistribution?: Record<string, number>; // { "Option 1": 5, "Option 2": 3, ... }
+  // For textarea
+  textResponses?: string[];
+  // Total responses for this question
+  totalResponses: number;
+}
+
+export interface TemporalDataPoint {
+  date: string; // ISO date string
+  count: number;
+  averageStars?: number;
+}
+
+export interface GetQuizStatisticsOutput {
+  quizId: string;
+  totalResponses: number;
+  questions: QuestionStatistics[];
+  temporalEvolution: TemporalDataPoint[];
 }
 

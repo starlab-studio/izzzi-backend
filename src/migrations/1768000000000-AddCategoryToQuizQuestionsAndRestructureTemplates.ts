@@ -1,9 +1,53 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class SeedQuizTemplates1767000000000 implements MigrationInterface {
-  name = "SeedQuizTemplates1767000000000";
+export class AddCategoryToQuizQuestionsAndRestructureTemplates1768000000000 implements MigrationInterface {
+  name = "AddCategoryToQuizQuestionsAndRestructureTemplates1768000000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Add category column to quiz_template_questions
+    await queryRunner.query(`
+      ALTER TABLE "quiz_template_questions" 
+      ADD COLUMN IF NOT EXISTS "category" character varying NOT NULL DEFAULT 'course'
+    `);
+
+    // Delete all existing data in the correct order to respect foreign key constraints
+    // First, delete answers that reference quiz_template_questions
+    await queryRunner.query(`
+      DELETE FROM "answers"
+      WHERE "question_id" IN (SELECT "id" FROM "quiz_template_questions")
+    `);
+
+    // Then delete responses (answers are already deleted, so this is safe)
+    await queryRunner.query(`
+      DELETE FROM "responses"
+      WHERE "quiz_id" IN (SELECT "id" FROM "quizzes" WHERE "template_id" IN (SELECT "id" FROM "quiz_templates"))
+    `);
+
+    // Delete quizzes that reference templates
+    await queryRunner.query(`
+      DELETE FROM "quizzes"
+      WHERE "template_id" IN (SELECT "id" FROM "quiz_templates")
+    `);
+
+    // Delete student_quiz_tokens that reference quizzes (already deleted, but just in case)
+    await queryRunner.query(`
+      DELETE FROM "student_quiz_tokens"
+      WHERE "quiz_id" NOT IN (SELECT "id" FROM "quizzes")
+    `);
+
+    // Now we can safely delete template pairs, questions, and templates
+    await queryRunner.query(`
+      DELETE FROM "quiz_template_pairs"
+    `);
+
+    await queryRunner.query(`
+      DELETE FROM "quiz_template_questions"
+    `);
+
+    await queryRunner.query(`
+      DELETE FROM "quiz_templates"
+    `);
+
     // Template 1: Basique - During Course
     const basicDuringId = "00000000-0000-0000-0000-000000000001";
     await queryRunner.query(`
@@ -26,16 +70,17 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "quiz_template_questions" (
         "id", "template_id", "text", "type", "options", 
-        "validation_rules", "order_index", "created_at"
+        "validation_rules", "order_index", "category", "created_at"
       ) VALUES
       (
         uuid_generate_v4(),
         '${basicDuringId}',
-        'Comment évaluez-vous ce cours jusqu''à présent ?',
+        'Globalement, vous avez trouvé ce cours...',
         'stars',
         NULL,
         '{"required": true}',
         1,
+        'global',
         NOW()
       ),
       (
@@ -46,6 +91,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Trop lent", "Adapté", "Trop rapide"]',
         '{"required": true}',
         2,
+        'course',
         NOW()
       ),
       (
@@ -56,6 +102,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Clarté des explications", "Exemples pratiques", "Supports de cours", "Interactivité"]',
         '{"required": false}',
         3,
+        'course',
         NOW()
       ),
       (
@@ -66,6 +113,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         NULL,
         '{"required": false, "min_length": 0, "max_length": 1000}',
         4,
+        'course',
         NOW()
       )
     `);
@@ -92,7 +140,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "quiz_template_questions" (
         "id", "template_id", "text", "type", "options", 
-        "validation_rules", "order_index", "created_at"
+        "validation_rules", "order_index", "category", "created_at"
       ) VALUES
       (
         uuid_generate_v4(),
@@ -102,6 +150,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         NULL,
         '{"required": true}',
         1,
+        'global',
         NOW()
       ),
       (
@@ -112,26 +161,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Juste comme il faut", "J''aurai aimé plus de théorie", "J''aurai aimé plus de pratique"]',
         '{"required": true}',
         2,
-        NOW()
-      ),
-      (
-        uuid_generate_v4(),
-        '${basicAfterId}',
-        'L''ambiance durant le cours était',
-        'radio',
-        '["sympa et cool, juste comme il faut", "un peu trop détendue à mon goût", "froide"]',
-        '{"required": true}',
-        3,
-        NOW()
-      ),
-      (
-        uuid_generate_v4(),
-        '${basicAfterId}',
-        'Le nombre d''heures',
-        'radio',
-        '["juste ce qu''il faut", "trop court", "trop long"]',
-        '{"required": true}',
-        4,
+        'course',
         NOW()
       ),
       (
@@ -141,47 +171,63 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'radio',
         '["Comme je l''imaginais", "Bien au-delà", "Bien en deçà"]',
         '{"required": true}',
-        5,
+        3,
+        'course',
         NOW()
       ),
       (
         uuid_generate_v4(),
         '${basicAfterId}',
-        'Comment évaluez-vous la pédagogie de l''intervenant ?',
+        'Globalement, vous avez trouvé ce cours...',
         'stars',
         NULL,
+        '{"required": true}',
+        4,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${basicAfterId}',
+        'Le ratio théorie/pratique',
+        'radio',
+        '["Juste comme il faut", "J''aurai aimé plus de théorie", "J''aurai aimé plus de pratique"]',
+        '{"required": true}',
+        5,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${basicAfterId}',
+        'La pertinence des infos par rapport à ce que vous imaginiez de ce cours',
+        'radio',
+        '["Comme je l''imaginais", "Bien au-delà", "Bien en deçà"]',
         '{"required": true}',
         6,
+        'instructor',
         NOW()
       ),
       (
         uuid_generate_v4(),
         '${basicAfterId}',
-        'La clarté des informations et des notions',
-        'stars',
-        NULL,
-        '{"required": true}',
-        7,
-        NOW()
-      ),
-      (
-        uuid_generate_v4(),
-        '${basicAfterId}',
-        'Niveau vitesse',
-        'radio',
-        '["juste comme il faut", "trop rapide", "trop lente"]',
-        '{"required": true}',
-        8,
-        NOW()
-      ),
-      (
-        uuid_generate_v4(),
-        '${basicAfterId}',
-        'Avez-vous des commentaires supplémentaires ?',
+        'Quels sont les points forts de ce cours ?',
         'textarea',
         NULL,
         '{"required": false, "min_length": 0, "max_length": 1000}',
-        9,
+        7,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${basicAfterId}',
+        'Quels sont les points à améliorer ?',
+        'textarea',
+        NULL,
+        '{"required": false, "min_length": 0, "max_length": 1000}',
+        8,
+        'instructor',
         NOW()
       )
     `);
@@ -208,16 +254,17 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "quiz_template_questions" (
         "id", "template_id", "text", "type", "options", 
-        "validation_rules", "order_index", "created_at"
+        "validation_rules", "order_index", "category", "created_at"
       ) VALUES
       (
         uuid_generate_v4(),
         '${techDuringId}',
-        'Comment évaluez-vous la progression du cours jusqu''à présent ?',
+        'Globalement, vous avez trouvé ce cours...',
         'stars',
         NULL,
         '{"required": true}',
         1,
+        'global',
         NOW()
       ),
       (
@@ -228,6 +275,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Trop facile", "Adapté", "Trop difficile"]',
         '{"required": true}',
         2,
+        'course',
         NOW()
       ),
       (
@@ -238,6 +286,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Syntaxe et concepts", "Exercices pratiques", "Cas d''usage réels", "Bonnes pratiques", "Débogage"]',
         '{"required": false}',
         3,
+        'course',
         NOW()
       ),
       (
@@ -248,6 +297,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         NULL,
         '{"required": false, "min_length": 0, "max_length": 1000}',
         4,
+        'course',
         NOW()
       )
     `);
@@ -274,36 +324,94 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "quiz_template_questions" (
         "id", "template_id", "text", "type", "options", 
-        "validation_rules", "order_index", "created_at"
+        "validation_rules", "order_index", "category", "created_at"
       ) VALUES
       (
         uuid_generate_v4(),
         '${techAfterId}',
-        'Globalement, vous avez trouvé ce cours technique...',
+        'Globalement, vous avez trouvé ce cours...',
         'stars',
         NULL,
         '{"required": true}',
         1,
+        'global',
         NOW()
       ),
       (
         uuid_generate_v4(),
         '${techAfterId}',
-        'Le contenu technique était :',
+        'Le ratio théorie/pratique',
         'radio',
-        '["Trop basique", "Adapté à mon niveau", "Trop avancé"]',
+        '["Juste comme il faut", "J''aurai aimé plus de théorie", "J''aurai aimé plus de pratique"]',
         '{"required": true}',
         2,
+        'course',
         NOW()
       ),
       (
         uuid_generate_v4(),
         '${techAfterId}',
-        'Quels éléments techniques avez-vous le plus appréciés ?',
-        'checkbox',
-        '["Exemples de code", "Exercices pratiques", "Documentation fournie", "Projets réalisés", "Support technique"]',
-        '{"required": false}',
+        'La pertinence des infos par rapport à ce que vous imaginiez de ce cours',
+        'radio',
+        '["Comme je l''imaginais", "Bien au-delà", "Bien en deçà"]',
+        '{"required": true}',
         3,
+        'course',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${techAfterId}',
+        'Le niveau de difficulté des exercices pratiques est :',
+        'radio',
+        '["Trop facile", "Adapté", "Trop difficile"]',
+        '{"required": true}',
+        4,
+        'course',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${techAfterId}',
+        'Quels aspects techniques souhaiteriez-vous approfondir ?',
+        'checkbox',
+        '["Syntaxe et concepts", "Exercices pratiques", "Cas d''usage réels", "Bonnes pratiques", "Débogage"]',
+        '{"required": false}',
+        5,
+        'course',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${techAfterId}',
+        'Globalement, vous avez trouvé ce cours...',
+        'stars',
+        NULL,
+        '{"required": true}',
+        6,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${techAfterId}',
+        'Le ratio théorie/pratique',
+        'radio',
+        '["Juste comme il faut", "J''aurai aimé plus de théorie", "J''aurai aimé plus de pratique"]',
+        '{"required": true}',
+        7,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${techAfterId}',
+        'La pertinence des infos par rapport à ce que vous imaginiez de ce cours',
+        'radio',
+        '["Comme je l''imaginais", "Bien au-delà", "Bien en deçà"]',
+        '{"required": true}',
+        8,
+        'instructor',
         NOW()
       ),
       (
@@ -313,7 +421,8 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'stars',
         NULL,
         '{"required": true}',
-        4,
+        9,
+        'instructor',
         NOW()
       ),
       (
@@ -323,17 +432,30 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'radio',
         '["Toujours", "Souvent", "Parfois", "Rarement", "Jamais"]',
         '{"required": true}',
-        5,
+        10,
+        'instructor',
         NOW()
       ),
       (
         uuid_generate_v4(),
         '${techAfterId}',
-        'Avez-vous des suggestions pour améliorer ce cours technique ?',
+        'Quels sont les points forts de ce cours ?',
         'textarea',
         NULL,
         '{"required": false, "min_length": 0, "max_length": 1000}',
-        6,
+        11,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${techAfterId}',
+        'Quels sont les points à améliorer ?',
+        'textarea',
+        NULL,
+        '{"required": false, "min_length": 0, "max_length": 1000}',
+        12,
+        'instructor',
         NOW()
       )
     `);
@@ -360,16 +482,17 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "quiz_template_questions" (
         "id", "template_id", "text", "type", "options", 
-        "validation_rules", "order_index", "created_at"
+        "validation_rules", "order_index", "category", "created_at"
       ) VALUES
       (
         uuid_generate_v4(),
         '${softDuringId}',
-        'Comment évaluez-vous votre progression dans ce cours jusqu''à présent ?',
+        'Globalement, vous avez trouvé ce cours...',
         'stars',
         NULL,
         '{"required": true}',
         1,
+        'global',
         NOW()
       ),
       (
@@ -380,6 +503,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Trop lent", "Adapté", "Trop rapide"]',
         '{"required": true}',
         2,
+        'course',
         NOW()
       ),
       (
@@ -390,6 +514,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Techniques enseignées", "Mises en situation", "Retours personnalisés", "Support pédagogique"]',
         '{"required": false}',
         3,
+        'course',
         NOW()
       ),
       (
@@ -400,6 +525,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         NULL,
         '{"required": false, "min_length": 0, "max_length": 1000}',
         4,
+        'course',
         NOW()
       )
     `);
@@ -426,26 +552,50 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "quiz_template_questions" (
         "id", "template_id", "text", "type", "options", 
-        "validation_rules", "order_index", "created_at"
+        "validation_rules", "order_index", "category", "created_at"
       ) VALUES
       (
         uuid_generate_v4(),
         '${softAfterId}',
-        'Globalement, vous avez trouvé ce cours de soft skills...',
+        'Globalement, vous avez trouvé ce cours...',
         'stars',
         NULL,
         '{"required": true}',
         1,
+        'global',
         NOW()
       ),
       (
         uuid_generate_v4(),
         '${softAfterId}',
-        'Le contenu du cours était :',
+        'Le ratio théorie/pratique',
         'radio',
-        '["Trop théorique", "Équilibré", "Trop pratique"]',
+        '["Juste comme il faut", "J''aurai aimé plus de théorie", "J''aurai aimé plus de pratique"]',
         '{"required": true}',
         2,
+        'course',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softAfterId}',
+        'La pertinence des infos par rapport à ce que vous imaginiez de ce cours',
+        'radio',
+        '["Comme je l''imaginais", "Bien au-delà", "Bien en deçà"]',
+        '{"required": true}',
+        3,
+        'course',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softAfterId}',
+        'L''ambiance durant le cours était',
+        'radio',
+        '["sympa et cool, juste comme il faut", "un peu trop détendue à mon goût", "froide"]',
+        '{"required": true}',
+        4,
+        'course',
         NOW()
       ),
       (
@@ -455,7 +605,41 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'checkbox',
         '["Mises en situation", "Retours personnalisés", "Conseils pratiques", "Support pédagogique", "Exemples concrets"]',
         '{"required": false}',
-        3,
+        5,
+        'course',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softAfterId}',
+        'Globalement, vous avez trouvé ce cours...',
+        'stars',
+        NULL,
+        '{"required": true}',
+        6,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softAfterId}',
+        'Le ratio théorie/pratique',
+        'radio',
+        '["Juste comme il faut", "J''aurai aimé plus de théorie", "J''aurai aimé plus de pratique"]',
+        '{"required": true}',
+        7,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softAfterId}',
+        'La pertinence des infos par rapport à ce que vous imaginiez de ce cours',
+        'radio',
+        '["Comme je l''imaginais", "Bien au-delà", "Bien en deçà"]',
+        '{"required": true}',
+        8,
+        'instructor',
         NOW()
       ),
       (
@@ -465,7 +649,8 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'stars',
         NULL,
         '{"required": true}',
-        4,
+        9,
+        'instructor',
         NOW()
       ),
       (
@@ -475,17 +660,30 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'radio',
         '["Toujours", "Souvent", "Parfois", "Rarement", "Jamais"]',
         '{"required": true}',
-        5,
+        10,
+        'instructor',
         NOW()
       ),
       (
         uuid_generate_v4(),
         '${softAfterId}',
-        'Avez-vous des commentaires ou suggestions ?',
+        'Quels sont les points forts de ce cours ?',
         'textarea',
         NULL,
         '{"required": false, "min_length": 0, "max_length": 1000}',
-        6,
+        11,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softAfterId}',
+        'Quels sont les points à améliorer ?',
+        'textarea',
+        NULL,
+        '{"required": false, "min_length": 0, "max_length": 1000}',
+        12,
+        'instructor',
         NOW()
       )
     `);
@@ -512,16 +710,17 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "quiz_template_questions" (
         "id", "template_id", "text", "type", "options", 
-        "validation_rules", "order_index", "created_at"
+        "validation_rules", "order_index", "category", "created_at"
       ) VALUES
       (
         uuid_generate_v4(),
         '${softwareDuringId}',
-        'Comment évaluez-vous votre maîtrise de l''outil jusqu''à présent ?',
+        'Globalement, vous avez trouvé ce cours...',
         'stars',
         NULL,
         '{"required": true}',
         1,
+        'global',
         NOW()
       ),
       (
@@ -532,6 +731,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Trop lente", "Adaptée", "Trop rapide"]',
         '{"required": true}',
         2,
+        'course',
         NOW()
       ),
       (
@@ -542,6 +742,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         '["Fonctionnalités de base", "Fonctionnalités avancées", "Astuces et raccourcis", "Intégrations", "Bonnes pratiques"]',
         '{"required": false}',
         3,
+        'course',
         NOW()
       ),
       (
@@ -552,6 +753,7 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         NULL,
         '{"required": false, "min_length": 0, "max_length": 1000}',
         4,
+        'course',
         NOW()
       )
     `);
@@ -578,16 +780,39 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "quiz_template_questions" (
         "id", "template_id", "text", "type", "options", 
-        "validation_rules", "order_index", "created_at"
+        "validation_rules", "order_index", "category", "created_at"
       ) VALUES
       (
         uuid_generate_v4(),
         '${softwareAfterId}',
-        'Globalement, vous avez trouvé ce cours logiciel...',
+        'Globalement, vous avez trouvé ce cours...',
         'stars',
         NULL,
         '{"required": true}',
         1,
+        'global',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softwareAfterId}',
+        'Le ratio théorie/pratique',
+        'radio',
+        '["Juste comme il faut", "J''aurai aimé plus de théorie", "J''aurai aimé plus de pratique"]',
+        '{"required": true}',
+        2,
+        'course',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softwareAfterId}',
+        'La pertinence des infos par rapport à ce que vous imaginiez de ce cours',
+        'radio',
+        '["Comme je l''imaginais", "Bien au-delà", "Bien en deçà"]',
+        '{"required": true}',
+        3,
+        'course',
         NOW()
       ),
       (
@@ -597,7 +822,8 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'radio',
         '["Débutant", "Intermédiaire", "Avancé"]',
         '{"required": true}',
-        2,
+        4,
+        'course',
         NOW()
       ),
       (
@@ -607,7 +833,41 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'checkbox',
         '["Démonstrations pratiques", "Exercices guidés", "Ressources fournies", "Support technique", "Projets réalisés"]',
         '{"required": false}',
-        3,
+        5,
+        'course',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softwareAfterId}',
+        'Globalement, vous avez trouvé ce cours...',
+        'stars',
+        NULL,
+        '{"required": true}',
+        6,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softwareAfterId}',
+        'Le ratio théorie/pratique',
+        'radio',
+        '["Juste comme il faut", "J''aurai aimé plus de théorie", "J''aurai aimé plus de pratique"]',
+        '{"required": true}',
+        7,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softwareAfterId}',
+        'La pertinence des infos par rapport à ce que vous imaginiez de ce cours',
+        'radio',
+        '["Comme je l''imaginais", "Bien au-delà", "Bien en deçà"]',
+        '{"required": true}',
+        8,
+        'instructor',
         NOW()
       ),
       (
@@ -617,7 +877,8 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'stars',
         NULL,
         '{"required": true}',
-        4,
+        9,
+        'instructor',
         NOW()
       ),
       (
@@ -627,17 +888,30 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
         'radio',
         '["Toujours", "Souvent", "Parfois", "Rarement", "Jamais"]',
         '{"required": true}',
-        5,
+        10,
+        'instructor',
         NOW()
       ),
       (
         uuid_generate_v4(),
         '${softwareAfterId}',
-        'Avez-vous des suggestions pour améliorer ce cours logiciel ?',
+        'Quels sont les points forts de ce cours ?',
         'textarea',
         NULL,
         '{"required": false, "min_length": 0, "max_length": 1000}',
-        6,
+        11,
+        'instructor',
+        NOW()
+      ),
+      (
+        uuid_generate_v4(),
+        '${softwareAfterId}',
+        'Quels sont les points à améliorer ?',
+        'textarea',
+        NULL,
+        '{"required": false, "min_length": 0, "max_length": 1000}',
+        12,
+        'instructor',
         NOW()
       )
     `);
@@ -692,58 +966,25 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Delete template pairs first (due to foreign keys)
+    // Delete template pairs
     await queryRunner.query(`
-      DELETE FROM "quiz_template_pairs" 
-      WHERE "during_course_template_id" IN (
-        '00000000-0000-0000-0000-000000000001',
-        '00000000-0000-0000-0000-000000000002',
-        '00000000-0000-0000-0000-000000000003',
-        '00000000-0000-0000-0000-000000000004',
-        '00000000-0000-0000-0000-000000000005',
-        '00000000-0000-0000-0000-000000000006',
-        '00000000-0000-0000-0000-000000000007',
-        '00000000-0000-0000-0000-000000000008'
-      ) OR "after_course_template_id" IN (
-        '00000000-0000-0000-0000-000000000001',
-        '00000000-0000-0000-0000-000000000002',
-        '00000000-0000-0000-0000-000000000003',
-        '00000000-0000-0000-0000-000000000004',
-        '00000000-0000-0000-0000-000000000005',
-        '00000000-0000-0000-0000-000000000006',
-        '00000000-0000-0000-0000-000000000007',
-        '00000000-0000-0000-0000-000000000008'
-      )
+      DELETE FROM "quiz_template_pairs"
     `);
 
     // Delete questions
     await queryRunner.query(`
-      DELETE FROM "quiz_template_questions" 
-      WHERE "template_id" IN (
-        '00000000-0000-0000-0000-000000000001',
-        '00000000-0000-0000-0000-000000000002',
-        '00000000-0000-0000-0000-000000000003',
-        '00000000-0000-0000-0000-000000000004',
-        '00000000-0000-0000-0000-000000000005',
-        '00000000-0000-0000-0000-000000000006',
-        '00000000-0000-0000-0000-000000000007',
-        '00000000-0000-0000-0000-000000000008'
-      )
+      DELETE FROM "quiz_template_questions"
     `);
 
     // Delete templates
     await queryRunner.query(`
-      DELETE FROM "quiz_templates" 
-      WHERE "id" IN (
-        '00000000-0000-0000-0000-000000000001',
-        '00000000-0000-0000-0000-000000000002',
-        '00000000-0000-0000-0000-000000000003',
-        '00000000-0000-0000-0000-000000000004',
-        '00000000-0000-0000-0000-000000000005',
-        '00000000-0000-0000-0000-000000000006',
-        '00000000-0000-0000-0000-000000000007',
-        '00000000-0000-0000-0000-000000000008'
-      )
+      DELETE FROM "quiz_templates"
+    `);
+
+    // Remove category column
+    await queryRunner.query(`
+      ALTER TABLE "quiz_template_questions" 
+      DROP COLUMN IF EXISTS "category"
     `);
   }
 }

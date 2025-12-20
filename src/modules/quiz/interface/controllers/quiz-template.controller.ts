@@ -129,6 +129,7 @@ export class QuizTemplateController extends BaseController {
           max_length?: number;
         } | null;
         orderIndex: number;
+        category: "global" | "course" | "instructor";
       }[];
     },
     @CurrentUser() user: JWTPayload,

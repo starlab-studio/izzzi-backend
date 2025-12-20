@@ -92,6 +92,7 @@ export class GetQuizByAccessTokenUseCase extends BaseUseCase implements IUseCase
             options: q.options,
             validationRules: q.validationRules,
             orderIndex: q.orderIndex,
+            category: q.category,
           })),
         },
       };

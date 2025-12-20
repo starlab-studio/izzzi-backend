@@ -48,6 +48,7 @@ import { RemindQuizToStudentsUseCase } from "./application/use-cases/RemindQuizT
 import { GetQuizByAccessTokenUseCase } from "./application/use-cases/GetQuizByAccessToken.use-case";
 import { SubmitQuizResponseUseCase } from "./application/use-cases/SubmitQuizResponse.use-case";
 import { CheckQuizResponseStatusUseCase } from "./application/use-cases/CheckQuizResponseStatus.use-case";
+import { GetQuizStatisticsUseCase } from "./application/use-cases/GetQuizStatistics.use-case";
 
 import { QuizFacade } from "./application/facades/quiz.facade";
 
@@ -512,6 +513,33 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       ],
     },
     {
+      provide: GetQuizStatisticsUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        quizRepository: IQuizRepository,
+        quizTemplateRepository: IQuizTemplateRepository,
+        responseRepository: IResponseRepository,
+        answerRepository: IAnswerRepository,
+        organizationFacade: OrganizationFacade,
+      ) =>
+        new GetQuizStatisticsUseCase(
+          logger,
+          quizRepository,
+          quizTemplateRepository,
+          responseRepository,
+          answerRepository,
+          organizationFacade,
+        ),
+      inject: [
+        LoggerService,
+        "QUIZ_REPOSITORY",
+        "QUIZ_TEMPLATE_REPOSITORY",
+        "RESPONSE_REPOSITORY",
+        "ANSWER_REPOSITORY",
+        OrganizationFacade,
+      ],
+    },
+    {
       provide: QuizFacade,
       useFactory: (
         getQuizTemplatePairsUseCase: GetQuizTemplatePairsUseCase,
@@ -527,6 +555,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         getQuizByAccessTokenUseCase: GetQuizByAccessTokenUseCase,
         submitQuizResponseUseCase: SubmitQuizResponseUseCase,
         checkQuizResponseStatusUseCase: CheckQuizResponseStatusUseCase,
+        getQuizStatisticsUseCase: GetQuizStatisticsUseCase,
       ) =>
         new QuizFacade(
           getQuizTemplatePairsUseCase,
@@ -542,6 +571,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           getQuizByAccessTokenUseCase,
           submitQuizResponseUseCase,
           checkQuizResponseStatusUseCase,
+          getQuizStatisticsUseCase,
         ),
       inject: [
         GetQuizTemplatePairsUseCase,
@@ -557,6 +587,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         GetQuizByAccessTokenUseCase,
         SubmitQuizResponseUseCase,
         CheckQuizResponseStatusUseCase,
+        GetQuizStatisticsUseCase,
       ],
     },
   ],

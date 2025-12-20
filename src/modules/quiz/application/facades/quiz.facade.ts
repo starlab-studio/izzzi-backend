@@ -25,6 +25,8 @@ import {
   SubmitQuizResponseOutput,
   CheckQuizResponseStatusInput,
   CheckQuizResponseStatusOutput,
+  GetQuizStatisticsInput,
+  GetQuizStatisticsOutput,
 } from "../../domain/types";
 import { GetQuizTemplatePairsUseCase } from "../use-cases/GetQuizTemplatePairs.use-case";
 import { GetQuizTemplateByIdUseCase } from "../use-cases/GetQuizTemplateById.use-case";
@@ -39,6 +41,7 @@ import { RemindQuizToStudentsUseCase } from "../use-cases/RemindQuizToStudents.u
 import { GetQuizByAccessTokenUseCase } from "../use-cases/GetQuizByAccessToken.use-case";
 import { SubmitQuizResponseUseCase } from "../use-cases/SubmitQuizResponse.use-case";
 import { CheckQuizResponseStatusUseCase } from "../use-cases/CheckQuizResponseStatus.use-case";
+import { GetQuizStatisticsUseCase } from "../use-cases/GetQuizStatistics.use-case";
 
 export class QuizFacade {
   constructor(
@@ -55,6 +58,7 @@ export class QuizFacade {
     private readonly getQuizByAccessTokenUseCase: GetQuizByAccessTokenUseCase,
     private readonly submitQuizResponseUseCase: SubmitQuizResponseUseCase,
     private readonly checkQuizResponseStatusUseCase: CheckQuizResponseStatusUseCase,
+    private readonly getQuizStatisticsUseCase: GetQuizStatisticsUseCase,
   ) {}
 
   async getQuizTemplatePairs(
@@ -133,6 +137,12 @@ export class QuizFacade {
     data: CheckQuizResponseStatusInput,
   ): Promise<CheckQuizResponseStatusOutput> {
     return await this.checkQuizResponseStatusUseCase.execute(data);
+  }
+
+  async getQuizStatistics(
+    data: GetQuizStatisticsInput,
+  ): Promise<GetQuizStatisticsOutput> {
+    return await this.getQuizStatisticsUseCase.execute(data);
   }
 }
 

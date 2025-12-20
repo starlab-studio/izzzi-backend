@@ -370,5 +370,44 @@ export class QuizDetailController extends BaseController {
 
     return this.success(result);
   }
+
+  @Get(":id/statistics")
+  @ApiOperation({
+    summary: "Récupérer les statistiques des réponses d'un quiz",
+    description: "Récupère les statistiques détaillées des réponses d'un quiz. \
+    Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @ApiParam({
+    name: "id",
+    description: "ID du quiz",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Statistiques récupérées avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  @ApiResponse({ status: 404, description: "Quiz non trouvé" })
+  async getQuizStatistics(
+    @Param("id") quizId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any,
+  ) {
+    const organizationId = request.organizationId;
+
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.quizFacade.getQuizStatistics({
+      quizId,
+      organizationId,
+      userId: user.userId,
+    });
+
+    return this.success(result);
+  }
 }
 

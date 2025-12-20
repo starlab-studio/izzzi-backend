@@ -46,6 +46,7 @@ export class CreateQuizTemplateUseCase extends BaseUseCase implements IUseCase {
         options: q.options,
         validationRules: q.validationRules,
         orderIndex: q.orderIndex,
+        category: q.category,
         createdAt: new Date(),
       }));
 
@@ -68,6 +69,7 @@ export class CreateQuizTemplateUseCase extends BaseUseCase implements IUseCase {
           options: q.options,
           validationRules: q.validationRules,
           orderIndex: q.orderIndex,
+          category: q.category,
         })),
       };
     } catch (error) {

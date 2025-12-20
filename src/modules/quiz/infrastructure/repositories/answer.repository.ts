@@ -42,6 +42,17 @@ export class AnswerRepository
     );
   }
 
+  async findByQuiz(quizId: string): Promise<AnswerEntity[]> {
+    const ormEntityList = await this.directRepository
+      .createQueryBuilder("answer")
+      .innerJoin("responses", "response", "response.id = answer.response_id")
+      .where("response.quiz_id = :quizId", { quizId })
+      .getMany();
+    return ormEntityList.map((ormEntity) =>
+      AnswerEntity.reconstitute(ormEntity),
+    );
+  }
+
   async create(entity: AnswerEntity): Promise<AnswerEntity> {
     const data = entity.toPersistence();
     const ormEntity = this.directRepository.create(data);

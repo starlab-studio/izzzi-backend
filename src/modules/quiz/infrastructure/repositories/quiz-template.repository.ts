@@ -94,6 +94,7 @@ export class QuizTemplateRepository
           options: q.options,
           validationRules: q.validationRules,
           orderIndex: q.orderIndex,
+          category: q.category,
           createdAt: q.createdAt,
         }),
       );

@@ -135,3 +135,32 @@ export interface IVerificationToken {
 export interface ConfirmSignUpData {
   token: string;
 }
+
+export interface IRefreshToken {
+  readonly id: string;
+  readonly tokenHash: string;
+  readonly userId: string;
+  readonly deviceInfo?: string;
+  readonly ipAddress?: string;
+  readonly isRevoked: boolean;
+  readonly expiresAt: Date;
+  readonly createdAt: Date;
+  readonly revokedAt?: Date;
+  readonly lastUsedAt?: Date;
+}
+
+export interface RefreshTokenCreatedPayload {
+  tokenId: string;
+  userId: string;
+  deviceInfo?: string;
+}
+export type IRefreshTokenCreatedEvent =
+  IDomainEvent<RefreshTokenCreatedPayload>;
+
+export interface RefreshTokenRevokedPayload {
+  tokenId: string;
+  userId: string;
+}
+
+export type IRefreshTokenRevokedEvent =
+  IDomainEvent<RefreshTokenRevokedPayload>;

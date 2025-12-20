@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as Handlebars from "handlebars";
-import { randomBytes } from "crypto";
+import * as crypto from "crypto";
 
 export class GeneralUtils {
   static htmlTemplateReader = (
@@ -19,7 +19,7 @@ export class GeneralUtils {
   };
 
   static generateToken(length: number): string {
-    return randomBytes(length).toString("hex");
+    return crypto.randomBytes(length).toString("hex");
   }
 
   static generateSlug(text: string): string {
@@ -39,5 +39,14 @@ export class GeneralUtils {
       .split(";")
       .map((email) => email.trim())
       .filter((email) => email.length > 0);
+  }
+
+  static hashToken(token: string): string {
+    return crypto.createHash("sha256").update(token).digest("hex");
+  }
+
+  static verifyToken(token: string, hashedToken: string): boolean {
+    const hash = this.hashToken(token);
+    return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(hashedToken));
   }
 }

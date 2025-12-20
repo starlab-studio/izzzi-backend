@@ -21,7 +21,7 @@ export class AuthFacade {
     }
   }
 
-  async signIn(data: SignInData) {
+  async signIn(data: SignInData & { deviceInfo?: string; ipAddress?: string }) {
     try {
       return await this.signInUseCase.execute(data);
     } catch (error) {

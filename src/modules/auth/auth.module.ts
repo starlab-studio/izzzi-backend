@@ -37,11 +37,17 @@ import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
 import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
 import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-case";
 import { UserCreatedEventHandler } from "./application/handlers/UserCreated.handler";
+import { RefreshTokenModel } from "./infrastructure/models/refreshToken.model";
+import { RefreshTokenRepository } from "./infrastructure/repositories/refreshToken.repository";
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([AuthIdentityModel, VerificationTokenModel]),
+    TypeOrmModule.forFeature([
+      AuthIdentityModel,
+      VerificationTokenModel,
+      RefreshTokenModel,
+    ]),
     CoreModule,
     OrganizationModule,
     JwtModule.registerAsync({
@@ -60,6 +66,7 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
     LoggerService,
     AuthIdentityRepository,
     VerificationTokenRepository,
+    RefreshTokenRepository,
     AuthIdentityFactory,
     AuthIdentityUniquenessService,
     {
@@ -97,7 +104,8 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
         authIdentityUniquenessService: AuthIdentityUniquenessService,
         authIdentityRepository: IAuthIdentityRepository,
         organizationFacade: OrganizationFacade,
-        verificationTokenRepository: VerificationTokenRepository
+        verificationTokenRepository: VerificationTokenRepository,
+        refreshTokenRepository: RefreshTokenRepository
       ) =>
         new CustomAuthAdapter(
           configService,
@@ -105,7 +113,8 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
           authIdentityUniquenessService,
           authIdentityRepository,
           organizationFacade,
-          verificationTokenRepository
+          verificationTokenRepository,
+          refreshTokenRepository
         ),
       inject: [
         ConfigService,
@@ -114,6 +123,7 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
         AuthIdentityRepository,
         OrganizationFacade,
         VerificationTokenRepository,
+        RefreshTokenRepository,
       ],
     },
     {

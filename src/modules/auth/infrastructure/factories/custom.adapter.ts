@@ -11,6 +11,7 @@ import {
   SignUpResponse,
 } from "../../domain/types";
 
+import { DateUtils } from "src/utils/date.utils";
 import { GeneralUtils } from "src/utils/general.utils";
 import { AuthIdentityName } from "../../domain/types";
 import { DomainError, ErrorCode, Email, JWTPayload } from "src/core";
@@ -22,6 +23,8 @@ import { VerificationTokenType } from "../../domain/types";
 import { Password } from "../../domain/value-objects/password.vo";
 import { VerificationTokenEntity } from "../../domain/entities/verificationToken.entity";
 import { AuthIdentityUniquenessService } from "../../domain/services/authIdentity-uniqueness.service";
+import { RefreshToken } from "../../domain/entities/refreshToken.entity";
+import type { IRefreshTokenRepository } from "../../domain/repositories/refreshToken.repository";
 
 @Injectable()
 export class CustomAuthAdapter implements IAuthStrategy {
@@ -33,7 +36,8 @@ export class CustomAuthAdapter implements IAuthStrategy {
     private readonly authIdentityUniquenessService: AuthIdentityUniquenessService,
     private readonly authIdentityRepository: IAuthIdentityRepository,
     private readonly organizationFacade: OrganizationFacade,
-    private readonly verificationTokenRepository: IVerificationTokenRepository
+    private readonly verificationTokenRepository: IVerificationTokenRepository,
+    private readonly refreshTokenRepository: IRefreshTokenRepository
   ) {}
 
   async signUp(data: SignUpData): Promise<SignUpResponse> {
@@ -73,6 +77,8 @@ export class CustomAuthAdapter implements IAuthStrategy {
   async signIn(data: {
     email: string;
     password: string;
+    deviceInfo?: string;
+    ipAddress?: string;
   }): Promise<SignInResponse> {
     const authIdentityEntity =
       await this.authIdentityRepository.findByProviderAndUsername(
@@ -138,12 +144,23 @@ export class CustomAuthAdapter implements IAuthStrategy {
     });
 
     const refreshToken = GeneralUtils.generateToken(48);
-    // TODO : Save the refresh token in database
-    // await this.refreshTokenRepository.create({
-    //   token: refreshTokenVO.value,
-    //   userId: authIdentityEntity.providerUserId,
-    //   expiresAt: refreshTokenVO.expiresAt,
-    // });
+    const refreshTokenHash = GeneralUtils.hashToken(refreshToken);
+    const refreshTokenExpiresIn =
+      this.configService.get<string>("auth.jwt.refreshExpiresIn") ?? "7d";
+
+    const daysMatch = refreshTokenExpiresIn.match(/(\d+)d/);
+    const days = daysMatch ? parseInt(daysMatch[1], 10) : 7;
+    const expiresAt = DateUtils.addHours(new Date(), days * 24);
+
+    const refreshTokenEntity = RefreshToken.create(
+      refreshTokenHash,
+      authIdentityEntity.userId || userDetails.id,
+      expiresAt,
+      data.deviceInfo,
+      data.ipAddress
+    );
+
+    await this.refreshTokenRepository.save(refreshTokenEntity);
 
     return { accessToken, refreshToken };
   }
@@ -231,6 +248,8 @@ export class CustomAuthAdapter implements IAuthStrategy {
   async deleteIdentity(username: string): Promise<void> {
     await this.authIdentityRepository.deleteByUsername(username);
   }
+
+  // async refreshToken(token: string): Promise<SignInResponse> {}
 
   private generateUserId(username: string): string {
     return `custom:${Date.now()}:${username}`;

@@ -1,7 +1,7 @@
-import { type Response } from "express";
+import { type Response, type Request } from "express";
 import { ApiTags } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
-import { Controller, Post, Body, Res } from "@nestjs/common";
+import { Controller, Post, Body, Res, Req } from "@nestjs/common";
 
 import { BaseController } from "src/core";
 import { AuthFacade } from "../../application/facades/auth.facade";
@@ -27,9 +27,21 @@ export class AuthController extends BaseController {
   @Post("signin")
   async signIn(
     @Body() dto: SignInDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response
   ) {
-    const authIdentity = await this.authFacade.signIn(dto);
+    const deviceInfo = req.headers["user-agent"] || undefined;
+    const ipAddress =
+      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+      (req.headers["x-real-ip"] as string) ||
+      req.socket.remoteAddress ||
+      undefined;
+
+    const authIdentity = await this.authFacade.signIn({
+      ...dto,
+      deviceInfo,
+      ipAddress,
+    });
 
     res.cookie("access_token", authIdentity.accessToken, {
       httpOnly: true,

@@ -72,6 +72,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
             questionText: question.text,
             questionType: question.type,
             orderIndex: question.orderIndex,
+            category: question.category,
             totalResponses: questionAnswers.length,
           };
 

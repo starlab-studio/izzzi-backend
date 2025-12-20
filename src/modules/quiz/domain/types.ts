@@ -382,6 +382,7 @@ export interface QuestionStatistics {
   questionText: string;
   questionType: "stars" | "radio" | "checkbox" | "textarea";
   orderIndex: number;
+  category: "global" | "course" | "instructor";
   // For stars
   starsAverage?: number;
   starsDistribution?: Record<number, number>; // { 1: 2, 2: 3, ... }

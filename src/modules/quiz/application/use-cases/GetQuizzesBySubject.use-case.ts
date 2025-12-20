@@ -16,6 +16,8 @@ import { IQuizTemplateRepository } from "../../domain/repositories/quiz-template
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { QRCodeService } from "../../infrastructure/services/qr-code.service";
 import { IStudentQuizTokenRepository } from "../../domain/repositories/student-quiz-token.repository";
+import { ISubjectAssignmentRepository } from "src/modules/subject/domain/repositories/subject-assignment.repository";
+import { IClassStudentRepository } from "src/modules/class/domain/repositories/class-student.repository";
 
 export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -25,6 +27,8 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
     private readonly quizTemplateRepository: IQuizTemplateRepository,
     private readonly organizationFacade: OrganizationFacade,
     private readonly studentQuizTokenRepository: IStudentQuizTokenRepository,
+    private readonly subjectAssignmentRepository: ISubjectAssignmentRepository,
+    private readonly classStudentRepository: IClassStudentRepository,
   ) {
     super(logger);
   }
@@ -52,6 +56,13 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
       const templates = await this.quizTemplateRepository.findByIds(templateIds);
       const templateMap = new Map(templates.map((t) => [t.id, t]));
 
+      const assignments = await this.subjectAssignmentRepository.findBySubject(data.subjectId);
+      const activeAssignment = assignments.find((a) => a.isActive);
+      const students = activeAssignment
+        ? await this.classStudentRepository.findByClassAndActive(activeAssignment.classId, true)
+        : [];
+      const totalStudents = students.length;
+
       const quizzesResponse: QuizResponse[] = await Promise.all(
         quizzes.map(async (quiz) => {
           const template = templateMap.get(quiz.templateId);
@@ -64,9 +75,12 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
             await this.quizRepository.save(quiz);
           }
           
-          // Vérifier si le quiz a été envoyé aux étudiants (au moins un token avec emailSentAt)
           const tokens = await this.studentQuizTokenRepository.findByQuiz(quiz.id);
           const hasBeenSent = tokens.some((token) => token.emailSentAt !== null);
+          
+          const tokenStudentIds = new Set(tokens.map((t) => t.classStudentId));
+          const newStudentsCount = students.filter((s) => !tokenStudentIds.has(s.id)).length;
+          const toRemindCount = tokens.filter((t) => !t.hasResponded).length;
           
           return {
             id: quiz.id,
@@ -77,6 +91,9 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
             qrCodeUrl: qrCodeUrl,
             responseCount: quiz.responseCount,
             hasBeenSent,
+            totalStudents,
+            newStudentsCount,
+            toRemindCount,
             template: {
               id: template?.id || quiz.templateId,
               name: template?.name || "Unknown Template",

@@ -206,7 +206,10 @@ export interface QuizResponse {
   publicUrl: string | null;
   qrCodeUrl: string | null;
   responseCount?: number;
-  hasBeenSent?: boolean; // Indique si le quiz a été envoyé aux étudiants (au moins un email envoyé)
+  hasBeenSent?: boolean;
+  totalStudents?: number;
+  newStudentsCount?: number;
+  toRemindCount?: number;
   template: {
     id: string;
     name: string;
@@ -298,6 +301,7 @@ export interface RemindQuizToStudentsInput {
 
 export interface RemindQuizToStudentsOutput {
   remindedCount: number;
+  newStudentsSentCount: number;
   alreadyRespondedCount: number;
   message?: string;
 }

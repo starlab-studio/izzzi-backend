@@ -17,6 +17,8 @@ import { IClassStudentRepository } from "src/modules/class/domain/repositories/c
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { CreateEmailNotificationUseCase } from "src/modules/notification/application/use-cases/create-email-notification.use-case";
 import { GeneralUtils } from "src/utils/general.utils";
+import { StudentQuizTokenEntity } from "../../domain/entities/student-quiz-token.entity";
+import { randomBytes } from "crypto";
 
 export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -64,35 +66,80 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
         data.quizId,
       );
 
-      if (allTokens.length === 0) {
-        // No tokens created yet - quiz hasn't been sent to students
+      const students = await this.classStudentRepository.findByClassAndActive(
+        activeAssignment.classId,
+        true,
+      );
+      const studentMap = new Map(students.map((s) => [s.id, s]));
+      const tokenStudentIds = new Set(allTokens.map((t) => t.classStudentId));
+
+      const newStudents = students.filter((s) => !tokenStudentIds.has(s.id));
+
+      if (allTokens.length === 0 && newStudents.length === 0) {
         return {
           remindedCount: 0,
+          newStudentsSentCount: 0,
           alreadyRespondedCount: 0,
           message: "Aucun étudiant n'a encore reçu ce questionnaire. Veuillez d'abord l'envoyer aux étudiants.",
         };
       }
 
       const respondedCount = allTokens.filter((t) => t.hasResponded).length;
-      
-      if (tokens.length === 0) {
-        // All students have already responded
+      const tokensToRemind = await this.studentQuizTokenRepository.findByQuizAndNotResponded(
+        data.quizId,
+      );
+
+      if (tokensToRemind.length === 0 && newStudents.length === 0) {
         return {
           remindedCount: 0,
+          newStudentsSentCount: 0,
           alreadyRespondedCount: respondedCount,
           message: "Tous les étudiants ont déjà répondu à ce questionnaire.",
         };
       }
 
-      const students = await this.classStudentRepository.findByClassAndActive(
-        activeAssignment.classId,
-        true,
-      );
-      const studentMap = new Map(students.map((s) => [s.id, s]));
-
+      let newStudentsSentCount = 0;
       let remindedCount = 0;
 
-      for (const token of tokens) {
+      for (const student of newStudents) {
+        const token = this.generateToken();
+        const tokenEntity = StudentQuizTokenEntity.create({
+          quizId: data.quizId,
+          classStudentId: student.id,
+          token,
+        });
+        tokenEntity.markEmailSent();
+        await this.studentQuizTokenRepository.create(tokenEntity);
+
+        const studentUrl = quiz.publicUrl
+          ? `${quiz.publicUrl}?token=${token}`
+          : null;
+
+        if (studentUrl) {
+          try {
+            const quizTypeLabel = quiz.type === "during_course" 
+              ? "Pendant le cours" 
+              : "Fin du cours";
+            
+            const template = GeneralUtils.htmlTemplateReader("quiz-send.html", {
+              subjectName: subject.name,
+              quizUrl: studentUrl,
+              quizType: quizTypeLabel,
+            });
+            
+            await this.createEmailNotificationUseCase.execute({
+              target: student.email,
+              subject: `Questionnaire de retour - ${subject.name}`,
+              template,
+            });
+            newStudentsSentCount++;
+          } catch (error) {
+            this.logger.error(`Failed to send email to new student ${student.email}:`, error);
+          }
+        }
+      }
+
+      for (const token of tokensToRemind) {
         const student = studentMap.get(token.classStudentId);
         if (!student) continue;
 
@@ -131,11 +178,16 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
 
       return {
         remindedCount,
+        newStudentsSentCount,
         alreadyRespondedCount,
       };
     } catch (error) {
       this.handleError(error);
     }
+  }
+
+  private generateToken(): string {
+    return randomBytes(32).toString("hex");
   }
 
   async withCompensation(): Promise<void> {}

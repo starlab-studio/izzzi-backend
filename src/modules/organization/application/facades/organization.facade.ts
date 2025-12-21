@@ -79,6 +79,23 @@ export class OrganizationFacade {
     }
   }
 
+  async validateUserBelongsToOrganization(
+    userId: string,
+    organizationId: string
+  ): Promise<void> {
+    const user = await this.userRepository.findByIdWithActiveMemberships(userId);
+    if (!user) {
+      throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+    }
+
+    if (!user.belongsToOrganization(organizationId)) {
+      throw new DomainError(
+        ErrorCode.USER_HAS_NO_ORGANIZATION,
+        "User is not a member of this organization"
+      );
+    }
+  }
+
   async getOneOrganization(
     organizationId: string,
     userId: string

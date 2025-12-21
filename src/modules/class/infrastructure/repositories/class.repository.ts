@@ -70,6 +70,13 @@ export class ClassRepository
     return results.map((result) => ClassEntity.reconstitute(result));
   }
 
+  async findByOrganizationAndStatus(organizationId: string, status: "active" | "archived"): Promise<ClassEntity[]> {
+    const results = await this.directRepository.find({
+      where: { organizationId, status },
+    });
+    return results.map((result) => ClassEntity.reconstitute(result));
+  }
+
   async findByUser(userId: string): Promise<ClassEntity[]> {
     const results = await this.directRepository.find({
       where: { userId },
@@ -83,13 +90,12 @@ export class ClassRepository
   }
 
   async update(id: string, entity: Partial<IClass>): Promise<ClassEntity> {
-    const repository = this.getTypeOrmRepository();
     const entityData = {
       ...entity,
       createdAt: entity.createdAt ?? undefined,
       updatedAt: entity.updatedAt ?? undefined,
     };
-    await repository.update(id, entityData);
+    await this.directRepository.update(id, entityData);
     const updated = await this.findById(id);
     if (!updated) {
       throw new Error(`Class with id ${id} not found after update`);
@@ -98,19 +104,17 @@ export class ClassRepository
   }
 
   async delete(id: string): Promise<void> {
-    const repository = this.getTypeOrmRepository();
-    await repository.delete(id);
+    await this.directRepository.delete(id);
   }
 
   async save(entity: ClassEntity): Promise<ClassEntity> {
-    const repository = this.getTypeOrmRepository();
     const persistenceData = entity.toPersistence();
     const entityData = {
       ...persistenceData,
       createdAt: persistenceData.createdAt ?? undefined,
       updatedAt: persistenceData.updatedAt ?? undefined,
     };
-    const saved = await repository.save(entityData);
+    const saved = await this.directRepository.save(entityData);
     return ClassEntity.reconstitute(saved);
   }
 }

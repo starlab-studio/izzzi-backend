@@ -11,8 +11,10 @@ import {
 } from "src/core";
 
 import { ClassEntity } from "../../domain/entities/class.entity";
-import { IClass, IClassCreate } from "../../domain/types";
+import { ClassStudentEntity } from "../../domain/entities/class-student.entity";
+import { IClass, CreateClassInput } from "../../domain/types";
 import { IClassRepository } from "../../domain/repositories/class.repository";
+import { IClassStudentRepository } from "../../domain/repositories/class-student.repository";
 import { GeneralUtils } from "src/utils/general.utils";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { ClassCreatedEvent } from "../../domain/events/classCreated.event";
@@ -21,13 +23,14 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly classRepository: IClassRepository,
+    private readonly classStudentRepository: IClassStudentRepository,
     private readonly organizationFacade: OrganizationFacade,
     private readonly eventStore: IEventStore,
   ) {
     super(logger);
   }
 
-  async execute(data: IClassCreate & { userEmail: string }): Promise<IClass> {
+  async execute(data: CreateClassInput): Promise<IClass> {
     try {
       await this.organizationFacade.validateUserCanCreateClass(
         data.userId,
@@ -68,6 +71,15 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
           "Failed to create class. Please try again later.",
         );
+      }
+
+      for (const email of validatedEmails) {
+        const studentEntity = ClassStudentEntity.create({
+          classId: createdClass.id,
+          email,
+          isActive: true,
+        });
+        await this.classStudentRepository.create(studentEntity);
       }
 
       this.eventStore.publish(

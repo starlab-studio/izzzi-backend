@@ -46,6 +46,7 @@ import { PasswordResetTokenModel } from "./infrastructure/models/passwordResetTo
 import { PasswordResetTokenRepository } from "./infrastructure/repositories/passwordResetToken.repository";
 import { ForgotPasswordUseCase } from "./application/use-cases/ForgotPassword.use-case";
 import { ResetPasswordUseCase } from "./application/use-cases/ResetPassword.use-case";
+import { ChangePasswordUseCase } from "./application/use-cases/ChangePassword.use-case";
 import { IPasswordResetTokenRepository } from "./domain/repositories/passwordResetToken.repository";
 
 @Module({
@@ -205,6 +206,12 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
     },
     {
+      provide: ChangePasswordUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new ChangePasswordUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
       provide: AuthFacade,
       useFactory: (
         authService: AuthService,
@@ -213,7 +220,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         confirmSignUpUseCase: ConfirmSignUpUseCase,
         refreshAccessTokenUseCase: RefreshAccessTokenUseCase,
         forgotPasswordUseCase: ForgotPasswordUseCase,
-        resetPasswordUseCase: ResetPasswordUseCase
+        resetPasswordUseCase: ResetPasswordUseCase,
+        changePasswordUseCase: ChangePasswordUseCase
       ) =>
         new AuthFacade(
           authService,
@@ -222,7 +230,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
           confirmSignUpUseCase,
           refreshAccessTokenUseCase,
           forgotPasswordUseCase,
-          resetPasswordUseCase
+          resetPasswordUseCase,
+          changePasswordUseCase
         ),
       inject: [
         AuthService,
@@ -232,6 +241,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         RefreshAccessTokenUseCase,
         ForgotPasswordUseCase,
         ResetPasswordUseCase,
+        ChangePasswordUseCase,
       ],
     },
     {

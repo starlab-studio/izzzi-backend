@@ -67,7 +67,8 @@ export interface IAuthStrategy {
   confirmForgotPassword(data: ResetPasswordData): Promise<void>;
 
   changePassword(data: {
-    accessToken: string;
+    userId: string;
+    username: string;
     oldPassword: string;
     newPassword: string;
   }): Promise<void>;

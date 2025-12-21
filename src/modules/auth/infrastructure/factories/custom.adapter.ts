@@ -126,7 +126,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
 
       // TODO: Remove hardcoded max try value
       throw new DomainError(
-        ErrorCode.INVALID_AUTH_DATA,
+        ErrorCode.INCORRECT_PASSWORD,
         `Invalid email or password. ${5 - authIdentityEntity.failedLoginAttempts} attempts remaining.`
       );
     }
@@ -290,15 +290,27 @@ export class CustomAuthAdapter implements IAuthStrategy {
 
     if (!passwordResetTokenEntity) {
       throw new DomainError(
-        ErrorCode.INVALID_VERIFICATION_TOKEN,
+        ErrorCode.INVALID_PASSWORD_RESET_TOKEN,
         "Invalid reset token"
       );
     }
 
     if (!passwordResetTokenEntity.isValid()) {
+      if (passwordResetTokenEntity.isUsed) {
+        throw new DomainError(
+          ErrorCode.PASSWORD_RESET_TOKEN_ALREADY_USED,
+          "Reset token has already been used"
+        );
+      }
+      if (passwordResetTokenEntity.isExpired()) {
+        throw new DomainError(
+          ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED,
+          "Reset token has expired"
+        );
+      }
       throw new DomainError(
-        ErrorCode.VERIFICATION_TOKEN_EXPIRED,
-        "Reset token has expired or has already been used"
+        ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED,
+        "Reset token is invalid"
       );
     }
 
@@ -312,7 +324,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
 
     if (authIdentityEntity.userId !== passwordResetTokenEntity.userId) {
       throw new DomainError(
-        ErrorCode.INVALID_VERIFICATION_TOKEN,
+        ErrorCode.PASSWORD_RESET_TOKEN_USER_MISMATCH,
         "Token user mismatch"
       );
     }
@@ -330,11 +342,59 @@ export class CustomAuthAdapter implements IAuthStrategy {
   }
 
   async changePassword(data: {
-    accessToken: string;
+    userId: string;
+    username: string;
     oldPassword: string;
     newPassword: string;
   }): Promise<void> {
-    // TODO : Implement logic to change user password
+    const authIdentityEntity =
+      await this.authIdentityRepository.findByProviderAndUsername(
+        this.name,
+        data.username
+      );
+
+    if (!authIdentityEntity) {
+      throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+    }
+
+    if (authIdentityEntity.userId !== data.userId) {
+      throw new DomainError(ErrorCode.USER_ID_MISMATCH, "User ID mismatch");
+    }
+
+    if (!authIdentityEntity.canChangePassword(this.name)) {
+      throw new DomainError(
+        ErrorCode.PASSWORD_CHANGE_NOT_ALLOWED,
+        "Password change not allowed for this provider"
+      );
+    }
+
+    if (!authIdentityEntity.password) {
+      throw new DomainError(
+        ErrorCode.NO_PASSWORD_SET,
+        "No password set for this account"
+      );
+    }
+
+    const oldPasswordVO = Password.fromHash(authIdentityEntity.password);
+    const isOldPasswordValid = await oldPasswordVO.compare(data.oldPassword);
+
+    if (!isOldPasswordValid) {
+      throw new DomainError(
+        ErrorCode.INCORRECT_CURRENT_PASSWORD,
+        "Current password is incorrect"
+      );
+    }
+
+    const newPasswordVO = await Password.create(data.newPassword);
+
+    authIdentityEntity.changePassword(newPasswordVO.value);
+    await this.authIdentityRepository.save(authIdentityEntity);
+
+    if (authIdentityEntity.userId) {
+      await this.refreshTokenRepository.revokeAllByUserId(
+        authIdentityEntity.userId
+      );
+    }
   }
 
   async deleteIdentity(username: string): Promise<void> {
@@ -349,21 +409,21 @@ export class CustomAuthAdapter implements IAuthStrategy {
 
     if (!refreshTokenEntity) {
       throw new DomainError(
-        ErrorCode.INVALID_AUTH_DATA,
+        ErrorCode.INVALID_REFRESH_TOKEN,
         "Invalid refresh token"
       );
     }
 
     if (!refreshTokenEntity.isValid()) {
       throw new DomainError(
-        ErrorCode.INVALID_AUTH_DATA,
+        ErrorCode.REFRESH_TOKEN_EXPIRED_OR_REVOKED,
         "Refresh token is expired or revoked"
       );
     }
 
     if (data.deviceInfo && !refreshTokenEntity.matchesDevice(data.deviceInfo)) {
       throw new DomainError(
-        ErrorCode.INVALID_AUTH_DATA,
+        ErrorCode.DEVICE_MISMATCH,
         "Device mismatch detected"
       );
     }

@@ -13,6 +13,10 @@ import { ConfirmSignUpUseCase } from "../use-cases/ConfirmSignUp.use-case";
 import { RefreshAccessTokenUseCase } from "../use-cases/RefreshAccessToken.use-case";
 import { ForgotPasswordUseCase } from "../use-cases/ForgotPassword.use-case";
 import { ResetPasswordUseCase } from "../use-cases/ResetPassword.use-case";
+import {
+  ChangePasswordUseCase,
+  ChangePasswordData,
+} from "../use-cases/ChangePassword.use-case";
 
 export class AuthFacade {
   constructor(
@@ -22,7 +26,8 @@ export class AuthFacade {
     private readonly confirmSignUpUseCase: ConfirmSignUpUseCase,
     private readonly refreshAccessTokenUseCase: RefreshAccessTokenUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
-    private readonly resetPasswordUseCase: ResetPasswordUseCase
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly changePasswordUseCase: ChangePasswordUseCase
   ) {}
 
   async signUp(data: SignUpData) {
@@ -70,6 +75,14 @@ export class AuthFacade {
   async resetPassword(data: ResetPasswordData) {
     try {
       return await this.resetPasswordUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async changePassword(data: ChangePasswordData) {
+    try {
+      return await this.changePasswordUseCase.execute(data);
     } catch (error) {
       throw error;
     }

@@ -3,7 +3,8 @@ import { ApiTags, ApiResponse, ApiOperation, ApiBody } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
 import { Controller, Post, Body, Res, Req, UseGuards } from "@nestjs/common";
 
-import { BaseController } from "src/core";
+import { BaseController, AuthGuard, CurrentUser } from "src/core";
+import type { JWTPayload } from "src/core";
 import { AuthFacade } from "../../application/facades/auth.facade";
 import {
   SignInDto,
@@ -11,6 +12,7 @@ import {
   RefreshTokenDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  ChangePasswordDto,
 } from "../dto/auth.dto";
 import { ConfirmEmailDto } from "../dto/verification.dto";
 import { RefreshTokenGuard } from "src/core/interfaces/guards/refreshToken.guard";
@@ -166,6 +168,38 @@ export class AuthController extends BaseController {
     await this.authFacade.resetPassword(dto);
     return this.success({
       message: "Password has been reset successfully",
+    });
+  }
+
+  @Post("password/change")
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: "Change password",
+    description:
+      "Change password for authenticated user. Requires current password and new password.",
+  })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: "Password changed successfully",
+  })
+  @ApiResponse({ status: 400, description: "Invalid password" })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized or invalid current password",
+  })
+  async changePassword(
+    @Body() dto: ChangePasswordDto,
+    @CurrentUser() user: JWTPayload
+  ) {
+    await this.authFacade.changePassword({
+      userId: user.userId,
+      username: user.username,
+      oldPassword: dto.oldPassword,
+      newPassword: dto.newPassword,
+    });
+    return this.success({
+      message: "Password has been changed successfully",
     });
   }
 }

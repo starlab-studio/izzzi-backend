@@ -52,3 +52,47 @@ export class CreateClassDto
   @Transform(({ value }: { value: string | undefined }) => value ?? null)
   description: string | null;
 }
+
+export class UpdateClassDto {
+  @ApiProperty({
+    description: "Nom de la classe",
+    example: "Terminale S1",
+    required: false,
+  })
+  @IsString({ message: "Class name must be a string" })
+  @IsOptional()
+  @MinLength(1, { message: "Class name must contain at least 1 character" })
+  name?: string;
+
+  @ApiProperty({
+    description: "Nombre d'étudiants",
+    example: 25,
+    required: false,
+  })
+  @IsInt({ message: "Number of students must be an integer" })
+  @Min(1, { message: "Number of students must be greater than 0" })
+  @IsOptional()
+  numberOfStudents?: number;
+
+  @ApiProperty({
+    description:
+      "Adresses email des étudiants (séparées par des point-virgules)",
+    example:
+      "etudiant1@example.com;etudiant2@example.com;etudiant3@example.com",
+    required: false,
+  })
+  @IsString({ message: "Student emails must be a string" })
+  @IsOptional()
+  studentEmails?: string;
+
+  @ApiProperty({
+    description: "Description de la classe",
+    example: "Classe de Terminale S spécialité Mathématiques",
+    required: false,
+    nullable: true,
+  })
+  @IsString({ message: "Description must be a string" })
+  @IsOptional()
+  @Transform(({ value }: { value: string | undefined }) => value ?? null)
+  description?: string | null;
+}

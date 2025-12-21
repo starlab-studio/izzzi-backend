@@ -7,6 +7,10 @@ import { AuthModule } from "./modules/auth";
 import { OrganizationModule } from "./modules/organization";
 import { NotificationModule } from "./modules/notification";
 import { ClassModule } from "./modules/class";
+import { SubjectModule } from "./modules/subject";
+import { QuizModule } from "./modules/quiz/quiz.module";
+import { SubscriptionModule } from "./modules/subscription/subscription.module";
+
 import AppConfig from "./core/interfaces/config.global";
 
 @Module({
@@ -37,6 +41,9 @@ import AppConfig from "./core/interfaces/config.global";
     OrganizationModule,
     NotificationModule,
     ClassModule,
+    SubjectModule,
+    QuizModule,
+    SubscriptionModule,
   ],
 })
 export class AppModule {}

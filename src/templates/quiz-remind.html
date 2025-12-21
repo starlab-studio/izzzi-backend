@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rappel - Questionnaire de retour</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .container {
+        background-color: #f4f4f4;
+        padding: 30px;
+        border-radius: 8px;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .content {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .button {
+        display: inline-block;
+        padding: 12px 30px;
+        background-color: #9c71f0;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 5px;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+      .button:hover {
+        background-color: #7d5bc7;
+      }
+      .footer {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+      }
+      .quiz-info {
+        background-color: #fff3cd;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+        border-left: 4px solid #ffc107;
+      }
+      .reminder-note {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+        font-size: 14px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 style="color: #9c71f0; margin: 0;">IZZZI</h1>
+      </div>
+      <div class="content">
+        <p style="margin: 0 0 20px 0;">
+          Bonjour,
+        </p>
+        <p style="margin: 0 0 20px 0;">
+          Ceci est un rappel pour répondre au questionnaire de retour pour la matière <strong>"{{subjectName}}"</strong>.
+        </p>
+        <div class="reminder-note">
+          <p style="margin: 0;">
+            ⏰ <strong>N'oubliez pas !</strong> Votre avis est précieux et nous aide à améliorer la qualité de l'enseignement.
+          </p>
+        </div>
+        {{#if quizType}}
+        <div class="quiz-info">
+          <p style="margin: 0; font-size: 14px; color: #666;">
+            <strong>Type de questionnaire :</strong> {{quizType}}
+          </p>
+        </div>
+        {{/if}}
+        <p style="margin: 0 0 20px 0;">
+          Il ne vous prendra que quelques minutes à compléter.
+        </p>
+        <div style="text-align: center;">
+          <a href="{{quizUrl}}" class="button" target="_blank" rel="noopener noreferrer">
+            Accéder au questionnaire
+          </a>
+        </div>
+        <p style="margin: 20px 0 0 0; font-size: 14px; color: #666;">
+          Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :
+        </p>
+        <p style="margin: 10px 0 0 0; font-size: 12px; color: #9c71f0; word-break: break-all;">
+          {{quizUrl}}
+        </p>
+      </div>
+      <div class="footer">
+        <p style="margin: 0;">L'équipe Izzzi</p>
+      </div>
+    </div>
+  </body>
+</html>
+

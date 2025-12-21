@@ -255,37 +255,12 @@ export class CognitoAdapter implements IAuthStrategy {
   }
 
   async confirmForgotPassword(data: {
-    email: string;
-    code: string;
+    token: string;
     newPassword: string;
   }): Promise<void> {
-    const command = new ConfirmForgotPasswordCommand({
-      ClientId: this.clientId,
-      Username: data.email,
-      ConfirmationCode: data.code,
-      Password: data.newPassword,
-      SecretHash: this.getSecretHash(data.email),
-    });
-
-    try {
-      await this.cognito.send(command);
-    } catch (error) {
-      if (error instanceof CodeMismatchException) {
-        throw new DomainError(
-          ErrorCode.INVALID_AUTH_DATA,
-          "Invalid reset code"
-        );
-      }
-
-      if (error instanceof ExpiredCodeException) {
-        throw new DomainError(
-          ErrorCode.INVALID_AUTH_DATA,
-          "Reset code has expired"
-        );
-      }
-
-      throw error;
-    }
+    // TODO: Implement Cognito password reset with token
+    // For now, this is a placeholder that matches the interface
+    throw new Error("Cognito password reset not yet implemented");
   }
 
   async changePassword(data: {

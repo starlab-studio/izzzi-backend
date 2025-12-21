@@ -38,12 +38,12 @@ import { InvitationSentEventHandler } from "./application/handlers/invitation-se
       useFactory: (
         notificationDomainService: NotificationDomainService,
         notificationRepository: INotificationRespository,
-        notificationProvider: INotificationProvider,
+        notificationProvider: INotificationProvider
       ) =>
         new CreateEmailNotificationUseCase(
           notificationDomainService,
           notificationRepository,
-          notificationProvider,
+          notificationProvider
         ),
       inject: [
         NotificationDomainService,
@@ -55,7 +55,7 @@ import { InvitationSentEventHandler } from "./application/handlers/invitation-se
       provide: UserCreatedEventHandler,
       useFactory: (
         logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
       ) => new UserCreatedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
@@ -72,11 +72,12 @@ import { InvitationSentEventHandler } from "./application/handlers/invitation-se
       provide: ClassCreatedEventHandler,
       useFactory: (
         logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
       ) => new ClassCreatedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
   ],
+  exports: [CreateEmailNotificationUseCase],
 })
 export class NotificationModule {
   constructor(
@@ -84,13 +85,13 @@ export class NotificationModule {
     private readonly userCreatedEventHandler: UserCreatedEventHandler,
     private readonly invitationSentEventHandler: InvitationSentEventHandler,
     private readonly emailNotificationProvider: EmailProvider,
-    private readonly classCreatedEventHandler: ClassCreatedEventHandler,
+    private readonly classCreatedEventHandler: ClassCreatedEventHandler
   ) {}
 
   async onModuleInit() {
     NotificationProviderFactory.register(
       NotificationMode.EMAIL,
-      this.emailNotificationProvider,
+      this.emailNotificationProvider
     );
 
     this.eventHandlerRegistry.registerHandler(
@@ -105,7 +106,7 @@ export class NotificationModule {
 
     this.eventHandlerRegistry.registerHandler(
       "class.created",
-      this.classCreatedEventHandler,
+      this.classCreatedEventHandler
     );
   }
 }

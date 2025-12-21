@@ -5,7 +5,13 @@ import { Controller, Post, Body, Res, Req, UseGuards } from "@nestjs/common";
 
 import { BaseController } from "src/core";
 import { AuthFacade } from "../../application/facades/auth.facade";
-import { SignInDto, SignUpDto, RefreshTokenDto } from "../dto/auth.dto";
+import {
+  SignInDto,
+  SignUpDto,
+  RefreshTokenDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from "../dto/auth.dto";
 import { ConfirmEmailDto } from "../dto/verification.dto";
 import { RefreshTokenGuard } from "src/core/interfaces/guards/refreshToken.guard";
 import { RefreshToken } from "src/core/interfaces/decorators/refreshToken.decorator";
@@ -122,5 +128,44 @@ export class AuthController extends BaseController {
   async confirmEmail(@Body() dto: ConfirmEmailDto) {
     const result = await this.authFacade.confirmEmail(dto);
     return this.success(result);
+  }
+
+  @Post("password/forgot")
+  @ApiOperation({
+    summary: "Request password reset",
+    description: "Send a password reset link to the user's email address",
+  })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description:
+      "Password reset email sent successfully (always returns success for security)",
+  })
+  @ApiResponse({ status: 400, description: "Invalid email address" })
+  async forgotPassword(@Body() dto: ForgotPasswordDto, @Req() req: Request) {
+    await this.authFacade.forgotPassword(dto);
+    return this.success({
+      message:
+        "If an account with that email exists, a password reset link has been sent.",
+    });
+  }
+
+  @Post("password/reset")
+  @ApiOperation({
+    summary: "Reset password",
+    description: "Reset password using the token received via email",
+  })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: "Password reset successfully",
+  })
+  @ApiResponse({ status: 400, description: "Invalid token or password" })
+  @ApiResponse({ status: 401, description: "Token expired or already used" })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authFacade.resetPassword(dto);
+    return this.success({
+      message: "Password has been reset successfully",
+    });
   }
 }

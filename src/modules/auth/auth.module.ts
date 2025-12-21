@@ -14,6 +14,8 @@ import {
 import { CoreModule } from "src/core/core.module";
 import { OrganizationModule } from "../organization";
 import { OrganizationFacade } from "../organization/application/facades/organization.facade";
+import { NotificationModule } from "../notification";
+import { CreateEmailNotificationUseCase } from "../notification/application/use-cases/create-email-notification.use-case";
 import {
   AUTH_STRATEGY_TOKEN,
   AuthIdentityName,
@@ -40,6 +42,11 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
 import { RefreshTokenModel } from "./infrastructure/models/refreshToken.model";
 import { RefreshTokenRepository } from "./infrastructure/repositories/refreshToken.repository";
 import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccessToken.use-case";
+import { PasswordResetTokenModel } from "./infrastructure/models/passwordResetToken.model";
+import { PasswordResetTokenRepository } from "./infrastructure/repositories/passwordResetToken.repository";
+import { ForgotPasswordUseCase } from "./application/use-cases/ForgotPassword.use-case";
+import { ResetPasswordUseCase } from "./application/use-cases/ResetPassword.use-case";
+import { IPasswordResetTokenRepository } from "./domain/repositories/passwordResetToken.repository";
 
 @Module({
   imports: [
@@ -48,9 +55,11 @@ import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccess
       AuthIdentityModel,
       VerificationTokenModel,
       RefreshTokenModel,
+      PasswordResetTokenModel,
     ]),
     CoreModule,
     OrganizationModule,
+    NotificationModule,
     JwtModule.registerAsync({
       global: true,
       useFactory: (configService: ConfigService) => ({
@@ -68,6 +77,7 @@ import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccess
     AuthIdentityRepository,
     VerificationTokenRepository,
     RefreshTokenRepository,
+    PasswordResetTokenRepository,
     AuthIdentityFactory,
     AuthIdentityUniquenessService,
     {
@@ -106,7 +116,9 @@ import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccess
         authIdentityRepository: IAuthIdentityRepository,
         organizationFacade: OrganizationFacade,
         verificationTokenRepository: VerificationTokenRepository,
-        refreshTokenRepository: RefreshTokenRepository
+        refreshTokenRepository: RefreshTokenRepository,
+        passwordResetTokenRepository: IPasswordResetTokenRepository,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
       ) =>
         new CustomAuthAdapter(
           configService,
@@ -115,7 +127,9 @@ import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccess
           authIdentityRepository,
           organizationFacade,
           verificationTokenRepository,
-          refreshTokenRepository
+          refreshTokenRepository,
+          passwordResetTokenRepository,
+          createEmailNotificationUseCase
         ),
       inject: [
         ConfigService,
@@ -125,6 +139,8 @@ import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccess
         OrganizationFacade,
         VerificationTokenRepository,
         RefreshTokenRepository,
+        PasswordResetTokenRepository,
+        CreateEmailNotificationUseCase,
       ],
     },
     {
@@ -177,20 +193,36 @@ import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccess
       inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
     },
     {
+      provide: ForgotPasswordUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new ForgotPasswordUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
+      provide: ResetPasswordUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new ResetPasswordUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
       provide: AuthFacade,
       useFactory: (
         authService: AuthService,
         signInUseCase: SignInUseCase,
         organizationFacade: OrganizationFacade,
         confirmSignUpUseCase: ConfirmSignUpUseCase,
-        refreshAccessTokenUseCase: RefreshAccessTokenUseCase
+        refreshAccessTokenUseCase: RefreshAccessTokenUseCase,
+        forgotPasswordUseCase: ForgotPasswordUseCase,
+        resetPasswordUseCase: ResetPasswordUseCase
       ) =>
         new AuthFacade(
           authService,
           signInUseCase,
           organizationFacade,
           confirmSignUpUseCase,
-          refreshAccessTokenUseCase
+          refreshAccessTokenUseCase,
+          forgotPasswordUseCase,
+          resetPasswordUseCase
         ),
       inject: [
         AuthService,
@@ -198,6 +230,8 @@ import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccess
         OrganizationFacade,
         ConfirmSignUpUseCase,
         RefreshAccessTokenUseCase,
+        ForgotPasswordUseCase,
+        ResetPasswordUseCase,
       ],
     },
     {

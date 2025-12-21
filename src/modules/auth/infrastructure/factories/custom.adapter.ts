@@ -10,6 +10,8 @@ import {
   SignUpData,
   SignUpResponse,
   RefreshTokenData,
+  ForgotPasswordData,
+  ResetPasswordData,
 } from "../../domain/types";
 
 import { DateUtils } from "src/utils/date.utils";
@@ -26,6 +28,9 @@ import { VerificationTokenEntity } from "../../domain/entities/verificationToken
 import { AuthIdentityUniquenessService } from "../../domain/services/authIdentity-uniqueness.service";
 import { RefreshToken } from "../../domain/entities/refreshToken.entity";
 import type { IRefreshTokenRepository } from "../../domain/repositories/refreshToken.repository";
+import { PasswordResetToken } from "../../domain/entities/passwordResetToken.entity";
+import type { IPasswordResetTokenRepository } from "../../domain/repositories/passwordResetToken.repository";
+import { CreateEmailNotificationUseCase } from "src/modules/notification/application/use-cases/create-email-notification.use-case";
 
 @Injectable()
 export class CustomAuthAdapter implements IAuthStrategy {
@@ -38,7 +43,9 @@ export class CustomAuthAdapter implements IAuthStrategy {
     private readonly authIdentityRepository: IAuthIdentityRepository,
     private readonly organizationFacade: OrganizationFacade,
     private readonly verificationTokenRepository: IVerificationTokenRepository,
-    private readonly refreshTokenRepository: IRefreshTokenRepository
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
+    private readonly passwordResetTokenRepository: IPasswordResetTokenRepository,
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
   ) {}
 
   async signUp(data: SignUpData): Promise<SignUpResponse> {
@@ -229,16 +236,97 @@ export class CustomAuthAdapter implements IAuthStrategy {
     // ormVerificationToken.token to ormVerificationToken.email
   }
 
-  async forgotPassword(data: { email: string }): Promise<void> {
-    // TODO : Implement forgotPassword logic
+  async forgotPassword(data: ForgotPasswordData): Promise<void> {
+    const emailVO = Email.create(data.email);
+    const email = emailVO.value;
+
+    const authIdentityEntity =
+      await this.authIdentityRepository.findByUsername(email);
+
+    if (!authIdentityEntity || !authIdentityEntity.isEmailVerified) {
+      return;
+    }
+
+    const existingToken =
+      await this.passwordResetTokenRepository.findByEmailAndNotUsed(email);
+    if (existingToken) {
+      await this.passwordResetTokenRepository.delete(existingToken.id);
+    }
+
+    const resetToken = GeneralUtils.generateToken(48);
+    const resetTokenHash = GeneralUtils.hashToken(resetToken);
+    const expiresAt = DateUtils.addHours(new Date(), 1);
+
+    const passwordResetTokenEntity = PasswordResetToken.create(
+      resetTokenHash,
+      authIdentityEntity.userId!,
+      email,
+      expiresAt
+    );
+
+    await this.passwordResetTokenRepository.save(passwordResetTokenEntity);
+
+    const frontendUrl = this.configService.get<string>("frontend.url") || "";
+    const resetLink = `${frontendUrl}/auth/reset-password?token=${resetToken}`;
+
+    const template = GeneralUtils.htmlTemplateReader("password-reset.html", {
+      resetLink,
+      email,
+    });
+
+    await this.createEmailNotificationUseCase.execute({
+      subject: "Réinitialisation de votre mot de passe",
+      template,
+      target: email,
+    });
   }
 
-  async confirmForgotPassword(data: {
-    email: string;
-    code: string;
-    newPassword: string;
-  }): Promise<void> {
-    //  TODO : Implement confirmForgotPassword logic
+  async confirmForgotPassword(data: ResetPasswordData): Promise<void> {
+    const { token, newPassword } = data;
+
+    const tokenHash = GeneralUtils.hashToken(token);
+    const passwordResetTokenEntity =
+      await this.passwordResetTokenRepository.findByTokenHash(tokenHash);
+
+    if (!passwordResetTokenEntity) {
+      throw new DomainError(
+        ErrorCode.INVALID_VERIFICATION_TOKEN,
+        "Invalid reset token"
+      );
+    }
+
+    if (!passwordResetTokenEntity.isValid()) {
+      throw new DomainError(
+        ErrorCode.VERIFICATION_TOKEN_EXPIRED,
+        "Reset token has expired or has already been used"
+      );
+    }
+
+    const authIdentityEntity = await this.authIdentityRepository.findByUsername(
+      passwordResetTokenEntity.email
+    );
+
+    if (!authIdentityEntity) {
+      throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+    }
+
+    if (authIdentityEntity.userId !== passwordResetTokenEntity.userId) {
+      throw new DomainError(
+        ErrorCode.INVALID_VERIFICATION_TOKEN,
+        "Token user mismatch"
+      );
+    }
+
+    const passwordVO = await Password.create(newPassword);
+    authIdentityEntity.changePassword(passwordVO.value);
+    await this.authIdentityRepository.save(authIdentityEntity);
+
+    passwordResetTokenEntity.markAsUsed();
+    await this.passwordResetTokenRepository.save(passwordResetTokenEntity);
+
+    await this.refreshTokenRepository.revokeAllByUserId(
+      passwordResetTokenEntity.userId
+    );
   }
 
   async changePassword(data: {

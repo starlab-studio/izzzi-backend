@@ -16,6 +16,8 @@ export class RefreshToken {
     deviceInfo?: string,
     ipAddress?: string
   ): RefreshToken {
+    const now = new Date();
+
     const token = new RefreshToken({
       id: randomUUID(),
       tokenHash,
@@ -24,7 +26,8 @@ export class RefreshToken {
       ipAddress,
       isRevoked: false,
       expiresAt,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     });
 
     return token;
@@ -55,6 +58,7 @@ export class RefreshToken {
       ...this.props,
       isRevoked: true,
       revokedAt: new Date(),
+      updatedAt: new Date(),
     };
   }
 
@@ -76,6 +80,7 @@ export class RefreshToken {
     this.props = {
       ...this.props,
       lastUsedAt: new Date(),
+      updatedAt: new Date(),
     };
   }
 

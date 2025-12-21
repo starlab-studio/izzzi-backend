@@ -1,11 +1,4 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  Index,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from "typeorm";
+import { Entity, Column, PrimaryColumn, Index } from "typeorm";
 
 @Entity("refresh_tokens")
 export class RefreshTokenModel {
@@ -34,15 +27,15 @@ export class RefreshTokenModel {
   @Index("idx_refresh_token_expires_at")
   expiresAt: Date;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
   @Column("timestamp", { nullable: true })
   revokedAt?: Date;
 
   @Column("timestamp", { nullable: true })
   lastUsedAt?: Date;
 
-  @UpdateDateColumn()
+  @Column({ name: "created_at", type: "timestamp" })
+  createdAt: Date;
+
+  @Column({ name: "updated_at", type: "timestamp" })
   updatedAt: Date;
 }

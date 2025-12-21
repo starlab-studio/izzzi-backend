@@ -62,13 +62,9 @@ export interface IAuthStrategy {
 
   resendConfirmationCode(data: { email: string }): Promise<void>;
 
-  forgotPassword(data: { email: string }): Promise<void>;
+  forgotPassword(data: ForgotPasswordData): Promise<void>;
 
-  confirmForgotPassword(data: {
-    email: string;
-    code: string;
-    newPassword: string;
-  }): Promise<void>;
+  confirmForgotPassword(data: ResetPasswordData): Promise<void>;
 
   changePassword(data: {
     accessToken: string;
@@ -147,6 +143,7 @@ export interface IRefreshToken {
   readonly isRevoked: boolean;
   readonly expiresAt: Date;
   readonly createdAt: Date;
+  readonly updatedAt: Date;
   readonly revokedAt?: Date;
   readonly lastUsedAt?: Date;
 }
@@ -171,4 +168,25 @@ export type RefreshTokenData = {
   refreshToken: string;
   deviceInfo?: string;
   ipAddress?: string;
+};
+
+export interface IPasswordResetToken {
+  readonly id: string;
+  readonly userId: string;
+  readonly tokenHash: string;
+  readonly email: string;
+  readonly expiresAt: Date;
+  readonly isUsed: boolean;
+  readonly usedAt?: Date;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+export type ForgotPasswordData = {
+  email: string;
+};
+
+export type ResetPasswordData = {
+  token: string;
+  newPassword: string;
 };

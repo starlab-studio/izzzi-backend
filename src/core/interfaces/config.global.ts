@@ -32,4 +32,7 @@ export default () => ({
   nofitication: {
     email_provider: { key: process.env.BREVO_API_KEY },
   },
+  frontend: {
+    url: process.env.FRONTEND_DOMAIN_URL,
+  },
 });

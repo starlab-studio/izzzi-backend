@@ -77,6 +77,11 @@ export class InvitationRepository
     return this.toEntities(ormEntities);
   }
 
+  async findByToken(token: string): Promise<InvitationEntity | null> {
+    const ormEntity = await this.directRepository.findOneBy({ token });
+    return this.toEntity(ormEntity);
+  }
+
   async findAll(): Promise<InvitationEntity[]> {
     const ormEntities = await this.directRepository.find();
     return this.toEntities(ormEntities);

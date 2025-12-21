@@ -145,7 +145,8 @@ export type IInvitationSentEvent = IDomainEvent<InvitationSentPayload>;
 
 export type InvitationAcceptedPayload = {
   userId: string;
-  orgnaizationId: string;
+  organizationId: string;
   email: string;
+  firstName?: string; // Optional, present when user signs up from invitation
 };
 export type IInvitationAcceptedEvent = IDomainEvent<InvitationAcceptedPayload>;

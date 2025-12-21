@@ -32,6 +32,8 @@ import { InvitationModel } from "./infrastructure/models/invitation.model";
 import { InvitationAuthorizationService } from "./domain/services/invitation-authorization.service";
 import { IInvitationRepository } from "./domain/repositories/invitation.repository";
 import { SendInvitationUseCase } from "./application/use-cases/send-invitation.use-case";
+import { AcceptInvitationUseCase } from "./application/use-cases/accept-invitation.use-case";
+import { ValidateInvitationUseCase } from "./application/use-cases/validate-invitation.use-case";
 import { InvitationRepository } from "./infrastructure/repositories/invitation.repository";
 import { OrganizationController } from "./interface/controllers/organization.controller";
 import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-membership.use-case";
@@ -76,7 +78,7 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
       inject: [getRepositoryToken(OrganizationModel), TypeOrmUnitOfWork],
     },
     {
-      provide: MembershipRepository, 
+      provide: MembershipRepository,
       useFactory: (
         ormRepository: Repository<MembershipModel>,
         unitOfWork: IUnitOfWork
@@ -197,6 +199,44 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
       ],
     },
     {
+      provide: AcceptInvitationUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        eventStore: IEventStore,
+        invitationRepository: IInvitationRepository,
+        userRepository: IUserRepository,
+        membershipRepository: IMembershipRepository
+      ) =>
+        new AcceptInvitationUseCase(
+          logger,
+          eventStore,
+          invitationRepository,
+          userRepository,
+          membershipRepository
+        ),
+      inject: [
+        LoggerService,
+        EventStore,
+        InvitationRepository,
+        UserRepository,
+        MembershipRepository,
+      ],
+    },
+    {
+      provide: ValidateInvitationUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        invitationRepository: IInvitationRepository,
+        userRepository: IUserRepository
+      ) =>
+        new ValidateInvitationUseCase(
+          logger,
+          invitationRepository,
+          userRepository
+        ),
+      inject: [LoggerService, InvitationRepository, UserRepository],
+    },
+    {
       provide: OrganizationService,
       useFactory: (
         logger: ILoggerService,
@@ -231,7 +271,13 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         getUserMembershipsUseCase: GetUserMembershipsUseCase,
         userRepository: IUserRepository,
         getOrganizationUseCase: GetOrganizationUseCase,
-        sendUserInvitaionUsecase: SendInvitationUseCase
+        sendUserInvitaionUsecase: SendInvitationUseCase,
+        acceptInvitationUseCase: AcceptInvitationUseCase,
+        validateInvitationUseCase: ValidateInvitationUseCase,
+        invitationRepository: IInvitationRepository,
+        createUserUseCase: CreateUserUseCase,
+        addUserToOrganizationUseCase: AddUserToOrganizationUseCase,
+        unitOfWork: IUnitOfWork
       ) =>
         new OrganizationFacade(
           organizationService,
@@ -239,7 +285,13 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
           getUserMembershipsUseCase,
           userRepository,
           getOrganizationUseCase,
-          sendUserInvitaionUsecase
+          sendUserInvitaionUsecase,
+          acceptInvitationUseCase,
+          validateInvitationUseCase,
+          invitationRepository,
+          createUserUseCase,
+          addUserToOrganizationUseCase,
+          unitOfWork
         ),
       inject: [
         OrganizationService,
@@ -248,6 +300,12 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         UserRepository,
         GetOrganizationUseCase,
         SendInvitationUseCase,
+        AcceptInvitationUseCase,
+        ValidateInvitationUseCase,
+        InvitationRepository,
+        CreateUserUseCase,
+        AddUserToOrganizationUseCase,
+        TypeOrmUnitOfWork,
       ],
     },
     {

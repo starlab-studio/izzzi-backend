@@ -17,6 +17,10 @@ import {
   ChangePasswordUseCase,
   ChangePasswordData,
 } from "../use-cases/ChangePassword.use-case";
+import {
+  SignUpFromInvitationUseCase,
+  SignUpFromInvitationData,
+} from "../use-cases/SignUpFromInvitation.use-case";
 
 export class AuthFacade {
   constructor(
@@ -27,7 +31,8 @@ export class AuthFacade {
     private readonly refreshAccessTokenUseCase: RefreshAccessTokenUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
-    private readonly changePasswordUseCase: ChangePasswordUseCase
+    private readonly changePasswordUseCase: ChangePasswordUseCase,
+    private readonly signUpFromInvitationUseCase: SignUpFromInvitationUseCase
   ) {}
 
   async signUp(data: SignUpData) {
@@ -83,6 +88,14 @@ export class AuthFacade {
   async changePassword(data: ChangePasswordData) {
     try {
       return await this.changePasswordUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async signUpFromInvitation(data: SignUpFromInvitationData) {
+    try {
+      return await this.signUpFromInvitationUseCase.execute(data);
     } catch (error) {
       throw error;
     }

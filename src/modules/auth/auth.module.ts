@@ -47,6 +47,7 @@ import { PasswordResetTokenRepository } from "./infrastructure/repositories/pass
 import { ForgotPasswordUseCase } from "./application/use-cases/ForgotPassword.use-case";
 import { ResetPasswordUseCase } from "./application/use-cases/ResetPassword.use-case";
 import { ChangePasswordUseCase } from "./application/use-cases/ChangePassword.use-case";
+import { SignUpFromInvitationUseCase } from "./application/use-cases/SignUpFromInvitation.use-case";
 import { IPasswordResetTokenRepository } from "./domain/repositories/passwordResetToken.repository";
 
 @Module({
@@ -221,7 +222,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         refreshAccessTokenUseCase: RefreshAccessTokenUseCase,
         forgotPasswordUseCase: ForgotPasswordUseCase,
         resetPasswordUseCase: ResetPasswordUseCase,
-        changePasswordUseCase: ChangePasswordUseCase
+        changePasswordUseCase: ChangePasswordUseCase,
+        signUpFromInvitationUseCase: SignUpFromInvitationUseCase
       ) =>
         new AuthFacade(
           authService,
@@ -231,7 +233,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
           refreshAccessTokenUseCase,
           forgotPasswordUseCase,
           resetPasswordUseCase,
-          changePasswordUseCase
+          changePasswordUseCase,
+          signUpFromInvitationUseCase
         ),
       inject: [
         AuthService,
@@ -242,6 +245,31 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         ForgotPasswordUseCase,
         ResetPasswordUseCase,
         ChangePasswordUseCase,
+        SignUpFromInvitationUseCase,
+      ],
+    },
+    {
+      provide: SignUpFromInvitationUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        eventStore: IEventStore,
+        authProvider: IAuthStrategy,
+        authIdentityRepository: IAuthIdentityRepository,
+        organizationFacade: OrganizationFacade
+      ) =>
+        new SignUpFromInvitationUseCase(
+          logger,
+          eventStore,
+          authProvider,
+          authIdentityRepository,
+          organizationFacade
+        ),
+      inject: [
+        LoggerService,
+        EventStore,
+        "AUTH_IDENTITY_PROVIDER",
+        AuthIdentityRepository,
+        OrganizationFacade,
       ],
     },
     {

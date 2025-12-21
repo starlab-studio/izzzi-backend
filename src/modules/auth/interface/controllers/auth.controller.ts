@@ -18,7 +18,7 @@ import { ConfirmEmailDto } from "../dto/verification.dto";
 import { RefreshTokenGuard } from "src/core/interfaces/guards/refreshToken.guard";
 import { RefreshToken } from "src/core/interfaces/decorators/refreshToken.decorator";
 
-@ApiTags("auth")
+@ApiTags("Auth")
 @Controller("v1/auth")
 export class AuthController extends BaseController {
   constructor(

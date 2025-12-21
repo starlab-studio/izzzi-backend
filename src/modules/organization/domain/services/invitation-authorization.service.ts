@@ -1,4 +1,4 @@
-import { DomainError, ErrorCode, UserRole } from "src/core";
+import { DomainError, ErrorCode, UserRole, HTTP_STATUS } from "src/core";
 import { UserEntity } from "../entities/user.entity";
 import { OrganizationEntity } from "../entities/organization.entity";
 
@@ -10,14 +10,18 @@ export class InvitationAuthorizationService {
     if (!inviter.belongsToOrganization(organization.id)) {
       throw new DomainError(
         ErrorCode.NOT_ORGANIZATION_MEMBER,
-        "User is not a member of this organization"
+        "User is not a member of this organization",
+        undefined,
+        HTTP_STATUS.FORBIDDEN
       );
     }
 
     if (!inviter.hasRoleInOrganization(organization.id, UserRole.ADMIN)) {
       throw new DomainError(
         ErrorCode.INSUFFICIENT_PERMISSIONS,
-        "Only admins can send invitations"
+        "Only admins can send invitations",
+        undefined,
+        HTTP_STATUS.FORBIDDEN
       );
     }
 

@@ -1,16 +1,23 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsEmail, IsString } from "class-validator";
+import { IsNotEmpty, IsEmail, IsString, IsEnum } from "class-validator";
 
 import { UserRole } from "src/core";
 
 export class InvitationDto {
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiProperty({
+    description: "Email address of the user to invite",
+    example: "user@example.com",
+  })
+  @IsNotEmpty({ message: "Email is required" })
   @IsEmail({}, { message: "Email must be a valid email address" })
   email: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
+  @ApiProperty({
+    description: "Role to assign to the invited user",
+    enum: UserRole,
+    example: UserRole.LEARNING_MANAGER,
+  })
+  @IsNotEmpty({ message: "Role is required" })
+  @IsEnum(UserRole, { message: "Role must be a valid UserRole" })
   role: UserRole;
 }

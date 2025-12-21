@@ -9,6 +9,7 @@ import {
   SignInResponse,
   SignUpData,
   SignUpResponse,
+  RefreshTokenData,
 } from "../../domain/types";
 
 import { DateUtils } from "src/utils/date.utils";
@@ -143,6 +144,9 @@ export class CustomAuthAdapter implements IAuthStrategy {
         "15m") as jwt.SignOptions["expiresIn"],
     });
 
+    await this.cleanupOldTokensIfNeeded(
+      authIdentityEntity.userId || userDetails.id
+    );
     const refreshToken = GeneralUtils.generateToken(48);
     const refreshTokenHash = GeneralUtils.hashToken(refreshToken);
     const refreshTokenExpiresIn =
@@ -249,9 +253,101 @@ export class CustomAuthAdapter implements IAuthStrategy {
     await this.authIdentityRepository.deleteByUsername(username);
   }
 
-  // async refreshToken(token: string): Promise<SignInResponse> {}
+  async refreshToken(data: RefreshTokenData): Promise<SignInResponse> {
+    const refreshTokenHash = GeneralUtils.hashToken(data.refreshToken);
+
+    const refreshTokenEntity =
+      await this.refreshTokenRepository.findByTokenHash(refreshTokenHash);
+
+    if (!refreshTokenEntity) {
+      throw new DomainError(
+        ErrorCode.INVALID_AUTH_DATA,
+        "Invalid refresh token"
+      );
+    }
+
+    if (!refreshTokenEntity.isValid()) {
+      throw new DomainError(
+        ErrorCode.INVALID_AUTH_DATA,
+        "Refresh token is expired or revoked"
+      );
+    }
+
+    if (data.deviceInfo && !refreshTokenEntity.matchesDevice(data.deviceInfo)) {
+      throw new DomainError(
+        ErrorCode.INVALID_AUTH_DATA,
+        "Device mismatch detected"
+      );
+    }
+
+    refreshTokenEntity.recordUsage();
+    await this.refreshTokenRepository.save(refreshTokenEntity);
+
+    const userDetails = await this.organizationFacade.getUserProfile(
+      refreshTokenEntity.userId
+    );
+
+    const payload: JWTPayload = {
+      sub: userDetails.id, // TODO: ajuster la logique pour retourner le bpn sub ici ou supprimer
+      userId: refreshTokenEntity.userId,
+      username: userDetails.email,
+      roles: userDetails.memberships,
+    };
+
+    const accessToken = await this.jwtService.signAsync<JWTPayload>(payload, {
+      secret: this.configService.get<string>("auth.jwt.secret"),
+      expiresIn: (this.configService.get<string>("auth.jwt.expiresIn") ??
+        "15m") as jwt.SignOptions["expiresIn"],
+    });
+
+    refreshTokenEntity.revoke();
+    await this.refreshTokenRepository.save(refreshTokenEntity);
+
+    await this.cleanupOldTokensIfNeeded(refreshTokenEntity.userId);
+
+    const newRefreshToken = GeneralUtils.generateToken(48);
+    const newRefreshTokenHash = GeneralUtils.hashToken(newRefreshToken);
+    const refreshTokenExpiresIn =
+      this.configService.get<string>("auth.jwt.refreshExpiresIn") ?? "7d";
+
+    const daysMatch = refreshTokenExpiresIn.match(/(\d+)d/);
+    const days = daysMatch ? parseInt(daysMatch[1], 10) : 7;
+    const expiresAt = DateUtils.addHours(new Date(), days * 24);
+
+    const newRefreshTokenEntity = RefreshToken.create(
+      newRefreshTokenHash,
+      refreshTokenEntity.userId,
+      expiresAt,
+      data.deviceInfo || refreshTokenEntity.deviceInfo,
+      data.ipAddress || refreshTokenEntity.ipAddress
+    );
+
+    await this.refreshTokenRepository.save(newRefreshTokenEntity);
+
+    return { accessToken, refreshToken: newRefreshToken };
+  }
 
   private generateUserId(username: string): string {
     return `custom:${Date.now()}:${username}`;
+  }
+
+  private async cleanupOldTokensIfNeeded(userId: string): Promise<void> {
+    const count = await this.refreshTokenRepository.countActiveByUserId(userId);
+    const maxTokens = 5; // TODO : une logique pour récupérer ceci dynamique depuis config
+
+    if (count >= maxTokens) {
+      const tokens =
+        await this.refreshTokenRepository.findActiveByUserId(userId);
+
+      const sortedTokens = tokens.sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+      );
+
+      const tokensToRevoke = sortedTokens.slice(0, count - maxTokens + 1);
+      for (const token of tokensToRevoke) {
+        token.revoke();
+        await this.refreshTokenRepository.save(token);
+      }
+    }
   }
 }

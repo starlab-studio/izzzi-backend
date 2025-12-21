@@ -76,6 +76,8 @@ export interface IAuthStrategy {
     newPassword: string;
   }): Promise<void>;
 
+  refreshToken(data: RefreshTokenData): Promise<SignInResponse>;
+
   deleteIdentity(username: string): Promise<void>;
 }
 
@@ -164,3 +166,9 @@ export interface RefreshTokenRevokedPayload {
 
 export type IRefreshTokenRevokedEvent =
   IDomainEvent<RefreshTokenRevokedPayload>;
+
+export type RefreshTokenData = {
+  refreshToken: string;
+  deviceInfo?: string;
+  ipAddress?: string;
+};

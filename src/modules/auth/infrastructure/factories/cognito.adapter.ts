@@ -28,6 +28,7 @@ import {
   SignInResponse,
   SignUpData,
   SignUpResponse,
+  RefreshTokenData,
 } from "../../domain/types";
 
 import { AuthIdentityName } from "../../domain/types";
@@ -310,6 +311,10 @@ export class CognitoAdapter implements IAuthStrategy {
 
       throw error;
     }
+  }
+
+  async refreshToken(data: RefreshTokenData): Promise<SignInResponse> {
+    return { accessToken: "", refreshToken: "" };
   }
 
   async deleteIdentity(username: string): Promise<void> {

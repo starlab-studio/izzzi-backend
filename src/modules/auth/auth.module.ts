@@ -39,6 +39,7 @@ import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-
 import { UserCreatedEventHandler } from "./application/handlers/UserCreated.handler";
 import { RefreshTokenModel } from "./infrastructure/models/refreshToken.model";
 import { RefreshTokenRepository } from "./infrastructure/repositories/refreshToken.repository";
+import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccessToken.use-case";
 
 @Module({
   imports: [
@@ -170,24 +171,33 @@ import { RefreshTokenRepository } from "./infrastructure/repositories/refreshTok
       inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
     },
     {
+      provide: RefreshAccessTokenUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new RefreshAccessTokenUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
       provide: AuthFacade,
       useFactory: (
         authService: AuthService,
         signInUseCase: SignInUseCase,
         organizationFacade: OrganizationFacade,
-        confirmSignUpUseCase: ConfirmSignUpUseCase
+        confirmSignUpUseCase: ConfirmSignUpUseCase,
+        refreshAccessTokenUseCase: RefreshAccessTokenUseCase
       ) =>
         new AuthFacade(
           authService,
           signInUseCase,
           organizationFacade,
-          confirmSignUpUseCase
+          confirmSignUpUseCase,
+          refreshAccessTokenUseCase
         ),
       inject: [
         AuthService,
         SignInUseCase,
         OrganizationFacade,
         ConfirmSignUpUseCase,
+        RefreshAccessTokenUseCase,
       ],
     },
     {

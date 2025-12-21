@@ -4,6 +4,7 @@ import {
   MinLength,
   MaxLength,
   Matches,
+  IsOptional,
 } from "class-validator";
 import { Transform } from "class-transformer";
 
@@ -88,4 +89,15 @@ export class SignInDto implements SignInData {
   })
   @Transform(({ value }) => value.trim())
   password: string;
+}
+
+export class RefreshTokenDto {
+  @ApiProperty({
+    description: "Refresh token to get a new access token",
+    example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
+    required: false,
+  })
+  @IsString({ message: "Refresh token must be a string" })
+  @IsOptional()
+  refreshToken?: string;
 }

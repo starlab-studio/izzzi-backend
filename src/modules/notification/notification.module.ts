@@ -39,12 +39,12 @@ import { ClassArchivedEventHandler } from "./application/handlers/class-archived
       useFactory: (
         notificationDomainService: NotificationDomainService,
         notificationRepository: INotificationRespository,
-        notificationProvider: INotificationProvider,
+        notificationProvider: INotificationProvider
       ) =>
         new CreateEmailNotificationUseCase(
           notificationDomainService,
           notificationRepository,
-          notificationProvider,
+          notificationProvider
         ),
       inject: [
         NotificationDomainService,
@@ -56,7 +56,7 @@ import { ClassArchivedEventHandler } from "./application/handlers/class-archived
       provide: UserCreatedEventHandler,
       useFactory: (
         logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
       ) => new UserCreatedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
@@ -73,7 +73,7 @@ import { ClassArchivedEventHandler } from "./application/handlers/class-archived
       provide: ClassCreatedEventHandler,
       useFactory: (
         logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
       ) => new ClassCreatedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
@@ -101,7 +101,7 @@ export class NotificationModule {
   async onModuleInit() {
     NotificationProviderFactory.register(
       NotificationMode.EMAIL,
-      this.emailNotificationProvider,
+      this.emailNotificationProvider
     );
 
     this.eventHandlerRegistry.registerHandler(
@@ -116,7 +116,7 @@ export class NotificationModule {
 
     this.eventHandlerRegistry.registerHandler(
       "class.created",
-      this.classCreatedEventHandler,
+      this.classCreatedEventHandler
     );
 
     this.eventHandlerRegistry.registerHandler(

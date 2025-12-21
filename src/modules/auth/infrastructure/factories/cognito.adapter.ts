@@ -28,6 +28,7 @@ import {
   SignInResponse,
   SignUpData,
   SignUpResponse,
+  RefreshTokenData,
 } from "../../domain/types";
 
 import { AuthIdentityName } from "../../domain/types";
@@ -254,62 +255,48 @@ export class CognitoAdapter implements IAuthStrategy {
   }
 
   async confirmForgotPassword(data: {
-    email: string;
-    code: string;
+    token: string;
     newPassword: string;
   }): Promise<void> {
-    const command = new ConfirmForgotPasswordCommand({
-      ClientId: this.clientId,
-      Username: data.email,
-      ConfirmationCode: data.code,
-      Password: data.newPassword,
-      SecretHash: this.getSecretHash(data.email),
-    });
-
-    try {
-      await this.cognito.send(command);
-    } catch (error) {
-      if (error instanceof CodeMismatchException) {
-        throw new DomainError(
-          ErrorCode.INVALID_AUTH_DATA,
-          "Invalid reset code"
-        );
-      }
-
-      if (error instanceof ExpiredCodeException) {
-        throw new DomainError(
-          ErrorCode.INVALID_AUTH_DATA,
-          "Reset code has expired"
-        );
-      }
-
-      throw error;
-    }
+    // TODO: Implement Cognito password reset with token
+    // For now, this is a placeholder that matches the interface
+    throw new Error("Cognito password reset not yet implemented");
   }
 
   async changePassword(data: {
-    accessToken: string;
+    userId: string;
+    username: string;
     oldPassword: string;
     newPassword: string;
   }): Promise<void> {
-    const command = new ChangePasswordCommand({
-      AccessToken: data.accessToken,
-      PreviousPassword: data.oldPassword,
-      ProposedPassword: data.newPassword,
-    });
+    // For Cognito, we still need the access token
+    // This is a limitation - we might need to pass it separately
+    // For now, this will need to be handled differently
+    throw new Error(
+      "Cognito password change requires access token - not yet implemented with new signature"
+    );
+    // const command = new ChangePasswordCommand({
+    //   AccessToken: data.accessToken,
+    //   PreviousPassword: data.oldPassword,
+    //   ProposedPassword: data.newPassword,
+    // });
 
-    try {
-      await this.cognito.send(command);
-    } catch (error) {
-      if (error instanceof NotAuthorizedException) {
-        throw new DomainError(
-          ErrorCode.INVALID_CREDENTIALS,
-          "Current password is incorrect"
-        );
-      }
+    // try {
+    //   await this.cognito.send(command);
+    // } catch (error) {
+    //   if (error instanceof NotAuthorizedException) {
+    //     throw new DomainError(
+    //       ErrorCode.INVALID_CREDENTIALS,
+    //       "Current password is incorrect"
+    //     );
+    //   }
 
-      throw error;
-    }
+    //   throw error;
+    // }
+  }
+
+  async refreshToken(data: RefreshTokenData): Promise<SignInResponse> {
+    return { accessToken: "", refreshToken: "" };
   }
 
   async deleteIdentity(username: string): Promise<void> {

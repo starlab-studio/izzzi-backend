@@ -14,6 +14,8 @@ import {
 import { CoreModule } from "src/core/core.module";
 import { OrganizationModule } from "../organization";
 import { OrganizationFacade } from "../organization/application/facades/organization.facade";
+import { NotificationModule } from "../notification";
+import { CreateEmailNotificationUseCase } from "../notification/application/use-cases/create-email-notification.use-case";
 import {
   AUTH_STRATEGY_TOKEN,
   AuthIdentityName,
@@ -37,13 +39,28 @@ import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
 import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
 import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-case";
 import { UserCreatedEventHandler } from "./application/handlers/UserCreated.handler";
+import { RefreshTokenModel } from "./infrastructure/models/refreshToken.model";
+import { RefreshTokenRepository } from "./infrastructure/repositories/refreshToken.repository";
+import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccessToken.use-case";
+import { PasswordResetTokenModel } from "./infrastructure/models/passwordResetToken.model";
+import { PasswordResetTokenRepository } from "./infrastructure/repositories/passwordResetToken.repository";
+import { ForgotPasswordUseCase } from "./application/use-cases/ForgotPassword.use-case";
+import { ResetPasswordUseCase } from "./application/use-cases/ResetPassword.use-case";
+import { ChangePasswordUseCase } from "./application/use-cases/ChangePassword.use-case";
+import { IPasswordResetTokenRepository } from "./domain/repositories/passwordResetToken.repository";
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([AuthIdentityModel, VerificationTokenModel]),
+    TypeOrmModule.forFeature([
+      AuthIdentityModel,
+      VerificationTokenModel,
+      RefreshTokenModel,
+      PasswordResetTokenModel,
+    ]),
     CoreModule,
     OrganizationModule,
+    NotificationModule,
     JwtModule.registerAsync({
       global: true,
       useFactory: (configService: ConfigService) => ({
@@ -60,6 +77,8 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
     LoggerService,
     AuthIdentityRepository,
     VerificationTokenRepository,
+    RefreshTokenRepository,
+    PasswordResetTokenRepository,
     AuthIdentityFactory,
     AuthIdentityUniquenessService,
     {
@@ -97,7 +116,10 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
         authIdentityUniquenessService: AuthIdentityUniquenessService,
         authIdentityRepository: IAuthIdentityRepository,
         organizationFacade: OrganizationFacade,
-        verificationTokenRepository: VerificationTokenRepository
+        verificationTokenRepository: VerificationTokenRepository,
+        refreshTokenRepository: RefreshTokenRepository,
+        passwordResetTokenRepository: IPasswordResetTokenRepository,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
       ) =>
         new CustomAuthAdapter(
           configService,
@@ -105,7 +127,10 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
           authIdentityUniquenessService,
           authIdentityRepository,
           organizationFacade,
-          verificationTokenRepository
+          verificationTokenRepository,
+          refreshTokenRepository,
+          passwordResetTokenRepository,
+          createEmailNotificationUseCase
         ),
       inject: [
         ConfigService,
@@ -114,6 +139,9 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
         AuthIdentityRepository,
         OrganizationFacade,
         VerificationTokenRepository,
+        RefreshTokenRepository,
+        PasswordResetTokenRepository,
+        CreateEmailNotificationUseCase,
       ],
     },
     {
@@ -160,24 +188,60 @@ import { UserCreatedEventHandler } from "./application/handlers/UserCreated.hand
       inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
     },
     {
+      provide: RefreshAccessTokenUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new RefreshAccessTokenUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
+      provide: ForgotPasswordUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new ForgotPasswordUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
+      provide: ResetPasswordUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new ResetPasswordUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
+      provide: ChangePasswordUseCase,
+      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
+        new ChangePasswordUseCase(logger, authProvider),
+      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+    },
+    {
       provide: AuthFacade,
       useFactory: (
         authService: AuthService,
         signInUseCase: SignInUseCase,
         organizationFacade: OrganizationFacade,
-        confirmSignUpUseCase: ConfirmSignUpUseCase
+        confirmSignUpUseCase: ConfirmSignUpUseCase,
+        refreshAccessTokenUseCase: RefreshAccessTokenUseCase,
+        forgotPasswordUseCase: ForgotPasswordUseCase,
+        resetPasswordUseCase: ResetPasswordUseCase,
+        changePasswordUseCase: ChangePasswordUseCase
       ) =>
         new AuthFacade(
           authService,
           signInUseCase,
           organizationFacade,
-          confirmSignUpUseCase
+          confirmSignUpUseCase,
+          refreshAccessTokenUseCase,
+          forgotPasswordUseCase,
+          resetPasswordUseCase,
+          changePasswordUseCase
         ),
       inject: [
         AuthService,
         SignInUseCase,
         OrganizationFacade,
         ConfirmSignUpUseCase,
+        RefreshAccessTokenUseCase,
+        ForgotPasswordUseCase,
+        ResetPasswordUseCase,
+        ChangePasswordUseCase,
       ],
     },
     {

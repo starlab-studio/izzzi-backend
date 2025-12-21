@@ -7,6 +7,7 @@ import {
   IEventStore,
   ILoggerService,
   IUseCase,
+  HTTP_STATUS,
 } from "src/core";
 import { IInvitationRepository } from "../../domain/repositories/invitation.repository";
 
@@ -39,13 +40,20 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
       ]);
 
       if (!inviter) {
-        throw new DomainError(ErrorCode.USER_NOT_FOUND, "Inviter not found");
+        throw new DomainError(
+          ErrorCode.USER_NOT_FOUND,
+          "Inviter not found",
+          undefined,
+          HTTP_STATUS.NOT_FOUND
+        );
       }
 
       if (!organization) {
         throw new DomainError(
           ErrorCode.ORGANIZATION_NOT_FOUND,
-          "Organization not found"
+          "Organization not found",
+          undefined,
+          HTTP_STATUS.NOT_FOUND
         );
       }
 
@@ -56,7 +64,9 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
       if (existingUser?.belongsToOrganization(organization.id)) {
         throw new DomainError(
           ErrorCode.USER_IS_ALREADY_MEMBER,
-          "User is already a member of this organization"
+          "User is already a member of this organization",
+          undefined,
+          HTTP_STATUS.CONFLICT
         );
       }
 
@@ -69,7 +79,9 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
       if (pendingInvitation) {
         throw new DomainError(
           ErrorCode.INVITATION_ALREADY_SENT,
-          "An invitation is already pending for this email"
+          "An invitation is already pending for this email",
+          undefined,
+          HTTP_STATUS.CONFLICT
         );
       }
 

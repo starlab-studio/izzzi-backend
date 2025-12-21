@@ -257,6 +257,6 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
       inject: [LoggerService, EventStore],
     },
   ],
-  exports: [OrganizationFacade],
+  exports: [OrganizationFacade, "MEMBERSHIP_REPOSITORY"],
 })
 export class OrganizationModule {}

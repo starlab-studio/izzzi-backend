@@ -36,7 +36,7 @@ export class MembershipRepository
 
   async findByOrganization(
     organizationId: string
-  ): Promise<MembershipEntity[] | []> {
+  ): Promise<MembershipEntity[]> {
     const ormEntities = await this.directRepository.findBy({ organizationId });
     return this.toEntities(ormEntities);
   }

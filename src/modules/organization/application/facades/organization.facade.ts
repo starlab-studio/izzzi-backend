@@ -132,7 +132,9 @@ export class OrganizationFacade {
 
   async sendUserInvitation(data: IInvitationCreate): Promise<IInvitation> {
     try {
-      return await this.sendInvitationUseCase.execute(data);
+      return await this.unitOfWork.withTransaction(async () => {
+        return await this.sendInvitationUseCase.execute(data);
+      });
     } catch (error) {
       throw error;
     }
@@ -140,7 +142,9 @@ export class OrganizationFacade {
 
   async acceptInvitation(data: AcceptInvitationData): Promise<void> {
     try {
-      return await this.acceptInvitationUseCase.execute(data);
+      return await this.unitOfWork.withTransaction(async () => {
+        return await this.acceptInvitationUseCase.execute(data);
+      });
     } catch (error) {
       throw error;
     }
@@ -175,7 +179,9 @@ export class OrganizationFacade {
 
   async createUser(data: IUserCreate): Promise<IUser> {
     try {
-      return await this.createUserUseCase.execute(data);
+      return await this.unitOfWork.withTransaction(async () => {
+        return await this.createUserUseCase.execute(data);
+      });
     } catch (error) {
       throw error;
     }
@@ -227,24 +233,26 @@ export class OrganizationFacade {
     invitedBy: string | null;
   }): Promise<void> {
     try {
-      const invitation = await this.invitationRepository.findByToken(
-        data.invitationToken
-      );
-      if (!invitation) {
-        throw new DomainError(
-          ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-          "Invitation not found"
+      return await this.unitOfWork.withTransaction(async () => {
+        const invitation = await this.invitationRepository.findByToken(
+          data.invitationToken
         );
-      }
+        if (!invitation) {
+          throw new DomainError(
+            ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+            "Invitation not found"
+          );
+        }
 
-      invitation.markAsAccepted();
-      await this.invitationRepository.save(invitation);
+        invitation.markAsAccepted();
+        await this.invitationRepository.save(invitation);
 
-      await this.addUserToOrganizationUseCase.execute({
-        userId: data.userId,
-        organizationId: data.organizationId,
-        role: data.role,
-        addedBy: data.invitedBy,
+        await this.addUserToOrganizationUseCase.execute({
+          userId: data.userId,
+          organizationId: data.organizationId,
+          role: data.role,
+          addedBy: data.invitedBy,
+        });
       });
     } catch (error) {
       throw error;

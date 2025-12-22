@@ -78,7 +78,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       ...userData,
       authIdentityId: ormAuthIdentity.id,
       verificationToken: ormVerificationToken.token,
-      sendVerificationToken: ormAuthIdentity.isEmailVerified,
+      sendVerificationToken: !ormAuthIdentity.isEmailVerified,
     };
   }
 

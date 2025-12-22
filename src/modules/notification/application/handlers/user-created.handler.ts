@@ -13,7 +13,12 @@ export class UserCreatedEventHandler extends BaseEventHandler {
   }
 
   async handle(event: SignUpSucceedEvent): Promise<void> {
-    if (!event.payload.sendVerificationToken) return;
+    if (!event.payload.sendVerificationToken) {
+      this.logger.info(
+        `Skipping verification email for ${event.payload.email} (sendVerificationToken=false)`
+      );
+      return;
+    }
 
     const verificationLink = event.payload.verificationLink;
     const firstName = event.payload.firstName;

@@ -475,6 +475,25 @@ export class CustomAuthAdapter implements IAuthStrategy {
     return { accessToken, refreshToken: newRefreshToken };
   }
 
+  async generateAccessTokenForUser(userId: string): Promise<string> {
+    const userDetails = await this.organizationFacade.getUserProfile(userId);
+
+    const payload: JWTPayload = {
+      sub: userDetails.id,
+      userId: userDetails.id,
+      username: userDetails.email,
+      roles: userDetails.memberships,
+    };
+
+    const accessToken = await this.jwtService.signAsync<JWTPayload>(payload, {
+      secret: this.configService.get<string>("auth.jwt.secret"),
+      expiresIn: (this.configService.get<string>("auth.jwt.expiresIn") ??
+        "15m") as jwt.SignOptions["expiresIn"],
+    });
+
+    return accessToken;
+  }
+
   private generateUserId(username: string): string {
     return `custom:${Date.now()}:${username}`;
   }

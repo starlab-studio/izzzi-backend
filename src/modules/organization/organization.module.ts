@@ -39,6 +39,7 @@ import { OrganizationController } from "./interface/controllers/organization.con
 import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-membership.use-case";
 import { GetOrganizationUseCase } from "./application/use-cases/GetOrganization.use-case";
 import { OrganizationAuthorizationService } from "./domain/services/organization-authorization.service";
+import { AuthFacade } from "../auth/application/facades/auth.facade";
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
       InvitationModel,
     ]),
     forwardRef(() => CoreModule),
+    forwardRef(() => require("../auth/auth.module").AuthModule),
   ],
   controllers: [OrganizationController, UserController],
   providers: [
@@ -205,14 +207,16 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         eventStore: IEventStore,
         invitationRepository: IInvitationRepository,
         userRepository: IUserRepository,
-        membershipRepository: IMembershipRepository
+        membershipRepository: IMembershipRepository,
+        authFacade: AuthFacade
       ) =>
         new AcceptInvitationUseCase(
           logger,
           eventStore,
           invitationRepository,
           userRepository,
-          membershipRepository
+          membershipRepository,
+          authFacade
         ),
       inject: [
         LoggerService,
@@ -220,6 +224,7 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         InvitationRepository,
         UserRepository,
         MembershipRepository,
+        AuthFacade,
       ],
     },
     {

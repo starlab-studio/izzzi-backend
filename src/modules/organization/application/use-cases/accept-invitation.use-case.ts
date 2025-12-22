@@ -12,10 +12,15 @@ import { IUserRepository } from "../../domain/repositories/user.repository";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
 import { MembershipEntity } from "../../domain/entities/membership.entity";
 import { InvitationAcceptedEvent } from "../../domain/events/invitation-accepted.event";
+import { AuthFacade } from "src/modules/auth/application/facades/auth.facade";
 
 export type AcceptInvitationData = {
   token: string;
   userId: string;
+};
+
+export type AcceptInvitationResponse = {
+  accessToken: string;
 };
 
 export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
@@ -24,12 +29,13 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
     private readonly eventStore: IEventStore,
     private readonly invitationRepository: IInvitationRepository,
     private readonly userRepository: IUserRepository,
-    private readonly membershipRepository: IMembershipRepository
+    private readonly membershipRepository: IMembershipRepository,
+    private readonly authFacade: AuthFacade
   ) {
     super(logger);
   }
 
-  async execute(data: AcceptInvitationData): Promise<void> {
+  async execute(data: AcceptInvitationData): Promise<AcceptInvitationResponse> {
     try {
       const invitation = await this.invitationRepository.findByToken(
         data.token
@@ -80,7 +86,11 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
       if (user.belongsToOrganization(invitation.organizationId)) {
         invitation.markAsAccepted();
         await this.invitationRepository.save(invitation);
-        return;
+
+        const accessToken = await this.authFacade.generateAccessTokenForUser(
+          user.id
+        );
+        return { accessToken };
       }
 
       const membership = MembershipEntity.create({
@@ -102,6 +112,12 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
           email: invitation.email,
         })
       );
+
+      const accessToken = await this.authFacade.generateAccessTokenForUser(
+        user.id
+      );
+
+      return { accessToken };
     } catch (error) {
       this.handleError(error);
     }

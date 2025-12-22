@@ -5,6 +5,7 @@ import {
   ConfirmSignUpData,
   ForgotPasswordData,
   ResetPasswordData,
+  IAuthStrategy,
 } from "../../domain/types";
 import { AuthService } from "../services/auth.service";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
@@ -32,7 +33,8 @@ export class AuthFacade {
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
-    private readonly signUpFromInvitationUseCase: SignUpFromInvitationUseCase
+    private readonly signUpFromInvitationUseCase: SignUpFromInvitationUseCase,
+    private readonly authStrategy: IAuthStrategy
   ) {}
 
   async signUp(data: SignUpData) {
@@ -96,6 +98,16 @@ export class AuthFacade {
   async signUpFromInvitation(data: SignUpFromInvitationData) {
     try {
       return await this.signUpFromInvitationUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async generateAccessTokenForUser(userId: string): Promise<string> {
+    try {
+      return await (this.authStrategy as any).generateAccessTokenForUser(
+        userId
+      );
     } catch (error) {
       throw error;
     }

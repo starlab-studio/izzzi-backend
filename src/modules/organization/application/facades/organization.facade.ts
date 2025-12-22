@@ -14,6 +14,7 @@ import { SendInvitationUseCase } from "../use-cases/send-invitation.use-case";
 import {
   AcceptInvitationUseCase,
   AcceptInvitationData,
+  AcceptInvitationResponse,
 } from "../use-cases/accept-invitation.use-case";
 import {
   ValidateInvitationUseCase,
@@ -102,7 +103,8 @@ export class OrganizationFacade {
     userId: string,
     organizationId: string
   ): Promise<void> {
-    const user = await this.userRepository.findByIdWithActiveMemberships(userId);
+    const user =
+      await this.userRepository.findByIdWithActiveMemberships(userId);
     if (!user) {
       throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
     }
@@ -137,7 +139,9 @@ export class OrganizationFacade {
     }
   }
 
-  async acceptInvitation(data: AcceptInvitationData): Promise<void> {
+  async acceptInvitation(
+    data: AcceptInvitationData
+  ): Promise<AcceptInvitationResponse> {
     try {
       return await this.acceptInvitationUseCase.execute(data);
     } catch (error) {

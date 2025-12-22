@@ -223,7 +223,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         forgotPasswordUseCase: ForgotPasswordUseCase,
         resetPasswordUseCase: ResetPasswordUseCase,
         changePasswordUseCase: ChangePasswordUseCase,
-        signUpFromInvitationUseCase: SignUpFromInvitationUseCase
+        signUpFromInvitationUseCase: SignUpFromInvitationUseCase,
+        authStrategy: IAuthStrategy
       ) =>
         new AuthFacade(
           authService,
@@ -234,7 +235,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
           forgotPasswordUseCase,
           resetPasswordUseCase,
           changePasswordUseCase,
-          signUpFromInvitationUseCase
+          signUpFromInvitationUseCase,
+          authStrategy
         ),
       inject: [
         AuthService,
@@ -246,6 +248,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         ResetPasswordUseCase,
         ChangePasswordUseCase,
         SignUpFromInvitationUseCase,
+        "AUTH_IDENTITY_PROVIDER",
       ],
     },
     {

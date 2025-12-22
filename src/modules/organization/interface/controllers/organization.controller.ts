@@ -15,7 +15,11 @@ import {
   Param,
   Body,
   Query,
+  Req,
+  Res,
 } from "@nestjs/common";
+import type { Response } from "express";
+import { ConfigService } from "@nestjs/config";
 
 import {
   AuthGuard,
@@ -32,7 +36,10 @@ import { OrganizationFacade } from "../../application/facades/organization.facad
 @ApiTags("Organizations")
 @Controller("v1/organizations")
 export class OrganizationController extends BaseController {
-  constructor(private readonly organizationFacade: OrganizationFacade) {
+  constructor(
+    private readonly organizationFacade: OrganizationFacade,
+    private readonly configService: ConfigService
+  ) {
     super();
   }
 
@@ -196,14 +203,26 @@ export class OrganizationController extends BaseController {
   @ApiResponse({ status: 404, description: "Invitation or user not found" })
   async acceptInvitation(
     @Body() body: { token: string },
-    @CurrentUser() user: JWTPayload
+    @CurrentUser() user: JWTPayload,
+    @Res({ passthrough: true }) res: Response
   ) {
-    await this.organizationFacade.acceptInvitation({
+    const result = await this.organizationFacade.acceptInvitation({
       token: body.token,
       userId: user.userId,
     });
+
+    // Update access_token cookie with new token containing updated memberships
+    res.cookie("access_token", result.accessToken, {
+      httpOnly: true,
+      secure: this.configService.get("node_env") === "production",
+      sameSite: "lax",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+      path: "/",
+    });
+
     return this.success({
       message: "Invitation accepted successfully",
+      accessToken: result.accessToken,
     });
   }
 }

@@ -115,6 +115,16 @@ export class AuthIdentityEntity {
     };
   }
 
+  updateUsername(newUsername: string): void {
+    this.props = {
+      ...this.props,
+      username: newUsername.trim(),
+      isEmailVerified: false,
+      emailVerifiedAt: null,
+      updatedAt: new Date(),
+    };
+  }
+
   unlockAccount(): void {
     this.props = {
       ...this.props,

@@ -10,6 +10,7 @@ import { ClassModule } from "./modules/class";
 import { SubjectModule } from "./modules/subject";
 import { QuizModule } from "./modules/quiz/quiz.module";
 import { SubscriptionModule } from "./modules/subscription/subscription.module";
+import { UserModule } from "./modules/user/user.module";
 
 import AppConfig from "./core/interfaces/config.global";
 
@@ -44,6 +45,7 @@ import AppConfig from "./core/interfaces/config.global";
     SubjectModule,
     QuizModule,
     SubscriptionModule,
+    UserModule,
   ],
 })
 export class AppModule {}

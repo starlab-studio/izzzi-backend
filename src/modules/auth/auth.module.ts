@@ -277,7 +277,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
     },
   ],
-  exports: [AuthFacade],
+  exports: [AuthFacade, "AUTH_IDENTITY_PROVIDER"],
 })
 export class AuthModule {
   constructor(

@@ -109,8 +109,23 @@ export class UserRepository
   async save(entity: UserEntity): Promise<UserEntity> {
     const repository = this.getTypeOrmRepository();
     const data = entity.toPersistence();
-    const { memberships, ...ormEntity } = await repository.save(data);
-    return UserEntity.reconstitute(ormEntity);
+    // Exclude memberships to avoid TypeORM trying to save relations
+    const saved = await repository.save({
+      id: data.id,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      avatarUrl: data.avatarUrl,
+      lastLogin: data.lastLogin,
+      status: data.status,
+      role: data.role,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    });
+    // Exclude memberships from reconstitute to avoid type mismatch
+    const { memberships, ...userWithoutMemberships } = saved;
+    return UserEntity.reconstitute({ ...userWithoutMemberships, memberships: [] });
   }
 
   async delete(id: string): Promise<void> {

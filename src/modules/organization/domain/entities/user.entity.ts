@@ -122,6 +122,14 @@ export class UserEntity {
     };
   }
 
+  updateEmail(email: string): void {
+    this.props = {
+      ...this.props,
+      email: email.trim(),
+      updatedAt: new Date(),
+    };
+  }
+
   isActive(): boolean {
     return this.props.status === UserStatus.ACTIVE;
   }

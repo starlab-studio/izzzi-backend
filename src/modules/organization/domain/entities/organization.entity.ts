@@ -39,6 +39,15 @@ export class OrganizationEntity {
     return true;
   }
 
+  updateName(name: string): void {
+    this.props = {
+      ...this.props,
+      name: name.trim(),
+      slug: GeneralUtils.generateSlug(name.trim()),
+      updatedAt: new Date(),
+    };
+  }
+
   get id(): string {
     return this.props.id;
   }

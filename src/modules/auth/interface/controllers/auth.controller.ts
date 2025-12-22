@@ -102,7 +102,7 @@ export class AuthController extends BaseController {
       secure: this.configService.get("node_env") === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/v1/auth/refresh",
+      path: "/",
     });
 
     return this.success(authIdentity);
@@ -156,6 +156,14 @@ export class AuthController extends BaseController {
       secure: this.configService.get("node_env") === "production",
       sameSite: "lax",
       maxAge: 15 * 60 * 1000,
+      path: "/",
+    });
+
+    res.cookie("refresh_token", authIdentity.refreshToken, {
+      httpOnly: true,
+      secure: this.configService.get("node_env") === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/",
     });
 

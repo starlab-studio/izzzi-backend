@@ -32,12 +32,14 @@ import {
 } from "src/core";
 import { InvitationDto } from "../dto/invitation.dto";
 import { OrganizationFacade } from "../../application/facades/organization.facade";
+import { AuthFacade } from "src/modules/auth/application/facades/auth.facade";
 
 @ApiTags("Organizations")
 @Controller("v1/organizations")
 export class OrganizationController extends BaseController {
   constructor(
     private readonly organizationFacade: OrganizationFacade,
+    private readonly authFacade: AuthFacade,
     private readonly configService: ConfigService
   ) {
     super();
@@ -206,23 +208,26 @@ export class OrganizationController extends BaseController {
     @CurrentUser() user: JWTPayload,
     @Res({ passthrough: true }) res: Response
   ) {
-    const result = await this.organizationFacade.acceptInvitation({
+    await this.organizationFacade.acceptInvitation({
       token: body.token,
       userId: user.userId,
     });
 
-    // Update access_token cookie with new token containing updated memberships
-    res.cookie("access_token", result.accessToken, {
+    const accessToken = await this.authFacade.generateAccessTokenForUser(
+      user.userId
+    );
+
+    res.cookie("access_token", accessToken, {
       httpOnly: true,
       secure: this.configService.get("node_env") === "production",
       sameSite: "lax",
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 15 * 60 * 1000,
       path: "/",
     });
 
     return this.success({
       message: "Invitation accepted successfully",
-      accessToken: result.accessToken,
+      accessToken,
     });
   }
 }

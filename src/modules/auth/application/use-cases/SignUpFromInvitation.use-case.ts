@@ -112,10 +112,18 @@ export class SignUpFromInvitationUseCase
       const authIdentity = await this.authIdentityRepository.findById(
         signUpResponse.authIdentityId
       );
-      if (authIdentity) {
-        authIdentity.verifyEmail(invitation.email);
-        await this.authIdentityRepository.save(authIdentity);
+      if (!authIdentity) {
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "AuthIdentity not found after creation",
+          undefined,
+          HTTP_STATUS.INTERNAL_SERVER_ERROR
+        );
       }
+
+      authIdentity.setUser(user.id);
+      authIdentity.verifyEmail(invitation.email);
+      await this.authIdentityRepository.save(authIdentity);
 
       this.eventStore.publish(
         new InvitationAcceptedEvent({

@@ -193,10 +193,8 @@ export class OrganizationFacade {
   }): Promise<IUser> {
     try {
       return await this.unitOfWork.withTransaction(async () => {
-        // Create user
         const user = await this.createUserUseCase.execute(data.userData);
 
-        // Find and accept invitation
         const invitation = await this.invitationRepository.findByToken(
           data.invitationToken
         );
@@ -210,7 +208,6 @@ export class OrganizationFacade {
         invitation.markAsAccepted();
         await this.invitationRepository.save(invitation);
 
-        // Create membership
         await this.addUserToOrganizationUseCase.execute({
           userId: user.id,
           organizationId: data.organizationId,

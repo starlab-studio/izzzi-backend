@@ -1,4 +1,12 @@
-import { IsEnum, IsOptional, IsString } from "class-validator";
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsBoolean,
+  Min,
+  Max,
+} from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class GetPricingTiersQueryDto {
@@ -70,4 +78,369 @@ export class PricingPlanResponseDto {
 
   @ApiProperty({ enum: ["default", "premium"] })
   variant: "default" | "premium";
+}
+
+export class CalculatePriceQueryDto {
+  @ApiProperty({
+    description: "ID du plan de subscription",
+    example: "10000000-0000-0000-0000-000000000002",
+  })
+  @IsString()
+  planId: string;
+
+  @ApiProperty({
+    description: "Nombre de classes",
+    minimum: 1,
+    maximum: 20,
+    example: 7,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  classCount: number;
+
+  @ApiPropertyOptional({
+    enum: ["monthly", "annual"],
+    description: "Période de facturation (défaut: monthly)",
+    default: "monthly",
+  })
+  @IsEnum(["monthly", "annual"])
+  @IsOptional()
+  billingPeriod?: "monthly" | "annual";
+}
+
+export class CalculatePriceResponseDto {
+  @ApiProperty()
+  planId: string;
+
+  @ApiProperty()
+  planName: string;
+
+  @ApiProperty()
+  classCount: number;
+
+  @ApiProperty({
+    description: "Prix par classe en centimes",
+    example: 2200,
+  })
+  pricePerClassCents: number;
+
+  @ApiProperty({
+    description: "Prix total en centimes",
+    example: 15400,
+  })
+  totalPriceCents: number;
+
+  @ApiProperty({
+    description: "Prix total formaté",
+    example: "154€",
+  })
+  totalPriceFormatted: string;
+
+  @ApiProperty({
+    description: "Prix par classe formaté",
+    example: "22€",
+  })
+  pricePerClassFormatted: string;
+
+  @ApiProperty({ enum: ["monthly", "annual"] })
+  billingPeriod: "monthly" | "annual";
+
+  @ApiProperty({
+    description: "Palier de tarification utilisé",
+    type: "object",
+    properties: {
+      minClasses: { type: "number" },
+      maxClasses: { type: "number" },
+    },
+  })
+  tier: {
+    minClasses: number;
+    maxClasses: number;
+  };
+}
+
+export class CreateSubscriptionDto {
+  @ApiProperty({
+    description: "ID du plan de subscription",
+    example: "10000000-0000-0000-0000-000000000002",
+  })
+  @IsString()
+  planId: string;
+
+  @ApiProperty({
+    description: "Nombre de classes",
+    minimum: 1,
+    maximum: 20,
+    example: 7,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  quantity: number;
+
+  @ApiPropertyOptional({
+    enum: ["monthly", "annual"],
+    description: "Période de facturation (défaut: monthly)",
+    default: "monthly",
+  })
+  @IsEnum(["monthly", "annual"])
+  @IsOptional()
+  billingPeriod?: "monthly" | "annual";
+}
+
+export class SubscriptionDetailsDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  planId: string;
+
+  @ApiProperty()
+  planName: string;
+
+  @ApiProperty()
+  status: string;
+
+  @ApiProperty()
+  quantity: number;
+
+  @ApiProperty()
+  totalPriceCents: number;
+
+  @ApiProperty()
+  currentPeriodStart: Date;
+
+  @ApiProperty()
+  currentPeriodEnd: Date;
+
+  @ApiProperty({ nullable: true })
+  trialEnd: Date | null;
+}
+
+export class CreateSubscriptionResponseDto {
+  @ApiProperty({
+    description: "Détails de la subscription créée",
+    type: SubscriptionDetailsDto,
+  })
+  subscription: SubscriptionDetailsDto;
+
+  @ApiProperty({
+    description: "Indique si un paiement est requis",
+    example: true,
+  })
+  requiresPayment: boolean;
+
+  @ApiPropertyOptional({
+    description: "Client secret Stripe (sera implémenté plus tard)",
+  })
+  stripeClientSecret?: string;
+
+  @ApiPropertyOptional({
+    description: "URL de checkout Stripe (sera implémenté plus tard)",
+  })
+  stripeCheckoutUrl?: string;
+}
+
+export class UpdateQuantityDto {
+  @ApiProperty({
+    description: "Nouveau nombre de classes",
+    minimum: 1,
+    maximum: 20,
+    example: 10,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  quantity: number;
+}
+
+export class UpdateQuantityResponseDto {
+  @ApiProperty({
+    description: "Détails de la subscription mise à jour",
+    type: SubscriptionDetailsDto,
+  })
+  subscription: SubscriptionDetailsDto;
+
+  @ApiProperty()
+  previousQuantity: number;
+
+  @ApiProperty()
+  newQuantity: number;
+
+  @ApiProperty()
+  previousPriceCents: number;
+
+  @ApiProperty()
+  newPriceCents: number;
+
+  @ApiProperty({
+    description: "Différence de prix (positif = upgrade, négatif = downgrade)",
+  })
+  priceDifferenceCents: number;
+
+  @ApiProperty()
+  isUpgrade: boolean;
+
+  @ApiProperty()
+  effectiveDate: Date;
+
+  @ApiProperty()
+  prorationApplied: boolean;
+
+  @ApiProperty()
+  requiresPayment: boolean;
+
+  @ApiPropertyOptional()
+  amountDueCents?: number;
+}
+
+export class CancelSubscriptionDto {
+  @ApiProperty({
+    description: "Annulation immédiate (true) ou à la fin de période (false)",
+    example: false,
+  })
+  @IsBoolean()
+  immediate: boolean;
+
+  @ApiPropertyOptional({
+    description: "Raison de l'annulation",
+    example: "Trop cher",
+  })
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}
+
+export class CancelSubscriptionResponseDto {
+  @ApiProperty({
+    description: "Détails de la subscription annulée",
+    type: SubscriptionDetailsDto,
+  })
+  subscription: SubscriptionDetailsDto;
+
+  @ApiProperty()
+  canceledAt: Date;
+
+  @ApiProperty({
+    description: "Date d'effet de l'annulation",
+  })
+  effectiveDate: Date;
+
+  @ApiProperty()
+  wasImmediate: boolean;
+
+  @ApiProperty({
+    description: "Montant du remboursement en centimes (0 par défaut)",
+    example: 0,
+  })
+  refundAmountCents: number;
+}
+
+export class SubscriptionDetailDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  status: string;
+
+  @ApiProperty()
+  quantity: number;
+
+  @ApiProperty()
+  currentPeriodStart: Date;
+
+  @ApiProperty()
+  currentPeriodEnd: Date;
+
+  @ApiProperty()
+  cancelAtPeriodEnd: boolean;
+
+  @ApiProperty({ nullable: true })
+  trialEnd: Date | null;
+
+  @ApiProperty()
+  createdAt: Date;
+}
+
+export class PlanInfoDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty({ enum: ["default", "premium"] })
+  variant: "default" | "premium";
+
+  @ApiProperty()
+  displayPrice: string;
+}
+
+export class PricingInfoDto {
+  @ApiProperty()
+  pricePerClassCents: number;
+
+  @ApiProperty()
+  totalPriceCents: number;
+
+  @ApiProperty()
+  pricePerClassFormatted: string;
+
+  @ApiProperty()
+  totalPriceFormatted: string;
+}
+
+export class FeatureDto {
+  @ApiProperty()
+  featureKey: string;
+
+  @ApiProperty()
+  featureText: string;
+
+  @ApiProperty({ nullable: true })
+  featureSubtext: string | null;
+
+  @ApiProperty()
+  isComingSoon: boolean;
+}
+
+export class UsageInfoDto {
+  @ApiProperty()
+  classesUsed: number;
+
+  @ApiProperty()
+  classesRemaining: number;
+}
+
+export class GetSubscriptionResponseDto {
+  @ApiProperty({
+    description: "Détails de la subscription",
+    type: SubscriptionDetailDto,
+  })
+  subscription: SubscriptionDetailDto;
+
+  @ApiProperty({
+    description: "Informations sur le plan",
+    type: PlanInfoDto,
+  })
+  plan: PlanInfoDto;
+
+  @ApiProperty({
+    description: "Informations de tarification",
+    type: PricingInfoDto,
+  })
+  pricing: PricingInfoDto;
+
+  @ApiProperty({
+    description: "Liste des features du plan",
+    type: [FeatureDto],
+  })
+  features: FeatureDto[];
+
+  @ApiPropertyOptional({
+    description: "Informations d'utilisation (optionnel)",
+    type: UsageInfoDto,
+  })
+  usage?: UsageInfoDto;
 }

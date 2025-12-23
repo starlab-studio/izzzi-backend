@@ -1,0 +1,194 @@
+import { IUseCase, ILoggerService, BaseUseCase, DomainError } from "src/core";
+import { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
+import { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
+import { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
+import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
+import { SubscriptionEntity } from "../../domain/entities/subscription.entity";
+import { UserRole } from "src/core/domain/types";
+
+export interface CreateSubscriptionInput {
+  userId: string;
+  organizationId: string;
+  planId: string;
+  quantity: number;
+  billingPeriod?: "monthly" | "annual";
+}
+
+export interface CreateSubscriptionOutput {
+  subscription: {
+    id: string;
+    planId: string;
+    planName: string;
+    status: string;
+    quantity: number;
+    totalPriceCents: number;
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+    trialEnd: Date | null;
+  };
+  requiresPayment: boolean;
+  stripeClientSecret?: string;
+  stripeCheckoutUrl?: string;
+}
+
+export class CreateSubscriptionUseCase
+  extends BaseUseCase
+  implements IUseCase<CreateSubscriptionInput, CreateSubscriptionOutput>
+{
+  constructor(
+    readonly logger: ILoggerService,
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
+    private readonly pricingTierRepository: IPricingTierRepository,
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly userRepository: IUserRepository
+  ) {
+    super(logger);
+  }
+
+  async execute(
+    input: CreateSubscriptionInput
+  ): Promise<CreateSubscriptionOutput> {
+    try {
+      const {
+        userId,
+        organizationId,
+        planId,
+        quantity,
+        billingPeriod = "monthly",
+      } = input;
+
+      if (quantity < 1 || quantity > 20) {
+        throw new DomainError(
+          "INVALID_CLASS_COUNT",
+          "Le nombre de classes doit être entre 1 et 20",
+          { quantity }
+        );
+      }
+
+      const user =
+        await this.userRepository.findByIdWithActiveMemberships(userId);
+      if (!user) {
+        throw new DomainError("USER_NOT_FOUND", "Utilisateur non trouvé");
+      }
+
+      if (!user.hasRoleInOrganization(organizationId, UserRole.ADMIN)) {
+        throw new DomainError(
+          "INSUFFICIENT_PERMISSIONS",
+          "Vous devez être administrateur de cette organisation pour créer une subscription",
+          { userId, organizationId }
+        );
+      }
+
+      const existingSubscription =
+        await this.subscriptionRepository.findActiveByOrganizationId(
+          organizationId
+        );
+      if (existingSubscription) {
+        throw new DomainError(
+          "SUBSCRIPTION_ALREADY_EXISTS",
+          "Cette organisation a déjà une subscription active",
+          {
+            organizationId,
+            existingSubscriptionId: existingSubscription.id,
+          }
+        );
+      }
+
+      const plan = await this.subscriptionPlanRepository.findById(planId);
+      if (!plan) {
+        throw new DomainError(
+          "PLAN_NOT_FOUND",
+          "Le plan de subscription n'existe pas",
+          { planId }
+        );
+      }
+
+      if (!plan.isActive) {
+        throw new DomainError(
+          "PLAN_NOT_ACTIVE",
+          "Le plan de subscription n'est pas actif",
+          { planId }
+        );
+      }
+
+      const tiers =
+        await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
+          planId,
+          billingPeriod
+        );
+
+      if (tiers.length === 0 && !plan.isFree) {
+        throw new DomainError(
+          "NO_PRICING_TIERS",
+          "Aucun palier de tarification trouvé pour ce plan",
+          { planId, billingPeriod }
+        );
+      }
+
+      let pricePerClassCents = 0;
+      if (!plan.isFree && tiers.length > 0) {
+        const tier = tiers.find(
+          (t) => quantity >= t.minClasses && quantity <= t.maxClasses
+        );
+
+        if (!tier) {
+          throw new DomainError(
+            "TIER_NOT_FOUND",
+            `Aucun palier de tarification trouvé pour ${quantity} classe(s)`,
+            {
+              planId,
+              billingPeriod,
+              quantity,
+              availableTiers: tiers.map((t) => ({
+                min: t.minClasses,
+                max: t.maxClasses,
+              })),
+            }
+          );
+        }
+
+        pricePerClassCents = tier.pricePerClassCents;
+      }
+
+      const totalPriceCents = pricePerClassCents * quantity;
+
+      let trialDays: number | undefined;
+      if (plan.trialPeriodDays > 0) {
+        trialDays = plan.trialPeriodDays;
+      }
+
+      const subscription = SubscriptionEntity.create({
+        userId,
+        organizationId,
+        planId,
+        billingPeriod,
+        quantity,
+        trialDays,
+      });
+
+      const savedSubscription =
+        await this.subscriptionRepository.save(subscription);
+
+      const requiresPayment = !plan.isFree && totalPriceCents > 0;
+
+      return {
+        subscription: {
+          id: savedSubscription.id,
+          planId: savedSubscription.planId,
+          planName: plan.name,
+          status: savedSubscription.status,
+          quantity: savedSubscription.quantity,
+          totalPriceCents,
+          currentPeriodStart: savedSubscription.currentPeriodStart!,
+          currentPeriodEnd: savedSubscription.currentPeriodEnd!,
+          trialEnd: savedSubscription.trialEndDate,
+        },
+        requiresPayment,
+      };
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async withCompensation(): Promise<void> {}
+}

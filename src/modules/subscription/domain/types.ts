@@ -43,6 +43,7 @@ export interface IUserSubscription {
   planId: string;
   billingPeriod: "monthly" | "annual";
   quantity: number;
+  pendingQuantity: number | null; // Quantité qui prendra effet à la fin de période (pour downgrade)
   status: "trial" | "active" | "past_due" | "cancelled" | "expired";
   trialStartDate: Date | null;
   trialEndDate: Date | null;

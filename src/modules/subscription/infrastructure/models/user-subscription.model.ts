@@ -22,6 +22,13 @@ export class UserSubscriptionModel implements IUserSubscription {
   quantity: number;
 
   @Column({
+    name: "pending_quantity",
+    type: "integer",
+    nullable: true,
+  })
+  pendingQuantity: number | null;
+
+  @Column({
     type: "enum",
     enum: ["trial", "active", "past_due", "cancelled", "expired"],
     default: "trial",

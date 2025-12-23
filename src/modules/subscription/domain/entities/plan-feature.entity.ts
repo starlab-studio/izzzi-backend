@@ -16,6 +16,7 @@ export class PlanFeatureEntity {
       | "featureSubtext"
       | "section"
       | "displayOrder"
+      | "isComingSoon"
     >
   ): PlanFeatureEntity {
     return new PlanFeatureEntity({
@@ -55,6 +56,10 @@ export class PlanFeatureEntity {
 
   get createdAt(): Date {
     return this.props.createdAt;
+  }
+
+  get isComingSoon(): boolean {
+    return this.props.isComingSoon;
   }
 
   toPersistence(): IPlanFeature {

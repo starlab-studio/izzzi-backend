@@ -12,7 +12,12 @@ export class PlanFeatureModel implements IPlanFeature {
   @Column({ name: "feature_text", type: "varchar", length: 500 })
   featureText: string;
 
-  @Column({ name: "feature_subtext", type: "varchar", length: 500, nullable: true })
+  @Column({
+    name: "feature_subtext",
+    type: "varchar",
+    length: 500,
+    nullable: true,
+  })
   featureSubtext: string | null;
 
   @Column({ type: "enum", enum: ["main", "additional"], default: "main" })
@@ -21,7 +26,9 @@ export class PlanFeatureModel implements IPlanFeature {
   @Column({ name: "display_order", type: "integer", default: 0 })
   displayOrder: number;
 
+  @Column({ name: "is_coming_soon", type: "boolean", default: false })
+  isComingSoon: boolean;
+
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

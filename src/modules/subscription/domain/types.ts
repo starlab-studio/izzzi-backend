@@ -9,6 +9,7 @@ export interface ISubscriptionPlan {
   variant: "default" | "premium";
   isActive: boolean;
   displayOrder: number;
+  stripeProductId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,6 +21,7 @@ export interface IPlanFeature {
   featureSubtext: string | null;
   section: "main" | "additional";
   displayOrder: number;
+  isComingSoon: boolean;
   createdAt: Date;
 }
 
@@ -30,6 +32,7 @@ export interface IPricingTier {
   minClasses: number;
   maxClasses: number;
   pricePerClassCents: number;
+  stripePriceId: string | null;
   createdAt: Date;
 }
 
@@ -39,6 +42,7 @@ export interface IUserSubscription {
   organizationId: string;
   planId: string;
   billingPeriod: "monthly" | "annual";
+  quantity: number;
   status: "trial" | "active" | "past_due" | "cancelled" | "expired";
   trialStartDate: Date | null;
   trialEndDate: Date | null;
@@ -69,4 +73,3 @@ export interface IInvoice {
   paidAt: Date | null;
   createdAt: Date;
 }
-

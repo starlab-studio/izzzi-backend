@@ -14,4 +14,5 @@ export interface IInvitationRepository extends IRepository<InvitationEntity> {
     email: string,
     organizationId: string
   ): Promise<InvitationEntity | null>;
+  findByToken(token: string): Promise<InvitationEntity | null>;
 }

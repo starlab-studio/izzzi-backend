@@ -38,7 +38,6 @@ import { CognitoAdapter } from "./infrastructure/factories/cognito.adapter";
 import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
 import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
 import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-case";
-import { UserCreatedEventHandler } from "./application/handlers/UserCreated.handler";
 import { RefreshTokenModel } from "./infrastructure/models/refreshToken.model";
 import { RefreshTokenRepository } from "./infrastructure/repositories/refreshToken.repository";
 import { RefreshAccessTokenUseCase } from "./application/use-cases/RefreshAccessToken.use-case";
@@ -47,6 +46,7 @@ import { PasswordResetTokenRepository } from "./infrastructure/repositories/pass
 import { ForgotPasswordUseCase } from "./application/use-cases/ForgotPassword.use-case";
 import { ResetPasswordUseCase } from "./application/use-cases/ResetPassword.use-case";
 import { ChangePasswordUseCase } from "./application/use-cases/ChangePassword.use-case";
+import { SignUpFromInvitationUseCase } from "./application/use-cases/SignUpFromInvitation.use-case";
 import { IPasswordResetTokenRepository } from "./domain/repositories/passwordResetToken.repository";
 
 @Module({
@@ -177,9 +177,21 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       useFactory: (
         logger: LoggerService,
         eventStore: EventStore,
-        signUpUseCase: SignUpUseCase
-      ) => new AuthService(logger, eventStore, signUpUseCase),
-      inject: [LoggerService, EventStore, SignUpUseCase],
+        signUpUseCase: SignUpUseCase,
+        authIdentityRepository: IAuthIdentityRepository
+      ) =>
+        new AuthService(
+          logger,
+          eventStore,
+          signUpUseCase,
+          authIdentityRepository
+        ),
+      inject: [
+        LoggerService,
+        EventStore,
+        SignUpUseCase,
+        AuthIdentityRepository,
+      ],
     },
     {
       provide: SignInUseCase,
@@ -221,7 +233,9 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         refreshAccessTokenUseCase: RefreshAccessTokenUseCase,
         forgotPasswordUseCase: ForgotPasswordUseCase,
         resetPasswordUseCase: ResetPasswordUseCase,
-        changePasswordUseCase: ChangePasswordUseCase
+        changePasswordUseCase: ChangePasswordUseCase,
+        signUpFromInvitationUseCase: SignUpFromInvitationUseCase,
+        authStrategy: IAuthStrategy
       ) =>
         new AuthFacade(
           authService,
@@ -231,7 +245,9 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
           refreshAccessTokenUseCase,
           forgotPasswordUseCase,
           resetPasswordUseCase,
-          changePasswordUseCase
+          changePasswordUseCase,
+          signUpFromInvitationUseCase,
+          authStrategy
         ),
       inject: [
         AuthService,
@@ -242,6 +258,32 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         ForgotPasswordUseCase,
         ResetPasswordUseCase,
         ChangePasswordUseCase,
+        SignUpFromInvitationUseCase,
+        "AUTH_IDENTITY_PROVIDER",
+      ],
+    },
+    {
+      provide: SignUpFromInvitationUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        eventStore: IEventStore,
+        authProvider: IAuthStrategy,
+        authIdentityRepository: IAuthIdentityRepository,
+        organizationFacade: OrganizationFacade
+      ) =>
+        new SignUpFromInvitationUseCase(
+          logger,
+          eventStore,
+          authProvider,
+          authIdentityRepository,
+          organizationFacade
+        ),
+      inject: [
+        LoggerService,
+        EventStore,
+        "AUTH_IDENTITY_PROVIDER",
+        AuthIdentityRepository,
+        OrganizationFacade,
       ],
     },
     {
@@ -263,14 +305,6 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       inject: [LoggerService, EventStore, SignUpUseCase],
     },
     {
-      provide: UserCreatedEventHandler,
-      useFactory: (
-        logger: ILoggerService,
-        authIdentityRepository: AuthIdentityRepository
-      ) => new UserCreatedEventHandler(logger, authIdentityRepository),
-      inject: [LoggerService, AuthIdentityRepository],
-    },
-    {
       provide: ConfirmSignUpUseCase,
       useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
         new ConfirmSignUpUseCase(logger, authProvider),
@@ -283,7 +317,6 @@ export class AuthModule {
   constructor(
     private readonly eventHandlerRegistry: EventHandlerRegistry,
     private readonly authIdentityFailedHandler: AuthIdentityFailedHandler,
-    private readonly userCreatedHandler: UserCreatedEventHandler,
     private readonly userFailedHandler: UserFailedHandler
   ) {}
 
@@ -295,10 +328,6 @@ export class AuthModule {
     this.eventHandlerRegistry.registerHandler(
       "user.failed",
       this.userFailedHandler
-    );
-    this.eventHandlerRegistry.registerHandler(
-      "signup.succeed",
-      this.userCreatedHandler
     );
   }
 }

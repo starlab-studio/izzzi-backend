@@ -5,6 +5,7 @@ import {
   ConfirmSignUpData,
   ForgotPasswordData,
   ResetPasswordData,
+  IAuthStrategy,
 } from "../../domain/types";
 import { AuthService } from "../services/auth.service";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
@@ -17,6 +18,10 @@ import {
   ChangePasswordUseCase,
   ChangePasswordData,
 } from "../use-cases/ChangePassword.use-case";
+import {
+  SignUpFromInvitationUseCase,
+  SignUpFromInvitationData,
+} from "../use-cases/SignUpFromInvitation.use-case";
 
 export class AuthFacade {
   constructor(
@@ -27,7 +32,9 @@ export class AuthFacade {
     private readonly refreshAccessTokenUseCase: RefreshAccessTokenUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
-    private readonly changePasswordUseCase: ChangePasswordUseCase
+    private readonly changePasswordUseCase: ChangePasswordUseCase,
+    private readonly signUpFromInvitationUseCase: SignUpFromInvitationUseCase,
+    private readonly authStrategy: IAuthStrategy
   ) {}
 
   async signUp(data: SignUpData) {
@@ -83,6 +90,24 @@ export class AuthFacade {
   async changePassword(data: ChangePasswordData) {
     try {
       return await this.changePasswordUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async signUpFromInvitation(data: SignUpFromInvitationData) {
+    try {
+      return await this.signUpFromInvitationUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async generateAccessTokenForUser(userId: string): Promise<string> {
+    try {
+      return await (this.authStrategy as any).generateAccessTokenForUser(
+        userId
+      );
     } catch (error) {
       throw error;
     }

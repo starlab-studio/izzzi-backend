@@ -16,6 +16,7 @@ import { NotificationRepository } from "./infrastructure/repositories/notificati
 import { INotificationProvider } from "./application/providers/notification.provider";
 import { NotificationModel } from "./infrastructure/models/notification.model";
 import { InvitationSentEventHandler } from "./application/handlers/invitation-sent.handler";
+import { InvitationAcceptedEventHandler } from "./application/handlers/invitation-accepted.handler";
 import { ClassArchivedEventHandler } from "./application/handlers/class-archived.handler";
 
 @Module({
@@ -78,11 +79,24 @@ import { ClassArchivedEventHandler } from "./application/handlers/class-archived
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
     {
+      provide: InvitationAcceptedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new InvitationAcceptedEventHandler(
+          logger,
+          createEmailNotificationUseCase
+        ),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
+    {
       provide: ClassArchivedEventHandler,
       useFactory: (
         logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
-      ) => new ClassArchivedEventHandler(logger, createEmailNotificationUseCase),
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new ClassArchivedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
   ],
@@ -95,7 +109,8 @@ export class NotificationModule {
     private readonly invitationSentEventHandler: InvitationSentEventHandler,
     private readonly emailNotificationProvider: EmailProvider,
     private readonly classCreatedEventHandler: ClassCreatedEventHandler,
-    private readonly classArchivedEventHandler: ClassArchivedEventHandler,
+    private readonly invitationAcceptedEventHandler: InvitationAcceptedEventHandler,
+    private readonly classArchivedEventHandler: ClassArchivedEventHandler
   ) {}
 
   async onModuleInit() {
@@ -120,8 +135,13 @@ export class NotificationModule {
     );
 
     this.eventHandlerRegistry.registerHandler(
+      "invitation.accepted",
+      this.invitationAcceptedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
       "class.archived",
-      this.classArchivedEventHandler,
+      this.classArchivedEventHandler
     );
   }
 }

@@ -1,4 +1,4 @@
-import { UserRole, DomainError, ErrorCode } from "src/core";
+import { UserRole, DomainError, ErrorCode, IUnitOfWork } from "src/core";
 import {
   IInvitation,
   IInvitationCreate,
@@ -11,7 +11,19 @@ import { GetUserDetailsUseCase } from "../use-cases/GetUserDetails.use-case";
 import { GetUserMembershipsUseCase } from "../use-cases/get-user-membership.use-case";
 import { GetOrganizationUseCase } from "../use-cases/GetOrganization.use-case";
 import { SendInvitationUseCase } from "../use-cases/send-invitation.use-case";
+import {
+  AcceptInvitationUseCase,
+  AcceptInvitationData,
+} from "../use-cases/accept-invitation.use-case";
+import {
+  ValidateInvitationUseCase,
+  ValidateInvitationData,
+  ValidateInvitationResponse,
+} from "../use-cases/validate-invitation.use-case";
+import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
+import { AddUserToOrganizationUseCase } from "../use-cases/AddUserToOrganization.use-case";
 import { IUserRepository } from "../../domain/repositories/user.repository";
+import { IInvitationRepository } from "../../domain/repositories/invitation.repository";
 
 export class OrganizationFacade {
   constructor(
@@ -20,7 +32,13 @@ export class OrganizationFacade {
     private readonly getUserMembershipsUseCase: GetUserMembershipsUseCase,
     private readonly userRepository: IUserRepository,
     private readonly getOrganizationUseCase: GetOrganizationUseCase,
-    private readonly sendInvitationUseCase: SendInvitationUseCase
+    private readonly sendInvitationUseCase: SendInvitationUseCase,
+    private readonly acceptInvitationUseCase: AcceptInvitationUseCase,
+    private readonly validateInvitationUseCase: ValidateInvitationUseCase,
+    private readonly invitationRepository: IInvitationRepository,
+    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly addUserToOrganizationUseCase: AddUserToOrganizationUseCase,
+    private readonly unitOfWork: IUnitOfWork
   ) {}
 
   async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
@@ -59,7 +77,8 @@ export class OrganizationFacade {
     organizationId: string,
     requiredRoles: UserRole[]
   ): Promise<void> {
-    const user = await this.userRepository.findByIdWithActiveMemberships(userId);
+    const user =
+      await this.userRepository.findByIdWithActiveMemberships(userId);
     if (!user) {
       throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
     }
@@ -83,7 +102,8 @@ export class OrganizationFacade {
     userId: string,
     organizationId: string
   ): Promise<void> {
-    const user = await this.userRepository.findByIdWithActiveMemberships(userId);
+    const user =
+      await this.userRepository.findByIdWithActiveMemberships(userId);
     if (!user) {
       throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
     }
@@ -112,7 +132,128 @@ export class OrganizationFacade {
 
   async sendUserInvitation(data: IInvitationCreate): Promise<IInvitation> {
     try {
-      return await this.sendInvitationUseCase.execute(data);
+      return await this.unitOfWork.withTransaction(async () => {
+        return await this.sendInvitationUseCase.execute(data);
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async acceptInvitation(data: AcceptInvitationData): Promise<void> {
+    try {
+      return await this.unitOfWork.withTransaction(async () => {
+        return await this.acceptInvitationUseCase.execute(data);
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async validateInvitation(
+    data: ValidateInvitationData
+  ): Promise<ValidateInvitationResponse> {
+    try {
+      return await this.validateInvitationUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async findInvitationByToken(token: string) {
+    try {
+      return await this.invitationRepository.findByToken(token);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async checkUserExistsByEmail(email: string): Promise<boolean> {
+    try {
+      const user = await this.userRepository.findByEmail(email);
+      return !!user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createUser(data: IUserCreate): Promise<IUser> {
+    try {
+      return await this.unitOfWork.withTransaction(async () => {
+        return await this.createUserUseCase.execute(data);
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createUserAndAcceptInvitation(data: {
+    userData: IUserCreate;
+    invitationToken: string;
+    organizationId: string;
+    role: UserRole;
+    invitedBy: string | null;
+  }): Promise<IUser> {
+    try {
+      return await this.unitOfWork.withTransaction(async () => {
+        const user = await this.createUserUseCase.execute(data.userData);
+
+        const invitation = await this.invitationRepository.findByToken(
+          data.invitationToken
+        );
+        if (!invitation) {
+          throw new DomainError(
+            ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+            "Invitation not found"
+          );
+        }
+
+        invitation.markAsAccepted();
+        await this.invitationRepository.save(invitation);
+
+        await this.addUserToOrganizationUseCase.execute({
+          userId: user.id,
+          organizationId: data.organizationId,
+          role: data.role,
+          addedBy: data.invitedBy,
+        });
+
+        return user;
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async acceptInvitationAndCreateMembership(data: {
+    invitationToken: string;
+    userId: string;
+    organizationId: string;
+    role: UserRole;
+    invitedBy: string | null;
+  }): Promise<void> {
+    try {
+      return await this.unitOfWork.withTransaction(async () => {
+        const invitation = await this.invitationRepository.findByToken(
+          data.invitationToken
+        );
+        if (!invitation) {
+          throw new DomainError(
+            ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+            "Invitation not found"
+          );
+        }
+
+        invitation.markAsAccepted();
+        await this.invitationRepository.save(invitation);
+
+        await this.addUserToOrganizationUseCase.execute({
+          userId: data.userId,
+          organizationId: data.organizationId,
+          role: data.role,
+          addedBy: data.invitedBy,
+        });
+      });
     } catch (error) {
       throw error;
     }

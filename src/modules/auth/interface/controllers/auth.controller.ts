@@ -6,6 +6,7 @@ import { Controller, Post, Body, Res, Req, UseGuards } from "@nestjs/common";
 import { BaseController, AuthGuard, CurrentUser } from "src/core";
 import type { JWTPayload } from "src/core";
 import { AuthFacade } from "../../application/facades/auth.facade";
+import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import {
   SignInDto,
   SignUpDto,
@@ -14,6 +15,7 @@ import {
   ResetPasswordDto,
   ChangePasswordDto,
 } from "../dto/auth.dto";
+import { SignUpFromInvitationDto } from "../dto/invitation.dto";
 import { ConfirmEmailDto } from "../dto/verification.dto";
 import { RefreshTokenGuard } from "src/core/interfaces/guards/refreshToken.guard";
 import { RefreshToken } from "src/core/interfaces/decorators/refreshToken.decorator";
@@ -29,9 +31,43 @@ export class AuthController extends BaseController {
   }
 
   @Post("signup")
+  @ApiOperation({
+    summary: "Sign up",
+    description: "Create a new account and organization.",
+  })
+  @ApiBody({ type: SignUpDto })
+  @ApiResponse({
+    status: 201,
+    description: "Account created successfully",
+  })
   async signUp(@Body() dto: SignUpDto) {
     const authIdentity = await this.authFacade.signUp(dto);
     return this.success(authIdentity);
+  }
+
+  @Post("signup-from-invitation")
+  @ApiOperation({
+    summary: "Sign up from invitation",
+    description:
+      "Create a new account from an invitation token. The email is automatically verified and a welcome email is sent. No organization is created.",
+  })
+  @ApiBody({ type: SignUpFromInvitationDto })
+  @ApiResponse({
+    status: 201,
+    description: "Account created and invitation accepted successfully",
+  })
+  @ApiResponse({ status: 400, description: "Invalid or expired invitation" })
+  @ApiResponse({ status: 404, description: "Invitation not found" })
+  @ApiResponse({ status: 409, description: "User already exists" })
+  async signUpFromInvitation(@Body() dto: SignUpFromInvitationDto) {
+    const response = await this.authFacade.signUpFromInvitation({
+      token: dto.token,
+      email: dto.email,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      password: dto.password,
+    });
+    return this.success(response);
   }
 
   @Post("signin")
@@ -66,7 +102,7 @@ export class AuthController extends BaseController {
       secure: this.configService.get("node_env") === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/v1/auth/refresh",
+      path: "/",
     });
 
     return this.success(authIdentity);
@@ -120,6 +156,14 @@ export class AuthController extends BaseController {
       secure: this.configService.get("node_env") === "production",
       sameSite: "lax",
       maxAge: 15 * 60 * 1000,
+      path: "/",
+    });
+
+    res.cookie("refresh_token", authIdentity.refreshToken, {
+      httpOnly: true,
+      secure: this.configService.get("node_env") === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/",
     });
 

@@ -31,6 +31,10 @@ import {
   GetSubscriptionInput,
   SubscriptionDetailOutput,
 } from "../use-cases/GetSubscription.use-case";
+import {
+  SyncPlansWithStripeUseCase,
+  SyncPlansWithStripeOutput,
+} from "../use-cases/SyncPlansWithStripe.use-case";
 
 export class SubscriptionFacade {
   constructor(
@@ -40,7 +44,8 @@ export class SubscriptionFacade {
     private readonly createSubscriptionUseCase: CreateSubscriptionUseCase,
     private readonly updateSubscriptionQuantityUseCase: UpdateSubscriptionQuantityUseCase,
     private readonly cancelSubscriptionUseCase: CancelSubscriptionUseCase,
-    private readonly getSubscriptionUseCase: GetSubscriptionUseCase
+    private readonly getSubscriptionUseCase: GetSubscriptionUseCase,
+    private readonly syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase
   ) {}
 
   async getPricingPlans(): Promise<PricingPlanResponse[]> {
@@ -110,6 +115,14 @@ export class SubscriptionFacade {
   ): Promise<SubscriptionDetailOutput | null> {
     try {
       return await this.getSubscriptionUseCase.execute(input);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async syncPlansWithStripe(): Promise<SyncPlansWithStripeOutput> {
+    try {
+      return await this.syncPlansWithStripeUseCase.execute();
     } catch (error) {
       throw error;
     }

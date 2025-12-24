@@ -39,6 +39,7 @@ import {
   CancelSubscriptionDto,
   CancelSubscriptionResponseDto,
   GetSubscriptionResponseDto,
+  SyncPlansWithStripeResponseDto,
 } from "../dto/pricing.dto";
 
 @ApiTags("subscription")
@@ -132,6 +133,25 @@ export class SubscriptionController extends BaseController {
       classCount: query.classCount,
       billingPeriod: query.billingPeriod || "monthly",
     });
+    return this.success(result);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  // @Roles(UserRole.SUPER_ADMIN)
+  @Post("sync-stripe")
+  @ApiOperation({
+    summary: "Synchroniser tous les plans et tiers avec Stripe",
+    description:
+      "Crée ou met à jour les produits et prix Stripe pour tous les plans actifs. Seuls les administrateurs peuvent exécuter cette action.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Synchronisation réussie",
+    type: SyncPlansWithStripeResponseDto,
+  })
+  async syncWithStripe(@CurrentUser() authenticatedUser: JWTPayload) {
+    const result = await this.subscriptionFacade.syncPlansWithStripe();
     return this.success(result);
   }
 

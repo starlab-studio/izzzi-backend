@@ -30,10 +30,25 @@ export class UserSubscriptionModel implements IUserSubscription {
 
   @Column({
     type: "enum",
-    enum: ["trial", "active", "past_due", "cancelled", "expired"],
+    enum: [
+      "trial",
+      "active",
+      "past_due",
+      "cancelled",
+      "expired",
+      "pending",
+      "failed",
+    ],
     default: "trial",
   })
-  status: "trial" | "active" | "past_due" | "cancelled" | "expired";
+  status:
+    | "trial"
+    | "active"
+    | "past_due"
+    | "cancelled"
+    | "expired"
+    | "pending"
+    | "failed";
 
   @Column({ name: "trial_start_date", type: "timestamp", nullable: true })
   trialStartDate: Date | null;

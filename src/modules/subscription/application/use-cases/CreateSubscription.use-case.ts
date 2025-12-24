@@ -1,10 +1,13 @@
-import { IUseCase, ILoggerService, BaseUseCase, DomainError } from "src/core";
-import { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
-import { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
-import { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
-import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
+import { IUseCase, BaseUseCase, DomainError } from "src/core";
+import type { ILoggerService } from "src/core";
+import type { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
+import type { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
+import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
+import type { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
 import { SubscriptionEntity } from "../../domain/entities/subscription.entity";
+import { PricingTierEntity } from "../../domain/entities/pricing-tier.entity";
 import { UserRole } from "src/core/domain/types";
+import type { IPaymentService } from "../../domain/services/payment.service";
 
 export interface CreateSubscriptionInput {
   userId: string;
@@ -40,7 +43,8 @@ export class CreateSubscriptionUseCase
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly pricingTierRepository: IPricingTierRepository,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly paymentService: IPaymentService
   ) {
     super(logger);
   }
@@ -126,12 +130,14 @@ export class CreateSubscriptionUseCase
       }
 
       let pricePerClassCents = 0;
+      let selectedTier: PricingTierEntity | null = null;
       if (!plan.isFree && tiers.length > 0) {
-        const tier = tiers.find(
-          (t) => quantity >= t.minClasses && quantity <= t.maxClasses
-        );
+        selectedTier =
+          tiers.find(
+            (t) => quantity >= t.minClasses && quantity <= t.maxClasses
+          ) || null;
 
-        if (!tier) {
+        if (!selectedTier) {
           throw new DomainError(
             "TIER_NOT_FOUND",
             `Aucun palier de tarification trouvé pour ${quantity} classe(s)`,
@@ -147,29 +153,85 @@ export class CreateSubscriptionUseCase
           );
         }
 
-        pricePerClassCents = tier.pricePerClassCents;
+        pricePerClassCents = selectedTier.pricePerClassCents;
       }
 
       const totalPriceCents = pricePerClassCents * quantity;
+      const requiresPayment = !plan.isFree && totalPriceCents > 0;
 
       let trialDays: number | undefined;
       if (plan.trialPeriodDays > 0) {
         trialDays = plan.trialPeriodDays;
       }
 
-      const subscription = SubscriptionEntity.create({
-        userId,
-        organizationId,
-        planId,
-        billingPeriod,
-        quantity,
-        trialDays,
-      });
+      let savedSubscription: SubscriptionEntity;
+      let stripeClientSecret: string | null = null;
+      let stripeSubscriptionId: string | null = null;
+      let stripeCustomerId: string | null = null;
 
-      const savedSubscription =
-        await this.subscriptionRepository.save(subscription);
+      if (requiresPayment) {
+        const pendingSubscription = SubscriptionEntity.createPending({
+          userId,
+          organizationId,
+          planId,
+          billingPeriod,
+          quantity,
+        });
 
-      const requiresPayment = !plan.isFree && totalPriceCents > 0;
+        savedSubscription =
+          await this.subscriptionRepository.save(pendingSubscription);
+
+        const userEmail = user.email;
+        const userName = `${user.firstName} ${user.lastName}`.trim();
+
+        stripeCustomerId = await this.paymentService.getOrCreateCustomer(
+          organizationId,
+          userEmail,
+          userName
+        );
+
+        if (!selectedTier?.stripePriceId) {
+          throw new DomainError(
+            "STRIPE_PRICE_ID_MISSING",
+            "Le palier de tarification n'a pas de stripePriceId configuré",
+            { tierId: selectedTier?.id, planId, billingPeriod }
+          );
+        }
+
+        const stripeSubscription = await this.paymentService.createSubscription(
+          {
+            customerId: stripeCustomerId,
+            priceId: selectedTier.stripePriceId,
+            quantity,
+            trialDays,
+            metadata: {
+              subscriptionId: savedSubscription.id,
+              userId,
+              organizationId,
+              planId,
+            },
+          }
+        );
+
+        stripeSubscriptionId = stripeSubscription.subscriptionId;
+        stripeClientSecret = stripeSubscription.clientSecret;
+
+        savedSubscription.linkToStripe(stripeSubscriptionId, stripeCustomerId);
+        savedSubscription =
+          await this.subscriptionRepository.save(savedSubscription);
+      } else {
+        const subscription = SubscriptionEntity.create({
+          userId,
+          organizationId,
+          planId,
+          billingPeriod,
+          quantity,
+          trialDays,
+        });
+
+        savedSubscription =
+          await this.subscriptionRepository.save(subscription);
+      }
 
       return {
         subscription: {
@@ -179,11 +241,13 @@ export class CreateSubscriptionUseCase
           status: savedSubscription.status,
           quantity: savedSubscription.quantity,
           totalPriceCents,
-          currentPeriodStart: savedSubscription.currentPeriodStart!,
-          currentPeriodEnd: savedSubscription.currentPeriodEnd!,
+          currentPeriodStart:
+            savedSubscription.currentPeriodStart || new Date(),
+          currentPeriodEnd: savedSubscription.currentPeriodEnd || new Date(),
           trialEnd: savedSubscription.trialEndDate,
         },
         requiresPayment,
+        stripeClientSecret: stripeClientSecret || undefined,
       };
     } catch (error) {
       this.handleError(error);

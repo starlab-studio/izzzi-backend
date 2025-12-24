@@ -6,7 +6,9 @@ export type SubscriptionStatus =
   | "active"
   | "past_due"
   | "cancelled"
-  | "expired";
+  | "expired"
+  | "pending"
+  | "failed";
 
 export type StripeSubscriptionStatus =
   | "trialing"
@@ -86,6 +88,49 @@ export class SubscriptionEntity {
       cancelledAt: null,
       stripeSubscriptionId: null,
       stripeCustomerId: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  public static createPending(data: {
+    userId: string;
+    organizationId: string;
+    planId: string;
+    billingPeriod: "monthly" | "annual";
+    quantity: number;
+    stripeCustomerId?: string | null;
+  }): SubscriptionEntity {
+    const now = new Date();
+    const {
+      userId,
+      organizationId,
+      planId,
+      billingPeriod,
+      quantity,
+      stripeCustomerId = null,
+    } = data;
+
+    if (quantity < 1 || quantity > 20) {
+      throw new Error("Quantity must be between 1 and 20");
+    }
+
+    return new SubscriptionEntity({
+      id: randomUUID(),
+      userId,
+      organizationId,
+      planId,
+      billingPeriod,
+      quantity,
+      pendingQuantity: null,
+      status: "pending",
+      trialStartDate: null,
+      trialEndDate: null,
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      cancelledAt: null,
+      stripeSubscriptionId: null,
+      stripeCustomerId,
       createdAt: now,
       updatedAt: now,
     });
@@ -227,18 +272,22 @@ export class SubscriptionEntity {
       return;
     }
 
-    if (this.props.status !== "trial") {
+    if (this.props.status !== "trial" && this.props.status !== "pending") {
       throw new Error(
         `Cannot activate subscription with status: ${this.props.status}`
       );
     }
 
+    const previousStatus = this.props.status;
     this.props.status = "active";
     this.props.updatedAt = new Date();
 
-    if (this.props.trialEndDate) {
-      const now = new Date();
+    const now = new Date();
+    if (!this.props.currentPeriodStart) {
       this.props.currentPeriodStart = now;
+    }
+
+    if (!this.props.currentPeriodEnd) {
       const periodEnd = new Date(now);
       if (this.props.billingPeriod === "monthly") {
         periodEnd.setMonth(periodEnd.getMonth() + 1);
@@ -247,6 +296,26 @@ export class SubscriptionEntity {
       }
       this.props.currentPeriodEnd = periodEnd;
     }
+
+    if (this.props.trialEndDate && previousStatus === "trial") {
+      this.props.currentPeriodStart = now;
+      this.props.currentPeriodEnd = this.props.trialEndDate;
+    }
+  }
+
+  markFailed(): void {
+    if (this.props.status === "failed") {
+      return;
+    }
+
+    if (this.props.status !== "pending") {
+      throw new Error(
+        `Cannot mark subscription as failed with status: ${this.props.status}`
+      );
+    }
+
+    this.props.status = "failed";
+    this.props.updatedAt = new Date();
   }
 
   markPastDue(): void {

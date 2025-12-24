@@ -31,10 +31,18 @@ import { CreateSubscriptionUseCase } from "./application/use-cases/CreateSubscri
 import { UpdateSubscriptionQuantityUseCase } from "./application/use-cases/UpdateSubscriptionQuantity.use-case";
 import { CancelSubscriptionUseCase } from "./application/use-cases/CancelSubscription.use-case";
 import { GetSubscriptionUseCase } from "./application/use-cases/GetSubscription.use-case";
+import { SyncPlansWithStripeUseCase } from "./application/use-cases/SyncPlansWithStripe.use-case";
 
 import { SubscriptionFacade } from "./application/facades/subscription.facade";
 
 import { SubscriptionController } from "./interface/controllers/subscription.controller";
+import { PaymentModule } from "../payment/payment.module";
+import {
+  IPaymentService,
+  PAYMENT_SERVICE,
+} from "./domain/services/payment.service";
+import { StripePaymentService } from "./infrastructure/services/stripe-payment.service";
+import { StripeSyncService } from "../payment/infrastructure/services/stripe-sync.service";
 
 @Module({
   imports: [
@@ -46,6 +54,7 @@ import { SubscriptionController } from "./interface/controllers/subscription.con
     ]),
     CoreModule,
     forwardRef(() => OrganizationModule),
+    PaymentModule,
   ],
   controllers: [SubscriptionController],
   providers: [
@@ -57,6 +66,10 @@ import { SubscriptionController } from "./interface/controllers/subscription.con
     {
       provide: SUBSCRIPTION_REPOSITORY,
       useClass: SubscriptionRepository,
+    },
+    {
+      provide: PAYMENT_SERVICE,
+      useClass: StripePaymentService,
     },
     {
       provide: GetPricingPlansUseCase,
@@ -109,14 +122,16 @@ import { SubscriptionController } from "./interface/controllers/subscription.con
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         pricingTierRepository: IPricingTierRepository,
         subscriptionRepository: ISubscriptionRepository,
-        userRepository: IUserRepository
+        userRepository: IUserRepository,
+        paymentService: IPaymentService
       ) =>
         new CreateSubscriptionUseCase(
           logger,
           subscriptionPlanRepository,
           pricingTierRepository,
           subscriptionRepository,
-          userRepository
+          userRepository,
+          paymentService
         ),
       inject: [
         LoggerService,
@@ -124,6 +139,7 @@ import { SubscriptionController } from "./interface/controllers/subscription.con
         PricingTierRepository,
         SubscriptionRepository,
         UserRepository,
+        PAYMENT_SERVICE,
       ],
     },
     {
@@ -192,6 +208,27 @@ import { SubscriptionController } from "./interface/controllers/subscription.con
       ],
     },
     {
+      provide: SyncPlansWithStripeUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
+        pricingTierRepository: IPricingTierRepository,
+        stripeSyncService: StripeSyncService
+      ) =>
+        new SyncPlansWithStripeUseCase(
+          logger,
+          subscriptionPlanRepository,
+          pricingTierRepository,
+          stripeSyncService
+        ),
+      inject: [
+        LoggerService,
+        SubscriptionPlanRepository,
+        PricingTierRepository,
+        StripeSyncService,
+      ],
+    },
+    {
       provide: SubscriptionFacade,
       useFactory: (
         getPricingPlansUseCase: GetPricingPlansUseCase,
@@ -200,7 +237,8 @@ import { SubscriptionController } from "./interface/controllers/subscription.con
         createSubscriptionUseCase: CreateSubscriptionUseCase,
         updateSubscriptionQuantityUseCase: UpdateSubscriptionQuantityUseCase,
         cancelSubscriptionUseCase: CancelSubscriptionUseCase,
-        getSubscriptionUseCase: GetSubscriptionUseCase
+        getSubscriptionUseCase: GetSubscriptionUseCase,
+        syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase
       ) =>
         new SubscriptionFacade(
           getPricingPlansUseCase,
@@ -209,7 +247,8 @@ import { SubscriptionController } from "./interface/controllers/subscription.con
           createSubscriptionUseCase,
           updateSubscriptionQuantityUseCase,
           cancelSubscriptionUseCase,
-          getSubscriptionUseCase
+          getSubscriptionUseCase,
+          syncPlansWithStripeUseCase
         ),
       inject: [
         GetPricingPlansUseCase,
@@ -219,6 +258,7 @@ import { SubscriptionController } from "./interface/controllers/subscription.con
         UpdateSubscriptionQuantityUseCase,
         CancelSubscriptionUseCase,
         GetSubscriptionUseCase,
+        SyncPlansWithStripeUseCase,
       ],
     },
   ],

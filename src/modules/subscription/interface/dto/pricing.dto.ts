@@ -246,6 +246,40 @@ export class CreateSubscriptionResponseDto {
   stripeCheckoutUrl?: string;
 }
 
+export class SyncPlansWithStripeResponseDto {
+  @ApiProperty({
+    description: "Nombre de plans synchronisés",
+    example: 1,
+  })
+  syncedPlans: number;
+
+  @ApiProperty({
+    description: "Nombre de tiers synchronisés",
+    example: 8,
+  })
+  syncedTiers: number;
+
+  @ApiProperty({
+    description: "Détails de la synchronisation par plan",
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        planId: { type: "string" },
+        planName: { type: "string" },
+        productId: { type: "string" },
+        tiersSynced: { type: "number" },
+      },
+    },
+  })
+  details: Array<{
+    planId: string;
+    planName: string;
+    productId: string;
+    tiersSynced: number;
+  }>;
+}
+
 export class UpdateQuantityDto {
   @ApiProperty({
     description: "Nouveau nombre de classes",

@@ -154,17 +154,17 @@ export class StripeSyncService {
   }
 
   async getOrCreateCustomer(
-    userId: string,
+    organizationId: string,
     email: string,
     name: string
   ): Promise<string> {
-    const existingByUserId = await this.stripe.customers.search({
-      query: `metadata["userId"]:"${userId}"`,
+    const existingByOrganizationId = await this.stripe.customers.search({
+      query: `metadata["organizationId"]:"${organizationId}"`,
       limit: 1,
     });
 
-    if (existingByUserId.data.length > 0) {
-      return existingByUserId.data[0].id;
+    if (existingByOrganizationId.data.length > 0) {
+      return existingByOrganizationId.data[0].id;
     }
 
     const existingByEmail = await this.stripe.customers.list({
@@ -177,7 +177,7 @@ export class StripeSyncService {
       await this.stripe.customers.update(customer.id, {
         metadata: {
           ...customer.metadata,
-          userId,
+          organizationId,
         },
       });
       return customer.id;
@@ -186,7 +186,7 @@ export class StripeSyncService {
     return this.createCustomer({
       email,
       name,
-      metadata: { userId },
+      metadata: { organizationId },
     });
   }
 

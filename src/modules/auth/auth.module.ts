@@ -28,6 +28,7 @@ import { AuthIdentityModel } from "./infrastructure/models/authIdentity.model";
 import { AuthIdentityUniquenessService } from "./domain/services/authIdentity-uniqueness.service";
 import { VerificationTokenModel } from "./infrastructure/models/verificationToken.model";
 import { IAuthIdentityRepository } from "./domain/repositories/authIdentity.repository";
+import { IRefreshTokenRepository } from "./domain/repositories/refreshToken.repository";
 import { AuthIdentityRepository } from "./infrastructure/repositories/authIdentity.repository";
 import { VerificationTokenRepository } from "./infrastructure/repositories/verificationToken.repository";
 import { AuthIdentityFactory } from "./infrastructure/factories/auth.factory";
@@ -235,7 +236,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         resetPasswordUseCase: ResetPasswordUseCase,
         changePasswordUseCase: ChangePasswordUseCase,
         signUpFromInvitationUseCase: SignUpFromInvitationUseCase,
-        authStrategy: IAuthStrategy
+        authStrategy: IAuthStrategy,
+        refreshTokenRepository: IRefreshTokenRepository
       ) =>
         new AuthFacade(
           authService,
@@ -247,7 +249,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
           resetPasswordUseCase,
           changePasswordUseCase,
           signUpFromInvitationUseCase,
-          authStrategy
+          authStrategy,
+          refreshTokenRepository
         ),
       inject: [
         AuthService,
@@ -260,6 +263,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         ChangePasswordUseCase,
         SignUpFromInvitationUseCase,
         "AUTH_IDENTITY_PROVIDER",
+        RefreshTokenRepository,
       ],
     },
     {

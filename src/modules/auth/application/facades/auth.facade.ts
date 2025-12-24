@@ -22,6 +22,7 @@ import {
   SignUpFromInvitationUseCase,
   SignUpFromInvitationData,
 } from "../use-cases/SignUpFromInvitation.use-case";
+import { IRefreshTokenRepository } from "../../domain/repositories/refreshToken.repository";
 
 export class AuthFacade {
   constructor(
@@ -34,7 +35,8 @@ export class AuthFacade {
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
     private readonly signUpFromInvitationUseCase: SignUpFromInvitationUseCase,
-    private readonly authStrategy: IAuthStrategy
+    private readonly authStrategy: IAuthStrategy,
+    private readonly refreshTokenRepository: IRefreshTokenRepository
   ) {}
 
   async signUp(data: SignUpData) {
@@ -108,6 +110,14 @@ export class AuthFacade {
       return await (this.authStrategy as any).generateAccessTokenForUser(
         userId
       );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async revokeAllRefreshTokens(userId: string): Promise<void> {
+    try {
+      await this.refreshTokenRepository.revokeAllByUserId(userId);
     } catch (error) {
       throw error;
     }

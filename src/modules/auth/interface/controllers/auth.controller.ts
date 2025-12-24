@@ -1,12 +1,20 @@
 import { type Response, type Request } from "express";
 import { ApiTags, ApiResponse, ApiOperation, ApiBody } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
-import { Controller, Post, Body, Res, Req, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  Req,
+  UseGuards,
+  HttpCode,
+} from "@nestjs/common";
 
 import { BaseController, AuthGuard, CurrentUser } from "src/core";
 import type { JWTPayload } from "src/core";
 import { AuthFacade } from "../../application/facades/auth.facade";
-import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
+
 import {
   SignInDto,
   SignUpDto,
@@ -244,6 +252,29 @@ export class AuthController extends BaseController {
     });
     return this.success({
       message: "Password has been changed successfully",
+    });
+  }
+
+  @Post("logout")
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: "Logout",
+    description: "Revoke refresh token and clear authentication cookies.",
+  })
+  @ApiResponse({ status: 200, description: "Logged out successfully" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  async logout(
+    @CurrentUser() user: JWTPayload,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    await this.authFacade.revokeAllRefreshTokens(user.userId);
+
+    res.clearCookie("access_token", { path: "/" });
+    res.clearCookie("refresh_token", { path: "/" });
+
+    return this.success({
+      message: "Logged out successfully",
     });
   }
 }

@@ -39,6 +39,19 @@ import { OrganizationController } from "./interface/controllers/organization.con
 import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-membership.use-case";
 import { GetOrganizationUseCase } from "./application/use-cases/GetOrganization.use-case";
 import { OrganizationAuthorizationService } from "./domain/services/organization-authorization.service";
+import { UpdateMemberRoleUseCase } from "./application/use-cases/UpdateMemberRole.use-case";
+import { RemoveMemberUseCase } from "./application/use-cases/RemoveMember.use-case";
+import { GetOrganizationMembersUseCase } from "./application/use-cases/GetOrganizationMembers.use-case";
+import { GetOrganizationStatsUseCase } from "./application/use-cases/GetOrganizationStats.use-case";
+import { ClassModule } from "../class/class.module";
+import { SubjectModule } from "../subject/subject.module";
+import { QuizModule } from "../quiz/quiz.module";
+import { IClassRepository } from "../class/domain/repositories/class.repository";
+import { ISubjectRepository } from "../subject/domain/repositories/subject.repository";
+import { IQuizRepository } from "../quiz/domain/repositories/quiz.repository";
+import { IResponseRepository } from "../quiz/domain/repositories/response.repository";
+import { ClassRepository } from "../class/infrastructure/repositories/class.repository";
+import { SubjectRepository } from "../subject/infrastructure/repositories/subject.repository";
 
 @Module({
   imports: [
@@ -50,6 +63,9 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
     ]),
     forwardRef(() => CoreModule),
     forwardRef(() => require("../auth/auth.module").AuthModule),
+    forwardRef(() => ClassModule),
+    forwardRef(() => SubjectModule),
+    forwardRef(() => QuizModule),
   ],
   controllers: [OrganizationController, UserController],
   providers: [
@@ -238,6 +254,56 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
       inject: [LoggerService, InvitationRepository, UserRepository],
     },
     {
+      provide: UpdateMemberRoleUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository
+      ) => new UpdateMemberRoleUseCase(logger, membershipRepository),
+      inject: [LoggerService, MembershipRepository],
+    },
+    {
+      provide: RemoveMemberUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository
+      ) => new RemoveMemberUseCase(logger, membershipRepository),
+      inject: [LoggerService, MembershipRepository],
+    },
+    {
+      provide: GetOrganizationMembersUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository
+      ) => new GetOrganizationMembersUseCase(logger, membershipRepository),
+      inject: [LoggerService, MembershipRepository],
+    },
+    {
+      provide: GetOrganizationStatsUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository,
+        classRepository: IClassRepository,
+        subjectRepository: ISubjectRepository,
+        quizRepository: IQuizRepository,
+        responseRepository: IResponseRepository
+      ) => new GetOrganizationStatsUseCase(
+        logger,
+        membershipRepository,
+        classRepository,
+        subjectRepository,
+        quizRepository,
+        responseRepository
+      ),
+      inject: [
+        LoggerService,
+        MembershipRepository,
+        "CLASS_REPOSITORY",
+        "SUBJECT_REPOSITORY",
+        "QUIZ_REPOSITORY",
+        "RESPONSE_REPOSITORY",
+      ],
+    },
+    {
       provide: OrganizationService,
       useFactory: (
         logger: ILoggerService,
@@ -278,7 +344,11 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         invitationRepository: IInvitationRepository,
         createUserUseCase: CreateUserUseCase,
         addUserToOrganizationUseCase: AddUserToOrganizationUseCase,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
+        updateMemberRoleUseCase: UpdateMemberRoleUseCase,
+        removeMemberUseCase: RemoveMemberUseCase,
+        getOrganizationMembersUseCase: GetOrganizationMembersUseCase,
+        getOrganizationStatsUseCase: GetOrganizationStatsUseCase
       ) =>
         new OrganizationFacade(
           organizationService,
@@ -292,7 +362,11 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
           invitationRepository,
           createUserUseCase,
           addUserToOrganizationUseCase,
-          unitOfWork
+          unitOfWork,
+          updateMemberRoleUseCase,
+          removeMemberUseCase,
+          getOrganizationMembersUseCase,
+          getOrganizationStatsUseCase
         ),
       inject: [
         OrganizationService,
@@ -307,6 +381,10 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         CreateUserUseCase,
         AddUserToOrganizationUseCase,
         TypeOrmUnitOfWork,
+        UpdateMemberRoleUseCase,
+        RemoveMemberUseCase,
+        GetOrganizationMembersUseCase,
+        GetOrganizationStatsUseCase,
       ],
     },
     {

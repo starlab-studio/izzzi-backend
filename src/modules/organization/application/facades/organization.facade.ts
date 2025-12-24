@@ -24,6 +24,24 @@ import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
 import { AddUserToOrganizationUseCase } from "../use-cases/AddUserToOrganization.use-case";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { IInvitationRepository } from "../../domain/repositories/invitation.repository";
+import {
+  UpdateMemberRoleUseCase,
+  UpdateMemberRoleData,
+} from "../use-cases/UpdateMemberRole.use-case";
+import {
+  RemoveMemberUseCase,
+  RemoveMemberData,
+} from "../use-cases/RemoveMember.use-case";
+import {
+  GetOrganizationMembersUseCase,
+  GetOrganizationMembersData,
+  OrganizationMember,
+} from "../use-cases/GetOrganizationMembers.use-case";
+import {
+  GetOrganizationStatsUseCase,
+  GetOrganizationStatsData,
+  OrganizationStats,
+} from "../use-cases/GetOrganizationStats.use-case";
 
 export class OrganizationFacade {
   constructor(
@@ -38,7 +56,11 @@ export class OrganizationFacade {
     private readonly invitationRepository: IInvitationRepository,
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly addUserToOrganizationUseCase: AddUserToOrganizationUseCase,
-    private readonly unitOfWork: IUnitOfWork
+    private readonly unitOfWork: IUnitOfWork,
+    private readonly updateMemberRoleUseCase?: UpdateMemberRoleUseCase,
+    private readonly removeMemberUseCase?: RemoveMemberUseCase,
+    private readonly getOrganizationMembersUseCase?: GetOrganizationMembersUseCase,
+    private readonly getOrganizationStatsUseCase?: GetOrganizationStatsUseCase
   ) {}
 
   async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
@@ -254,6 +276,70 @@ export class OrganizationFacade {
           addedBy: data.invitedBy,
         });
       });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateMemberRole(data: UpdateMemberRoleData): Promise<void> {
+    if (!this.updateMemberRoleUseCase) {
+      throw new DomainError(
+        ErrorCode.UNEXPECTED_ERROR,
+        "UpdateMemberRoleUseCase not initialized"
+      );
+    }
+    try {
+      return await this.unitOfWork.withTransaction(async () => {
+        return await this.updateMemberRoleUseCase!.execute(data);
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeMember(data: RemoveMemberData): Promise<void> {
+    if (!this.removeMemberUseCase) {
+      throw new DomainError(
+        ErrorCode.UNEXPECTED_ERROR,
+        "RemoveMemberUseCase not initialized"
+      );
+    }
+    try {
+      return await this.unitOfWork.withTransaction(async () => {
+        return await this.removeMemberUseCase!.execute(data);
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getOrganizationMembers(
+    data: GetOrganizationMembersData
+  ): Promise<OrganizationMember[]> {
+    if (!this.getOrganizationMembersUseCase) {
+      throw new DomainError(
+        ErrorCode.UNEXPECTED_ERROR,
+        "GetOrganizationMembersUseCase not initialized"
+      );
+    }
+    try {
+      return await this.getOrganizationMembersUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getOrganizationStats(
+    data: GetOrganizationStatsData
+  ): Promise<OrganizationStats> {
+    if (!this.getOrganizationStatsUseCase) {
+      throw new DomainError(
+        ErrorCode.UNEXPECTED_ERROR,
+        "GetOrganizationStatsUseCase not initialized"
+      );
+    }
+    try {
+      return await this.getOrganizationStatsUseCase.execute(data);
     } catch (error) {
       throw error;
     }

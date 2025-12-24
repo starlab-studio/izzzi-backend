@@ -41,6 +41,38 @@ export class MembershipRepository
     return this.toEntities(ormEntities);
   }
 
+  async findActiveByOrganization(
+    organizationId: string
+  ): Promise<MembershipEntity[]> {
+    const memberships = await this.directRepository.find({
+      where: {
+        organizationId,
+        status: MembershipStatus.ACTIVE,
+      },
+      relations: ["user"],
+      order: {
+        createdAt: "ASC",
+      },
+    });
+    return this.toEntitiesWithUsers(memberships);
+  }
+
+  async findByIdWithUser(id: string): Promise<MembershipEntity | null> {
+    const ormEntity = await this.directRepository.findOne({
+      where: { id },
+      relations: ["user", "organization"],
+    });
+    return this.toEntityWithUser(ormEntity);
+  }
+
+  async update(entity: MembershipEntity): Promise<MembershipEntity> {
+    const repository = this.getTypeOrmRepository();
+    const data = entity.toPersistence();
+    await repository.update(entity.id, data);
+    const updated = await repository.findOne({ where: { id: entity.id } });
+    return this.toEntity(updated)!;
+  }
+
   async findByUserIdWithOrganizations(
     userId: string
   ): Promise<MembershipEntity[]> {
@@ -176,6 +208,73 @@ export class MembershipRepository
       ownerId: model.ownerId,
       createdAt: model.createdAt,
       updatedAt: model.updatedAt,
+    });
+  }
+
+  private toEntityWithUser(
+    model: MembershipModel | null
+  ): MembershipEntity | null {
+    if (!model) return null;
+
+    return MembershipEntity.reconstitute({
+      id: model.id,
+      userId: model.userId,
+      organizationId: model.organizationId,
+      role: model.role,
+      addedBy: model.addedBy,
+      status: model.status,
+      leftAt: model.leftAt,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+      ...(model.organization && {
+        organization: this.toOrganizationEntity(model.organization),
+      }),
+      ...(model.user && {
+        user: {
+          id: model.user.id,
+          firstName: model.user.firstName,
+          lastName: model.user.lastName,
+          email: model.user.email,
+          phoneNumber: model.user.phoneNumber,
+          avatarUrl: model.user.avatarUrl,
+          lastLogin: model.user.lastLogin,
+          status: model.user.status,
+          role: model.user.role,
+          createdAt: model.user.createdAt,
+          updatedAt: model.user.updatedAt,
+        },
+      }),
+    });
+  }
+
+  private toEntitiesWithUsers(models: MembershipModel[]): MembershipEntity[] {
+    return models.map((model) => {
+      return MembershipEntity.reconstitute({
+        id: model.id,
+        userId: model.userId,
+        organizationId: model.organizationId,
+        role: model.role,
+        addedBy: model.addedBy,
+        status: model.status,
+        leftAt: model.leftAt,
+        createdAt: model.createdAt,
+        updatedAt: model.updatedAt,
+        ...(model.user && {
+          user: {
+            id: model.user.id,
+            firstName: model.user.firstName,
+            lastName: model.user.lastName,
+            email: model.user.email,
+            phoneNumber: model.user.phoneNumber,
+            avatarUrl: model.user.avatarUrl,
+            lastLogin: model.user.lastLogin,
+            status: model.user.status,
+            role: model.user.role,
+            createdAt: model.user.createdAt,
+            updatedAt: model.user.updatedAt,
+          },
+        }),
+      });
     });
   }
 }

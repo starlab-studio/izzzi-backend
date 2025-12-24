@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -83,8 +83,8 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       StudentQuizTokenModel,
       OrganizationModel,
     ]),
-    CoreModule,
-    OrganizationModule,
+    forwardRef(() => CoreModule),
+    forwardRef(() => OrganizationModule),
     SubjectModule,
     ClassModule,
     NotificationModule,
@@ -613,7 +613,11 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
     },
   ],
   controllers: [QuizTemplateController, QuizController, QuizDetailController, QuizPublicController, QuizPublicSubmitController],
-  exports: [QuizFacade],
+  exports: [
+    QuizFacade,
+    "QUIZ_REPOSITORY",
+    "RESPONSE_REPOSITORY",
+  ],
 })
 export class QuizModule {}
 

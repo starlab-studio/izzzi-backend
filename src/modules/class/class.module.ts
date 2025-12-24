@@ -29,8 +29,8 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
 @Module({
   imports: [
     TypeOrmModule.forFeature([ClassModel, ClassStudentModel]),
-    CoreModule,
-    OrganizationModule,
+    forwardRef(() => CoreModule),
+    forwardRef(() => OrganizationModule),
   ],
   controllers: [ClassController],
   providers: [

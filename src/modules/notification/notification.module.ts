@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
@@ -23,7 +23,7 @@ import { ClassArchivedEventHandler } from "./application/handlers/class-archived
   imports: [
     ConfigModule,
     TypeOrmModule.forFeature([NotificationModel]),
-    CoreModule,
+    forwardRef(() => CoreModule),
   ],
   providers: [
     LoggerService,

@@ -99,6 +99,7 @@ export type MembershipWithOrganizationData = {
 
 export interface IMembershipReconstitute extends IMembership {
   organization?: OrganizationEntity;
+  user?: IUser;
 }
 
 export type IMembershipCreate = Pick<

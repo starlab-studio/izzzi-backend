@@ -4,6 +4,7 @@ import { MembershipEntity } from "../entities/membership.entity";
 export interface IMembershipRepository extends IRepository<MembershipEntity> {
   create(data: MembershipEntity): Promise<MembershipEntity>;
   findByOrganization(organizationId: string): Promise<MembershipEntity[]>;
+  findActiveByOrganization(organizationId: string): Promise<MembershipEntity[]>;
   findByUserIdWithOrganizations(
     userId: string
   ): Promise<MembershipEntity[]>;
@@ -11,4 +12,6 @@ export interface IMembershipRepository extends IRepository<MembershipEntity> {
     userId: string,
     organizationId: string
   ): Promise<MembershipEntity | null>;
+  findByIdWithUser(id: string): Promise<MembershipEntity | null>;
+  update(entity: MembershipEntity): Promise<MembershipEntity>;
 }

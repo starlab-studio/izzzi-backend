@@ -15,6 +15,8 @@ export interface GetSubscriptionInput {
 export interface SubscriptionDetailOutput {
   subscription: {
     id: string;
+    userId: string;
+    organizationId: string;
     status: string;
     quantity: number;
     currentPeriodStart: Date;
@@ -172,6 +174,8 @@ export class GetSubscriptionUseCase
       return {
         subscription: {
           id: subscription.id,
+          userId: subscription.userId,
+          organizationId: subscription.organizationId,
           status: subscription.status,
           quantity: displayQuantity,
           currentPeriodStart: subscription.currentPeriodStart!,

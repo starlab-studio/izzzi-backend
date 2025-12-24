@@ -58,7 +58,7 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
           const displayValues = this.getDisplayValues(plan.name);
 
           const response: PricingPlanResponse = {
-            id: plan.name,
+            id: plan.id,
             name: plan.name,
             title: displayValues.title,
             badge: displayValues.badge,
@@ -71,7 +71,6 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
           };
 
           if (additionalFeatures.length > 0) {
-            // La première feature avec displayOrder === 1 est le titre, les autres sont les features
             const titleFeature = additionalFeatures.find(
               (f) => f.displayOrder === 1
             );

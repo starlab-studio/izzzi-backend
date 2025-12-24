@@ -7,6 +7,7 @@ import {
   Min,
   Max,
 } from "class-validator";
+import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class GetPricingTiersQueryDto {
@@ -82,8 +83,8 @@ export class PricingPlanResponseDto {
 
 export class CalculatePriceQueryDto {
   @ApiProperty({
-    description: "ID du plan de subscription",
-    example: "10000000-0000-0000-0000-000000000002",
+    description: "ID du plan de subscription (UUID)",
+    example: "123e4567-e89b-12d3-a456-426614174000",
   })
   @IsString()
   planId: string;
@@ -94,9 +95,10 @@ export class CalculatePriceQueryDto {
     maximum: 20,
     example: 7,
   })
-  @IsInt()
-  @Min(1)
-  @Max(20)
+  @Type(() => Number)
+  @IsInt({ message: "classCount must be an integer number" })
+  @Min(1, { message: "classCount must not be less than 1" })
+  @Max(20, { message: "classCount must not be greater than 20" })
   classCount: number;
 
   @ApiPropertyOptional({
@@ -104,7 +106,9 @@ export class CalculatePriceQueryDto {
     description: "Période de facturation (défaut: monthly)",
     default: "monthly",
   })
-  @IsEnum(["monthly", "annual"])
+  @IsEnum(["monthly", "annual"], {
+    message: "billingPeriod must be one of: monthly, annual",
+  })
   @IsOptional()
   billingPeriod?: "monthly" | "annual";
 }
@@ -340,6 +344,12 @@ export class CancelSubscriptionResponseDto {
 export class SubscriptionDetailDto {
   @ApiProperty()
   id: string;
+
+  @ApiProperty()
+  userId: string;
+
+  @ApiProperty()
+  organizationId: string;
 
   @ApiProperty()
   status: string;

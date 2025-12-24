@@ -1,4 +1,4 @@
-import { IUseCase, ILoggerService, BaseUseCase } from "src/core";
+import { IUseCase, ILoggerService, BaseUseCase, ErrorCode } from "src/core";
 import { DomainError } from "src/core/domain/errors/domain.error";
 import { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
 import { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
@@ -40,18 +40,31 @@ export class CalculateSubscriptionPriceUseCase
     try {
       const { planId, classCount, billingPeriod = "monthly" } = input;
 
-      if (classCount < 1 || classCount > 20) {
+      if (
+        typeof classCount !== "number" ||
+        !Number.isInteger(classCount) ||
+        classCount < 1 ||
+        classCount > 20
+      ) {
         throw new DomainError(
-          "INVALID_CLASS_COUNT",
-          "Classes number must be between 1 and 20",
+          ErrorCode.INVALID_CLASS_COUNT,
+          "classCount must be an integer between 1 and 20",
           { classCount }
+        );
+      }
+
+      if (billingPeriod && !["monthly", "annual"].includes(billingPeriod)) {
+        throw new DomainError(
+          ErrorCode.INVALID_BILLING_PERIOD,
+          "billingPeriod must be 'monthly' or 'annual'",
+          { billingPeriod }
         );
       }
 
       const plan = await this.subscriptionPlanRepository.findById(planId);
       if (!plan) {
         throw new DomainError(
-          "PLAN_NOT_FOUND",
+          ErrorCode.PLAN_NOT_FOUND,
           "Le plan de subscription n'existe pas",
           { planId }
         );
@@ -59,7 +72,7 @@ export class CalculateSubscriptionPriceUseCase
 
       if (!plan.isActive) {
         throw new DomainError(
-          "PLAN_NOT_ACTIVE",
+          ErrorCode.PLAN_NOT_ACTIVE,
           "Le plan de subscription n'est pas actif",
           { planId }
         );
@@ -67,13 +80,13 @@ export class CalculateSubscriptionPriceUseCase
 
       const tiers =
         await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
-          planId,
+          plan.id,
           billingPeriod
         );
 
       if (tiers.length === 0) {
         throw new DomainError(
-          "NO_PRICING_TIERS",
+          ErrorCode.NO_PRICING_TIERS,
           "Aucun palier de tarification trouvé pour ce plan et cette période",
           { planId, billingPeriod }
         );
@@ -85,7 +98,7 @@ export class CalculateSubscriptionPriceUseCase
 
       if (!tier) {
         throw new DomainError(
-          "TIER_NOT_FOUND",
+          ErrorCode.TIER_NOT_FOUND,
           `Aucun palier de tarification trouvé pour ${classCount} classe(s)`,
           {
             planId,

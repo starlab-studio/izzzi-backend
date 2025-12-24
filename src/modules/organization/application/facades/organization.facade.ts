@@ -304,13 +304,7 @@ export class OrganizationFacade {
         "RemoveMemberUseCase not initialized"
       );
     }
-    try {
-      return await this.unitOfWork.withTransaction(async () => {
-        return await this.removeMemberUseCase!.execute(data);
-      });
-    } catch (error) {
-      throw error;
-    }
+    return await this.removeMemberUseCase.execute(data);
   }
 
   async getOrganizationMembers(

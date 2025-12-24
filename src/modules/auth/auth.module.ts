@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule, JwtService } from "@nestjs/jwt";
@@ -59,8 +59,8 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       RefreshTokenModel,
       PasswordResetTokenModel,
     ]),
-    CoreModule,
-    OrganizationModule,
+    forwardRef(() => CoreModule),
+    forwardRef(() => OrganizationModule),
     NotificationModule,
     JwtModule.registerAsync({
       global: true,

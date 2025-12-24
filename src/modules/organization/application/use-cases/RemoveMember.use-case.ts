@@ -5,6 +5,7 @@ import {
   UserRole,
   IUnitOfWork,
 } from "src/core";
+import { ModuleRef } from "@nestjs/core";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { IAuthIdentityRepository } from "../../../auth/domain/repositories/authIdentity.repository";
@@ -22,7 +23,7 @@ export class RemoveMemberUseCase {
     private readonly membershipRepository: IMembershipRepository,
     private readonly userRepository: IUserRepository,
     private readonly authIdentityRepository: IAuthIdentityRepository,
-    private readonly authStrategy: IAuthStrategy,
+    private readonly moduleRef: ModuleRef,
     private readonly unitOfWork: IUnitOfWork
   ) {}
 
@@ -86,7 +87,13 @@ export class RemoveMemberUseCase {
           );
           if (authIdentity) {
             try {
-              await this.authStrategy.deleteIdentity(user.email);
+              const authStrategy = this.moduleRef.get<IAuthStrategy>(
+                "AUTH_IDENTITY_PROVIDER",
+                { strict: false }
+              );
+              if (authStrategy) {
+                await authStrategy.deleteIdentity(user.email);
+              }
             } catch (error) {
               this.logger.warn(
                 `Failed to delete auth identity for ${user.email}: ${error}`

@@ -1,4 +1,5 @@
 import { Module, forwardRef } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -55,7 +56,8 @@ import { SubjectRepository } from "../subject/infrastructure/repositories/subjec
 import { AuthIdentityModel } from "../auth/infrastructure/models/authIdentity.model";
 import { AuthIdentityRepository } from "../auth/infrastructure/repositories/authIdentity.repository";
 import { IAuthIdentityRepository } from "../auth/domain/repositories/authIdentity.repository";
-import { IAuthStrategy } from "../auth/domain/types";
+// @ts-ignore - Circular dependency resolved with forwardRef
+import { AuthModule } from "../auth/auth.module";
 
 @Module({
   imports: [
@@ -67,7 +69,7 @@ import { IAuthStrategy } from "../auth/domain/types";
       AuthIdentityModel,
     ]),
     forwardRef(() => CoreModule),
-    forwardRef(() => require("../auth/auth.module").AuthModule),
+    forwardRef(() => AuthModule),
     forwardRef(() => ClassModule),
     forwardRef(() => SubjectModule),
     forwardRef(() => QuizModule),
@@ -279,7 +281,7 @@ import { IAuthStrategy } from "../auth/domain/types";
         membershipRepository: IMembershipRepository,
         userRepository: IUserRepository,
         authIdentityRepository: IAuthIdentityRepository,
-        authStrategy: IAuthStrategy,
+        moduleRef: ModuleRef,
         unitOfWork: IUnitOfWork
       ) =>
         new RemoveMemberUseCase(
@@ -287,7 +289,7 @@ import { IAuthStrategy } from "../auth/domain/types";
           membershipRepository,
           userRepository,
           authIdentityRepository,
-          authStrategy,
+          moduleRef,
           unitOfWork
         ),
       inject: [
@@ -295,7 +297,7 @@ import { IAuthStrategy } from "../auth/domain/types";
         MembershipRepository,
         UserRepository,
         "AUTH_IDENTITY_REPOSITORY",
-        "AUTH_IDENTITY_PROVIDER",
+        ModuleRef,
         TypeOrmUnitOfWork,
       ],
     },

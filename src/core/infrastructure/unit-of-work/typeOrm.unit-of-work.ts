@@ -20,10 +20,14 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
       await this.queryRunner.commitTransaction();
       return result;
     } catch (error) {
-      await this.queryRunner.rollbackTransaction();
+      if (this.queryRunner && this.queryRunner.isTransactionActive) {
+        await this.queryRunner.rollbackTransaction();
+      }
       throw error;
     } finally {
-      await this.queryRunner.release();
+      if (this.queryRunner) {
+        await this.queryRunner.release();
+      }
       this.queryRunner = undefined;
       this.entityManager = undefined;
     }

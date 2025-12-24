@@ -52,6 +52,10 @@ import { IQuizRepository } from "../quiz/domain/repositories/quiz.repository";
 import { IResponseRepository } from "../quiz/domain/repositories/response.repository";
 import { ClassRepository } from "../class/infrastructure/repositories/class.repository";
 import { SubjectRepository } from "../subject/infrastructure/repositories/subject.repository";
+import { AuthIdentityModel } from "../auth/infrastructure/models/authIdentity.model";
+import { AuthIdentityRepository } from "../auth/infrastructure/repositories/authIdentity.repository";
+import { IAuthIdentityRepository } from "../auth/domain/repositories/authIdentity.repository";
+import { IAuthStrategy } from "../auth/domain/types";
 
 @Module({
   imports: [
@@ -60,6 +64,7 @@ import { SubjectRepository } from "../subject/infrastructure/repositories/subjec
       OrganizationModel,
       MembershipModel,
       InvitationModel,
+      AuthIdentityModel,
     ]),
     forwardRef(() => CoreModule),
     forwardRef(() => require("../auth/auth.module").AuthModule),
@@ -117,6 +122,12 @@ import { SubjectRepository } from "../subject/infrastructure/repositories/subjec
         unitOfWork: IUnitOfWork
       ) => new InvitationRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(InvitationModel), TypeOrmUnitOfWork],
+    },
+    {
+      provide: "AUTH_IDENTITY_REPOSITORY",
+      useFactory: (ormRepository: Repository<AuthIdentityModel>) =>
+        new AuthIdentityRepository(ormRepository),
+      inject: [getRepositoryToken(AuthIdentityModel)],
     },
     {
       provide: CreateUserUseCase,
@@ -265,9 +276,28 @@ import { SubjectRepository } from "../subject/infrastructure/repositories/subjec
       provide: RemoveMemberUseCase,
       useFactory: (
         logger: ILoggerService,
-        membershipRepository: IMembershipRepository
-      ) => new RemoveMemberUseCase(logger, membershipRepository),
-      inject: [LoggerService, MembershipRepository],
+        membershipRepository: IMembershipRepository,
+        userRepository: IUserRepository,
+        authIdentityRepository: IAuthIdentityRepository,
+        authStrategy: IAuthStrategy,
+        unitOfWork: IUnitOfWork
+      ) =>
+        new RemoveMemberUseCase(
+          logger,
+          membershipRepository,
+          userRepository,
+          authIdentityRepository,
+          authStrategy,
+          unitOfWork
+        ),
+      inject: [
+        LoggerService,
+        MembershipRepository,
+        UserRepository,
+        "AUTH_IDENTITY_REPOSITORY",
+        "AUTH_IDENTITY_PROVIDER",
+        TypeOrmUnitOfWork,
+      ],
     },
     {
       provide: GetOrganizationMembersUseCase,

@@ -40,6 +40,7 @@ import {
   CancelSubscriptionResponseDto,
   GetSubscriptionResponseDto,
   SyncPlansWithStripeResponseDto,
+  PaymentConfirmationResponseDto,
 } from "../dto/pricing.dto";
 
 @ApiTags("subscription")
@@ -152,6 +153,41 @@ export class SubscriptionController extends BaseController {
   })
   async syncWithStripe(@CurrentUser() authenticatedUser: JWTPayload) {
     const result = await this.subscriptionFacade.syncPlansWithStripe();
+    return this.success(result);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get(":organizationId/payment-confirmation")
+  @ApiOperation({
+    summary: "Récupérer les détails de confirmation de paiement",
+    description:
+      "Récupère les détails de la dernière facture et du moyen de paiement pour une organisation. Seuls les administrateurs peuvent accéder à ces informations.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "ID de l'organisation",
+    type: String,
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Détails de confirmation de paiement",
+    type: PaymentConfirmationResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Aucune subscription active ou facture trouvée",
+  })
+  async getPaymentConfirmation(
+    @CurrentUser() authenticatedUser: JWTPayload,
+    @Param("organizationId") organizationId: string
+  ) {
+    const result = await this.subscriptionFacade.getPaymentConfirmation({
+      organizationId,
+      userId: authenticatedUser.userId,
+    });
     return this.success(result);
   }
 

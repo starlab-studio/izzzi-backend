@@ -35,6 +35,11 @@ import {
   SyncPlansWithStripeUseCase,
   SyncPlansWithStripeOutput,
 } from "../use-cases/SyncPlansWithStripe.use-case";
+import {
+  GetPaymentConfirmationUseCase,
+  GetPaymentConfirmationInput,
+  GetPaymentConfirmationOutput,
+} from "../use-cases/GetPaymentConfirmation.use-case";
 
 export class SubscriptionFacade {
   constructor(
@@ -45,7 +50,8 @@ export class SubscriptionFacade {
     private readonly updateSubscriptionQuantityUseCase: UpdateSubscriptionQuantityUseCase,
     private readonly cancelSubscriptionUseCase: CancelSubscriptionUseCase,
     private readonly getSubscriptionUseCase: GetSubscriptionUseCase,
-    private readonly syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase
+    private readonly syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase,
+    private readonly getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase
   ) {}
 
   async getPricingPlans(): Promise<PricingPlanResponse[]> {
@@ -123,6 +129,16 @@ export class SubscriptionFacade {
   async syncPlansWithStripe(): Promise<SyncPlansWithStripeOutput> {
     try {
       return await this.syncPlansWithStripeUseCase.execute();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getPaymentConfirmation(
+    input: GetPaymentConfirmationInput
+  ): Promise<GetPaymentConfirmationOutput> {
+    try {
+      return await this.getPaymentConfirmationUseCase.execute(input);
     } catch (error) {
       throw error;
     }

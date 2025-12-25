@@ -488,3 +488,37 @@ export class GetSubscriptionResponseDto {
   })
   usage?: UsageInfoDto;
 }
+
+export class PaymentMethodDto {
+  @ApiProperty()
+  last4: string;
+
+  @ApiProperty()
+  brand: string;
+}
+
+export class PaymentConfirmationResponseDto {
+  @ApiProperty()
+  planName: string;
+
+  @ApiProperty({ enum: ["monthly", "annual"] })
+  billingPeriod: "monthly" | "annual";
+
+  @ApiProperty()
+  amountPaid: number;
+
+  @ApiProperty()
+  amountFormatted: string;
+
+  @ApiProperty({ type: PaymentMethodDto })
+  paymentMethod: PaymentMethodDto;
+
+  @ApiProperty()
+  nextPaymentDate: Date;
+
+  @ApiPropertyOptional()
+  invoicePdfUrl: string | null;
+
+  @ApiPropertyOptional()
+  hostedInvoiceUrl: string | null;
+}

@@ -10,11 +10,13 @@ import { SubscriptionPlanModel } from "./infrastructure/models/subscription-plan
 import { PlanFeatureModel } from "./infrastructure/models/plan-feature.model";
 import { PricingTierModel } from "./infrastructure/models/pricing-tier.model";
 import { UserSubscriptionModel } from "./infrastructure/models/user-subscription.model";
+import { InvoiceModel } from "./infrastructure/models/invoice.model";
 
 import { SubscriptionPlanRepository } from "./infrastructure/repositories/subscription-plan.repository";
 import { PlanFeatureRepository } from "./infrastructure/repositories/plan-feature.repository";
 import { PricingTierRepository } from "./infrastructure/repositories/pricing-tier.repository";
 import { SubscriptionRepository } from "./infrastructure/repositories/subscription.repository";
+import { InvoiceRepository } from "./infrastructure/repositories/invoice.repository";
 
 import { ISubscriptionPlanRepository } from "./domain/repositories/subscription-plan.repository";
 import { IPlanFeatureRepository } from "./domain/repositories/plan-feature.repository";
@@ -23,6 +25,10 @@ import {
   ISubscriptionRepository,
   SUBSCRIPTION_REPOSITORY,
 } from "./domain/repositories/subscription.repository";
+import {
+  IInvoiceRepository,
+  INVOICE_REPOSITORY,
+} from "./domain/repositories/invoice.repository";
 
 import { GetPricingPlansUseCase } from "./application/use-cases/GetPricingPlans.use-case";
 import { GetPricingTiersUseCase } from "./application/use-cases/GetPricingTiers.use-case";
@@ -32,6 +38,9 @@ import { UpdateSubscriptionQuantityUseCase } from "./application/use-cases/Updat
 import { CancelSubscriptionUseCase } from "./application/use-cases/CancelSubscription.use-case";
 import { GetSubscriptionUseCase } from "./application/use-cases/GetSubscription.use-case";
 import { SyncPlansWithStripeUseCase } from "./application/use-cases/SyncPlansWithStripe.use-case";
+import { GetPaymentConfirmationUseCase } from "./application/use-cases/GetPaymentConfirmation.use-case";
+import { SyncInvoiceFromStripeUseCase } from "./application/use-cases/SyncInvoiceFromStripe.use-case";
+import { SyncSubscriptionFromStripeUseCase } from "./application/use-cases/SyncSubscriptionFromStripe.use-case";
 
 import { SubscriptionFacade } from "./application/facades/subscription.facade";
 
@@ -51,6 +60,7 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
       PlanFeatureModel,
       PricingTierModel,
       UserSubscriptionModel,
+      InvoiceModel,
     ]),
     CoreModule,
     forwardRef(() => OrganizationModule),
@@ -63,9 +73,14 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
     PlanFeatureRepository,
     PricingTierRepository,
     SubscriptionRepository,
+    InvoiceRepository,
     {
       provide: SUBSCRIPTION_REPOSITORY,
       useClass: SubscriptionRepository,
+    },
+    {
+      provide: INVOICE_REPOSITORY,
+      useClass: InvoiceRepository,
     },
     {
       provide: PAYMENT_SERVICE,
@@ -229,6 +244,57 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
       ],
     },
     {
+      provide: GetPaymentConfirmationUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionRepository: ISubscriptionRepository,
+        invoiceRepository: IInvoiceRepository,
+        stripeSyncService: StripeSyncService
+      ) =>
+        new GetPaymentConfirmationUseCase(
+          logger,
+          subscriptionRepository,
+          invoiceRepository,
+          stripeSyncService
+        ),
+      inject: [
+        LoggerService,
+        SubscriptionRepository,
+        InvoiceRepository,
+        StripeSyncService,
+      ],
+    },
+    {
+      provide: SyncInvoiceFromStripeUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        invoiceRepository: IInvoiceRepository,
+        subscriptionRepository: ISubscriptionRepository,
+        stripeSyncService: StripeSyncService
+      ) =>
+        new SyncInvoiceFromStripeUseCase(
+          logger,
+          invoiceRepository,
+          subscriptionRepository,
+          stripeSyncService
+        ),
+      inject: [
+        LoggerService,
+        InvoiceRepository,
+        SubscriptionRepository,
+        StripeSyncService,
+      ],
+    },
+    {
+      provide: SyncSubscriptionFromStripeUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionRepository: ISubscriptionRepository
+      ) =>
+        new SyncSubscriptionFromStripeUseCase(logger, subscriptionRepository),
+      inject: [LoggerService, SubscriptionRepository],
+    },
+    {
       provide: SubscriptionFacade,
       useFactory: (
         getPricingPlansUseCase: GetPricingPlansUseCase,
@@ -238,7 +304,8 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
         updateSubscriptionQuantityUseCase: UpdateSubscriptionQuantityUseCase,
         cancelSubscriptionUseCase: CancelSubscriptionUseCase,
         getSubscriptionUseCase: GetSubscriptionUseCase,
-        syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase
+        syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase,
+        getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase
       ) =>
         new SubscriptionFacade(
           getPricingPlansUseCase,
@@ -248,7 +315,8 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
           updateSubscriptionQuantityUseCase,
           cancelSubscriptionUseCase,
           getSubscriptionUseCase,
-          syncPlansWithStripeUseCase
+          syncPlansWithStripeUseCase,
+          getPaymentConfirmationUseCase
         ),
       inject: [
         GetPricingPlansUseCase,
@@ -259,9 +327,19 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
         CancelSubscriptionUseCase,
         GetSubscriptionUseCase,
         SyncPlansWithStripeUseCase,
+        GetPaymentConfirmationUseCase,
       ],
     },
   ],
-  exports: [SubscriptionFacade],
+  exports: [
+    SubscriptionFacade,
+    InvoiceRepository,
+    SubscriptionRepository,
+    INVOICE_REPOSITORY,
+    SUBSCRIPTION_REPOSITORY,
+    GetPaymentConfirmationUseCase,
+    SyncInvoiceFromStripeUseCase,
+    SyncSubscriptionFromStripeUseCase,
+  ],
 })
 export class SubscriptionModule {}

@@ -476,4 +476,20 @@ export class StripeSyncService {
       webhookSecret
     );
   }
+
+  async getPaymentMethod(
+    paymentMethodId: string
+  ): Promise<Stripe.PaymentMethod | null> {
+    try {
+      return await this.stripe.paymentMethods.retrieve(paymentMethodId);
+    } catch (error) {
+      if (
+        error instanceof Stripe.errors.StripeError &&
+        error.code === "resource_missing"
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
 }

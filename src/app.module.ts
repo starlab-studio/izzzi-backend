@@ -13,6 +13,7 @@ import { SubscriptionModule } from "./modules/subscription/subscription.module";
 import { UserModule } from "./modules/user/user.module";
 
 import AppConfig from "./core/interfaces/config.global";
+import { FaqModule } from "./modules/faq/faq.module";
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import AppConfig from "./core/interfaces/config.global";
     QuizModule,
     SubscriptionModule,
     UserModule,
+    FaqModule,
   ],
 })
 export class AppModule {}

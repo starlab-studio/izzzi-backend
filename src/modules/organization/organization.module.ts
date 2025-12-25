@@ -321,6 +321,7 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
     "MEMBERSHIP_REPOSITORY",
     UserRepository,
     "USER_REPOSITORY",
+    OrganizationAuthorizationService,
   ],
 })
 export class OrganizationModule {}

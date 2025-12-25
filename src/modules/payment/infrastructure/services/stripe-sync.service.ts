@@ -492,4 +492,109 @@ export class StripeSyncService {
       throw error;
     }
   }
+
+  async createBillingPortalSession(params: {
+    customerId: string;
+    returnUrl: string;
+  }): Promise<string> {
+    const session = await this.stripe.billingPortal.sessions.create({
+      customer: params.customerId,
+      return_url: params.returnUrl,
+    });
+
+    this.logger.log(
+      `Created billing portal session for customer: ${params.customerId}`
+    );
+
+    return session.url;
+  }
+
+  async createPaymentIntent(params: {
+    customerId: string;
+    amountCents: number;
+    currency?: string;
+    metadata?: Record<string, string>;
+    createInvoice?: boolean;
+    description?: string;
+  }): Promise<{
+    paymentIntentId: string;
+    clientSecret: string;
+    invoiceId?: string;
+  }> {
+    let invoiceId: string | undefined;
+
+    if (params.createInvoice) {
+      const invoice = await this.stripe.invoices.create({
+        customer: params.customerId,
+        currency: params.currency || "eur",
+        description: params.description || "Quantity update payment",
+        metadata: params.metadata || {},
+        auto_advance: false,
+      });
+
+      await this.stripe.invoiceItems.create({
+        customer: params.customerId,
+        invoice: invoice.id,
+        amount: params.amountCents,
+        currency: params.currency || "eur",
+        description: params.description || "Quantity update payment",
+      });
+
+      const finalizedInvoice = await this.stripe.invoices.finalizeInvoice(
+        invoice.id
+      );
+
+      invoiceId = finalizedInvoice.id;
+
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount: params.amountCents,
+        currency: params.currency || "eur",
+        customer: params.customerId,
+        metadata: {
+          ...params.metadata,
+          invoiceId: invoiceId,
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      if (!paymentIntent.client_secret) {
+        throw new Error("PaymentIntent created without client_secret");
+      }
+
+      this.logger.log(
+        `Created payment intent ${paymentIntent.id} with invoice ${invoiceId} for customer ${params.customerId}, amount: ${params.amountCents} cents`
+      );
+
+      return {
+        paymentIntentId: paymentIntent.id,
+        clientSecret: paymentIntent.client_secret,
+        invoiceId,
+      };
+    }
+
+    const paymentIntent = await this.stripe.paymentIntents.create({
+      amount: params.amountCents,
+      currency: params.currency || "eur",
+      customer: params.customerId,
+      metadata: params.metadata || {},
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    this.logger.log(
+      `Created payment intent ${paymentIntent.id} for customer ${params.customerId}, amount: ${params.amountCents} cents`
+    );
+
+    if (!paymentIntent.client_secret) {
+      throw new Error("PaymentIntent created without client_secret");
+    }
+
+    return {
+      paymentIntentId: paymentIntent.id,
+      clientSecret: paymentIntent.client_secret,
+    };
+  }
 }

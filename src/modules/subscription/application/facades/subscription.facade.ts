@@ -40,6 +40,11 @@ import {
   GetPaymentConfirmationInput,
   GetPaymentConfirmationOutput,
 } from "../use-cases/GetPaymentConfirmation.use-case";
+import {
+  GetBillingPortalLinkUseCase,
+  GetBillingPortalLinkInput,
+  GetBillingPortalLinkOutput,
+} from "../use-cases/GetBillingPortalLink.use-case";
 
 export class SubscriptionFacade {
   constructor(
@@ -51,7 +56,8 @@ export class SubscriptionFacade {
     private readonly cancelSubscriptionUseCase: CancelSubscriptionUseCase,
     private readonly getSubscriptionUseCase: GetSubscriptionUseCase,
     private readonly syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase,
-    private readonly getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase
+    private readonly getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase,
+    private readonly getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase
   ) {}
 
   async getPricingPlans(): Promise<PricingPlanResponse[]> {
@@ -139,6 +145,16 @@ export class SubscriptionFacade {
   ): Promise<GetPaymentConfirmationOutput> {
     try {
       return await this.getPaymentConfirmationUseCase.execute(input);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getBillingPortalLink(
+    input: GetBillingPortalLinkInput
+  ): Promise<GetBillingPortalLinkOutput> {
+    try {
+      return await this.getBillingPortalLinkUseCase.execute(input);
     } catch (error) {
       throw error;
     }

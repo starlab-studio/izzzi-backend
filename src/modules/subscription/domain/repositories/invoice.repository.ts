@@ -7,6 +7,10 @@ export interface IInvoiceRepository extends IRepository<InvoiceEntity> {
   findLatestByOrganizationId(
     organizationId: string
   ): Promise<InvoiceEntity | null>;
+  findLatestPaidByOrganizationId(
+    organizationId: string,
+    since?: Date
+  ): Promise<InvoiceEntity | null>;
 }
 
 export const INVOICE_REPOSITORY = Symbol("IInvoiceRepository");

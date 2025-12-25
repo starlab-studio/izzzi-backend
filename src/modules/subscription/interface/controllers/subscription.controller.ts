@@ -41,6 +41,7 @@ import {
   GetSubscriptionResponseDto,
   SyncPlansWithStripeResponseDto,
   PaymentConfirmationResponseDto,
+  BillingPortalResponseDto,
 } from "../dto/pricing.dto";
 
 @ApiTags("subscription")
@@ -187,6 +188,43 @@ export class SubscriptionController extends BaseController {
     const result = await this.subscriptionFacade.getPaymentConfirmation({
       organizationId,
       userId: authenticatedUser.userId,
+    });
+    return this.success(result);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get(":organizationId/billing-portal")
+  @ApiOperation({
+    summary: "Générer un lien vers le portail de facturation Stripe",
+    description:
+      "Génère une session temporaire pour accéder au portail de gestion de facturation Stripe. Seuls les administrateurs peuvent accéder à ce lien.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "ID de l'organisation",
+    type: String,
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "URL du portail de facturation",
+    type: BillingPortalResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Aucune subscription trouvée pour cette organisation",
+  })
+  async getBillingPortalLink(
+    @CurrentUser() authenticatedUser: JWTPayload,
+    @Param("organizationId") organizationId: string,
+    @Query("returnUrl") returnUrl?: string
+  ) {
+    const result = await this.subscriptionFacade.getBillingPortalLink({
+      organizationId,
+      userId: authenticatedUser.userId,
+      returnUrl,
     });
     return this.success(result);
   }

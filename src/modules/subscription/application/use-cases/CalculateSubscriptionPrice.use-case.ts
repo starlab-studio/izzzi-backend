@@ -113,7 +113,12 @@ export class CalculateSubscriptionPriceUseCase
       }
 
       const pricePerClassCents = tier.pricePerClassCents;
-      const totalPriceCents = pricePerClassCents * classCount;
+      let totalPriceCents = pricePerClassCents * classCount;
+
+      if (billingPeriod === "annual") {
+        totalPriceCents = totalPriceCents * 12;
+      }
+
       const totalPriceFormatted = this.formatPrice(totalPriceCents);
       const pricePerClassFormatted = this.formatPrice(pricePerClassCents);
 

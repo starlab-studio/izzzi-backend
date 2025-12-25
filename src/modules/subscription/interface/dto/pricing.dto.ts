@@ -280,6 +280,14 @@ export class SyncPlansWithStripeResponseDto {
   }>;
 }
 
+export class BillingPortalResponseDto {
+  @ApiProperty({
+    description: "URL du portail de facturation Stripe",
+    example: "https://billing.stripe.com/session/xxx",
+  })
+  url: string;
+}
+
 export class UpdateQuantityDto {
   @ApiProperty({
     description: "Nouveau nombre de classes",
@@ -331,6 +339,17 @@ export class UpdateQuantityResponseDto {
 
   @ApiPropertyOptional()
   amountDueCents?: number;
+
+  @ApiPropertyOptional({
+    description: "Stripe client secret for payment if requiresPayment is true",
+  })
+  stripeClientSecret?: string;
+
+  @ApiProperty({
+    description: "Billing period of the subscription",
+    enum: ["monthly", "annual"],
+  })
+  billingPeriod: "monthly" | "annual";
 }
 
 export class CancelSubscriptionDto {

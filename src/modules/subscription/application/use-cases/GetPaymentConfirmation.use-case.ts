@@ -5,6 +5,7 @@ import type { ISubscriptionRepository } from "../../domain/repositories/subscrip
 import type { IInvoiceRepository } from "../../domain/repositories/invoice.repository";
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import { StripeSyncService } from "../../../payment/infrastructure/services/stripe-sync.service";
+import { OrganizationAuthorizationService } from "src/modules/organization/domain/services/organization-authorization.service";
 
 export interface GetPaymentConfirmationInput {
   organizationId: string;
@@ -34,7 +35,8 @@ export class GetPaymentConfirmationUseCase
     logger: ILoggerService,
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly invoiceRepository: IInvoiceRepository,
-    private readonly stripeSyncService: StripeSyncService
+    private readonly stripeSyncService: StripeSyncService,
+    private readonly organizationAuthorizationService: OrganizationAuthorizationService
   ) {
     super(logger);
   }
@@ -60,18 +62,16 @@ export class GetPaymentConfirmationUseCase
       if (!subscription) {
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
-          "Aucune subscription trouvée pour cette organisation",
+          "No subscription found for this organization",
           { organizationId }
         );
       }
 
-      if (subscription.userId !== userId) {
-        throw new DomainError(
-          "UNAUTHORIZED",
-          "Vous n'avez pas accès à cette subscription",
-          { userId, subscriptionUserId: subscription.userId }
-        );
-      }
+      // Vérifier que l'utilisateur a accès à cette organisation
+      await this.organizationAuthorizationService.assertCanAccess(
+        userId,
+        organizationId
+      );
 
       if (
         subscription.status !== "active" &&
@@ -80,13 +80,25 @@ export class GetPaymentConfirmationUseCase
       ) {
         throw new DomainError(
           "SUBSCRIPTION_NOT_ACTIVE",
-          "La subscription n'est pas active ou en attente de confirmation",
+          "Subscription is not active or pending confirmation",
           { organizationId, status: subscription.status }
         );
       }
 
-      let invoice =
-        await this.invoiceRepository.findLatestByOrganizationId(organizationId);
+      const oneDayAgo = new Date();
+      oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+
+      let invoice = await this.invoiceRepository.findLatestPaidByOrganizationId(
+        organizationId,
+        oneDayAgo
+      );
+
+      if (!invoice) {
+        invoice =
+          await this.invoiceRepository.findLatestByOrganizationId(
+            organizationId
+          );
+      }
 
       if (!invoice && subscription.stripeSubscriptionId) {
         const stripeSubscription = await this.stripeSyncService.getSubscription(
@@ -117,7 +129,7 @@ export class GetPaymentConfirmationUseCase
       if (!invoice) {
         throw new DomainError(
           "INVOICE_NOT_FOUND",
-          "Aucune facture trouvée pour cette subscription",
+          "No invoice found for this subscription",
           { subscriptionId: subscription.id }
         );
       }

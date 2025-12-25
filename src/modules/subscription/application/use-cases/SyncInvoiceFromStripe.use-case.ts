@@ -35,7 +35,6 @@ export class SyncInvoiceFromStripeUseCase
     const { stripeInvoice } = input;
 
     try {
-      // Récupérer la subscription depuis les metadata Stripe
       const subscriptionId =
         stripeInvoice.metadata?.subscriptionId ||
         (typeof stripeInvoice.subscription === "string"
@@ -45,12 +44,11 @@ export class SyncInvoiceFromStripeUseCase
       if (!subscriptionId) {
         throw new DomainError(
           "SUBSCRIPTION_ID_MISSING",
-          "Impossible de trouver l'ID de subscription dans l'invoice Stripe",
+          "Unable to find subscription ID in Stripe invoice",
           { stripeInvoiceId: stripeInvoice.id }
         );
       }
 
-      // Récupérer la subscription depuis la DB
       const subscription =
         await this.subscriptionRepository.findByStripeSubscriptionId(
           subscriptionId
@@ -59,22 +57,19 @@ export class SyncInvoiceFromStripeUseCase
       if (!subscription) {
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
-          "Subscription non trouvée pour cet invoice",
+          "Subscription not found for this invoice",
           { subscriptionId, stripeInvoiceId: stripeInvoice.id }
         );
       }
 
-      // Vérifier si l'invoice existe déjà
       let invoice = await this.invoiceRepository.findByStripeInvoiceId(
         stripeInvoice.id
       );
 
       if (invoice) {
-        // Mettre à jour l'invoice existante
         invoice.updateFromStripe(stripeInvoice);
         invoice = await this.invoiceRepository.save(invoice);
       } else {
-        // Créer une nouvelle invoice
         invoice = InvoiceEntity.syncFromStripe(
           stripeInvoice,
           subscription.userId,
@@ -84,7 +79,6 @@ export class SyncInvoiceFromStripeUseCase
         invoice = await this.invoiceRepository.save(invoice);
       }
 
-      // Si l'invoice est payée, mettre à jour le statut de la subscription
       if (
         stripeInvoice.status === "paid" &&
         subscription.status === "pending"
@@ -110,7 +104,5 @@ export class SyncInvoiceFromStripeUseCase
     }
   }
 
-  async withCompensation(): Promise<void> {
-    // No compensation needed for webhook sync operation
-  }
+  async withCompensation(): Promise<void> {}
 }

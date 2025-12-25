@@ -52,6 +52,11 @@ import {
 } from "./domain/services/payment.service";
 import { StripePaymentService } from "./infrastructure/services/stripe-payment.service";
 import { StripeSyncService } from "../payment/infrastructure/services/stripe-sync.service";
+import { NotificationModule } from "../notification/notification.module";
+import { CreateEmailNotificationUseCase } from "../notification/application/use-cases/create-email-notification.use-case";
+import { GetBillingPortalLinkUseCase } from "./application/use-cases/GetBillingPortalLink.use-case";
+import { SendSubscriptionConfirmationEmailUseCase } from "./application/use-cases/SendSubscriptionConfirmationEmail.use-case";
+import { OrganizationAuthorizationService } from "../organization/domain/services/organization-authorization.service";
 
 @Module({
   imports: [
@@ -65,6 +70,7 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
     CoreModule,
     forwardRef(() => OrganizationModule),
     PaymentModule,
+    NotificationModule,
   ],
   controllers: [SubscriptionController],
   providers: [
@@ -164,14 +170,16 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
         subscriptionRepository: ISubscriptionRepository,
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         pricingTierRepository: IPricingTierRepository,
-        userRepository: IUserRepository
+        userRepository: IUserRepository,
+        stripeSyncService: StripeSyncService
       ) =>
         new UpdateSubscriptionQuantityUseCase(
           logger,
           subscriptionRepository,
           subscriptionPlanRepository,
           pricingTierRepository,
-          userRepository
+          userRepository,
+          stripeSyncService
         ),
       inject: [
         LoggerService,
@@ -179,6 +187,7 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
         SubscriptionPlanRepository,
         PricingTierRepository,
         UserRepository,
+        StripeSyncService,
       ],
     },
     {
@@ -249,19 +258,22 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
         logger: ILoggerService,
         subscriptionRepository: ISubscriptionRepository,
         invoiceRepository: IInvoiceRepository,
-        stripeSyncService: StripeSyncService
+        stripeSyncService: StripeSyncService,
+        organizationAuthorizationService: OrganizationAuthorizationService
       ) =>
         new GetPaymentConfirmationUseCase(
           logger,
           subscriptionRepository,
           invoiceRepository,
-          stripeSyncService
+          stripeSyncService,
+          organizationAuthorizationService
         ),
       inject: [
         LoggerService,
         SubscriptionRepository,
         InvoiceRepository,
         StripeSyncService,
+        OrganizationAuthorizationService,
       ],
     },
     {
@@ -295,6 +307,51 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
       inject: [LoggerService, SubscriptionRepository],
     },
     {
+      provide: GetBillingPortalLinkUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionRepository: ISubscriptionRepository,
+        stripeSyncService: StripeSyncService,
+        organizationAuthorizationService: OrganizationAuthorizationService
+      ) =>
+        new GetBillingPortalLinkUseCase(
+          logger,
+          subscriptionRepository,
+          stripeSyncService,
+          organizationAuthorizationService
+        ),
+      inject: [
+        LoggerService,
+        SubscriptionRepository,
+        StripeSyncService,
+        OrganizationAuthorizationService,
+      ],
+    },
+    {
+      provide: SendSubscriptionConfirmationEmailUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionRepository: ISubscriptionRepository,
+        userRepository: IUserRepository,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase
+      ) =>
+        new SendSubscriptionConfirmationEmailUseCase(
+          logger,
+          subscriptionRepository,
+          userRepository,
+          createEmailNotificationUseCase,
+          getBillingPortalLinkUseCase
+        ),
+      inject: [
+        LoggerService,
+        SubscriptionRepository,
+        UserRepository,
+        CreateEmailNotificationUseCase,
+        GetBillingPortalLinkUseCase,
+      ],
+    },
+    {
       provide: SubscriptionFacade,
       useFactory: (
         getPricingPlansUseCase: GetPricingPlansUseCase,
@@ -305,7 +362,8 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
         cancelSubscriptionUseCase: CancelSubscriptionUseCase,
         getSubscriptionUseCase: GetSubscriptionUseCase,
         syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase,
-        getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase
+        getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase,
+        getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase
       ) =>
         new SubscriptionFacade(
           getPricingPlansUseCase,
@@ -316,7 +374,8 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
           cancelSubscriptionUseCase,
           getSubscriptionUseCase,
           syncPlansWithStripeUseCase,
-          getPaymentConfirmationUseCase
+          getPaymentConfirmationUseCase,
+          getBillingPortalLinkUseCase
         ),
       inject: [
         GetPricingPlansUseCase,
@@ -328,6 +387,7 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
         GetSubscriptionUseCase,
         SyncPlansWithStripeUseCase,
         GetPaymentConfirmationUseCase,
+        GetBillingPortalLinkUseCase,
       ],
     },
   ],
@@ -340,6 +400,8 @@ import { StripeSyncService } from "../payment/infrastructure/services/stripe-syn
     GetPaymentConfirmationUseCase,
     SyncInvoiceFromStripeUseCase,
     SyncSubscriptionFromStripeUseCase,
+    GetBillingPortalLinkUseCase,
+    SendSubscriptionConfirmationEmailUseCase,
   ],
 })
 export class SubscriptionModule {}

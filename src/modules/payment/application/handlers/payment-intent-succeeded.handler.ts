@@ -1,13 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common";
 import Stripe from "stripe";
 import { SyncSubscriptionFromStripeUseCase } from "../../../subscription/application/use-cases/SyncSubscriptionFromStripe.use-case";
+import { SyncInvoiceFromStripeUseCase } from "../../../subscription/application/use-cases/SyncInvoiceFromStripe.use-case";
+import { StripeSyncService } from "../../infrastructure/services/stripe-sync.service";
 
 @Injectable()
 export class PaymentIntentSucceededHandler {
   private readonly logger = new Logger(PaymentIntentSucceededHandler.name);
 
   constructor(
-    private readonly syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase
+    private readonly syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase,
+    private readonly syncInvoiceFromStripeUseCase: SyncInvoiceFromStripeUseCase,
+    private readonly stripeSyncService: StripeSyncService
   ) {}
 
   async handle(paymentIntent: Stripe.PaymentIntent): Promise<void> {
@@ -16,7 +20,35 @@ export class PaymentIntentSucceededHandler {
         `Processing payment_intent.succeeded event for payment intent ${paymentIntent.id}`
       );
 
-      // Si le payment intent est lié à une subscription, on synchronise la subscription
+      // Si le payment intent est lié à une facture, synchroniser la facture
+      if (paymentIntent.invoice) {
+        const invoiceId =
+          typeof paymentIntent.invoice === "string"
+            ? paymentIntent.invoice
+            : paymentIntent.invoice.id;
+
+        try {
+          const stripeInvoice =
+            await this.stripeSyncService.getInvoice(invoiceId);
+          if (stripeInvoice) {
+            await this.syncInvoiceFromStripeUseCase.execute({
+              stripeInvoice,
+            });
+            this.logger.log(
+              `Synchronized invoice ${invoiceId} from payment intent ${paymentIntent.id}`
+            );
+          }
+        } catch (invoiceError) {
+          this.logger.error(
+            `Failed to sync invoice ${invoiceId} from payment intent ${paymentIntent.id}: ${
+              invoiceError instanceof Error
+                ? invoiceError.message
+                : String(invoiceError)
+            }`
+          );
+        }
+      }
+
       if (paymentIntent.metadata?.subscriptionId) {
         const subscriptionId = paymentIntent.metadata.subscriptionId;
         const stripeSubscription =

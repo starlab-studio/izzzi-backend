@@ -32,14 +32,12 @@ export class SyncSubscriptionFromStripeUseCase
     const { stripeSubscription } = input;
 
     try {
-      // Récupérer la subscription depuis la DB
       let subscription =
         await this.subscriptionRepository.findByStripeSubscriptionId(
           stripeSubscription.id
         );
 
       if (!subscription) {
-        // Si la subscription n'existe pas, on essaie de la trouver via les metadata
         const subscriptionId = stripeSubscription.metadata?.subscriptionId;
         if (subscriptionId) {
           subscription =
@@ -49,12 +47,11 @@ export class SyncSubscriptionFromStripeUseCase
         if (!subscription) {
           throw new DomainError(
             "SUBSCRIPTION_NOT_FOUND",
-            "Subscription non trouvée pour cette subscription Stripe",
+            "Subscription not found for this Stripe subscription",
             { stripeSubscriptionId: stripeSubscription.id }
           );
         }
 
-        // Lier la subscription à Stripe si ce n'est pas déjà fait
         if (!subscription.stripeSubscriptionId) {
           subscription.linkToStripe(
             stripeSubscription.id,
@@ -65,7 +62,6 @@ export class SyncSubscriptionFromStripeUseCase
         }
       }
 
-      // Mettre à jour le statut de la subscription
       const stripeStatus = stripeSubscription.status;
       let newStatus: SubscriptionEntity["status"];
 
@@ -100,7 +96,6 @@ export class SyncSubscriptionFromStripeUseCase
         }
       }
 
-      // Mettre à jour les dates de période
       if (stripeSubscription.current_period_start) {
         (subscription as any).props.currentPeriodStart = new Date(
           stripeSubscription.current_period_start * 1000
@@ -113,7 +108,6 @@ export class SyncSubscriptionFromStripeUseCase
         );
       }
 
-      // Mettre à jour la date d'annulation si applicable
       if (
         stripeSubscription.canceled_at &&
         (stripeStatus === "canceled" || stripeStatus === "unpaid")
@@ -123,7 +117,6 @@ export class SyncSubscriptionFromStripeUseCase
         );
       }
 
-      // Sauvegarder la subscription
       subscription = await this.subscriptionRepository.save(subscription);
 
       this.logger.info(
@@ -143,7 +136,5 @@ export class SyncSubscriptionFromStripeUseCase
     }
   }
 
-  async withCompensation(): Promise<void> {
-    // No compensation needed for webhook sync operation
-  }
+  async withCompensation(): Promise<void> {}
 }

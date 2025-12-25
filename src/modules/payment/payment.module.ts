@@ -10,6 +10,11 @@ import { SubscriptionDeletedHandler } from "./application/handlers/subscription-
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { SyncInvoiceFromStripeUseCase } from "../subscription/application/use-cases/SyncInvoiceFromStripe.use-case";
 import { SyncSubscriptionFromStripeUseCase } from "../subscription/application/use-cases/SyncSubscriptionFromStripe.use-case";
+import { SendSubscriptionConfirmationEmailUseCase } from "../subscription/application/use-cases/SendSubscriptionConfirmationEmail.use-case";
+import {
+  ISubscriptionRepository,
+  SUBSCRIPTION_REPOSITORY,
+} from "../subscription/domain/repositories/subscription.repository";
 
 @Module({
   imports: [ConfigModule, CoreModule, forwardRef(() => SubscriptionModule)],
@@ -24,16 +29,39 @@ import { SyncSubscriptionFromStripeUseCase } from "../subscription/application/u
     },
     {
       provide: InvoicePaidHandler,
-      useFactory: (syncInvoiceUseCase: SyncInvoiceFromStripeUseCase) =>
-        new InvoicePaidHandler(syncInvoiceUseCase),
-      inject: [SyncInvoiceFromStripeUseCase],
+      useFactory: (
+        syncInvoiceUseCase: SyncInvoiceFromStripeUseCase,
+        sendConfirmationEmailUseCase: SendSubscriptionConfirmationEmailUseCase,
+        subscriptionRepository: ISubscriptionRepository
+      ) =>
+        new InvoicePaidHandler(
+          syncInvoiceUseCase,
+          sendConfirmationEmailUseCase,
+          subscriptionRepository
+        ),
+      inject: [
+        SyncInvoiceFromStripeUseCase,
+        SendSubscriptionConfirmationEmailUseCase,
+        SUBSCRIPTION_REPOSITORY,
+      ],
     },
     {
       provide: PaymentIntentSucceededHandler,
       useFactory: (
-        syncSubscriptionUseCase: SyncSubscriptionFromStripeUseCase
-      ) => new PaymentIntentSucceededHandler(syncSubscriptionUseCase),
-      inject: [SyncSubscriptionFromStripeUseCase],
+        syncSubscriptionUseCase: SyncSubscriptionFromStripeUseCase,
+        syncInvoiceUseCase: SyncInvoiceFromStripeUseCase,
+        stripeSyncService: StripeSyncService
+      ) =>
+        new PaymentIntentSucceededHandler(
+          syncSubscriptionUseCase,
+          syncInvoiceUseCase,
+          stripeSyncService
+        ),
+      inject: [
+        SyncSubscriptionFromStripeUseCase,
+        SyncInvoiceFromStripeUseCase,
+        StripeSyncService,
+      ],
     },
     {
       provide: SubscriptionUpdatedHandler,

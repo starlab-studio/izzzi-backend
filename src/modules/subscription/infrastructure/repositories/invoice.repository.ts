@@ -57,6 +57,26 @@ export class InvoiceRepository implements IInvoiceRepository {
     return InvoiceEntity.reconstitute(ormEntity);
   }
 
+  async findLatestPaidByOrganizationId(
+    organizationId: string,
+    since?: Date
+  ): Promise<InvoiceEntity | null> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder("invoice")
+      .where("invoice.organizationId = :organizationId", { organizationId })
+      .andWhere("invoice.status = :status", { status: "paid" })
+      .orderBy("invoice.paidAt", "DESC")
+      .addOrderBy("invoice.createdAt", "DESC");
+
+    if (since) {
+      queryBuilder.andWhere("invoice.paidAt >= :since", { since });
+    }
+
+    const ormEntity = await queryBuilder.getOne();
+    if (!ormEntity) return null;
+    return InvoiceEntity.reconstitute(ormEntity);
+  }
+
   async save(entity: InvoiceEntity): Promise<InvoiceEntity> {
     const data = entity.toPersistence();
     const saved = await this.ormRepository.save(data);

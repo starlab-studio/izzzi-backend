@@ -4,6 +4,7 @@ import { ISubscriptionPlanRepository } from "../../domain/repositories/subscript
 import { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
 import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
 import { UserRole } from "src/core/domain/types";
+import { StripeSyncService } from "src/modules/payment/infrastructure/services/stripe-sync.service";
 
 export interface UpdateQuantityInput {
   subscriptionId: string;
@@ -32,6 +33,8 @@ export interface UpdateQuantityOutput {
   prorationApplied: boolean;
   requiresPayment: boolean;
   amountDueCents?: number;
+  stripeClientSecret?: string;
+  billingPeriod: "monthly" | "annual";
 }
 
 export class UpdateSubscriptionQuantityUseCase
@@ -43,7 +46,8 @@ export class UpdateSubscriptionQuantityUseCase
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly pricingTierRepository: IPricingTierRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly stripeSyncService: StripeSyncService
   ) {
     super(logger);
   }
@@ -55,7 +59,7 @@ export class UpdateSubscriptionQuantityUseCase
       if (newQuantity < 1 || newQuantity > 20) {
         throw new DomainError(
           "INVALID_CLASS_COUNT",
-          "Le nombre de classes doit être entre 1 et 20",
+          "Number of classes must be between 1 and 20",
           { newQuantity }
         );
       }
@@ -63,13 +67,13 @@ export class UpdateSubscriptionQuantityUseCase
       const user =
         await this.userRepository.findByIdWithActiveMemberships(userId);
       if (!user) {
-        throw new DomainError("USER_NOT_FOUND", "Utilisateur non trouvé");
+        throw new DomainError("USER_NOT_FOUND", "User not found");
       }
 
       if (!user.hasRoleInOrganization(organizationId, UserRole.ADMIN)) {
         throw new DomainError(
           "INSUFFICIENT_PERMISSIONS",
-          "Vous devez être administrateur de cette organisation pour modifier la subscription",
+          "You must be an administrator of this organization to modify the subscription",
           { userId, organizationId }
         );
       }
@@ -103,7 +107,7 @@ export class UpdateSubscriptionQuantityUseCase
       if (subscription.quantity === newQuantity) {
         throw new DomainError(
           "QUANTITY_UNCHANGED",
-          "La nouvelle quantité est identique à l'actuelle",
+          "New quantity is identical to current quantity",
           { quantity: newQuantity }
         );
       }
@@ -117,7 +121,7 @@ export class UpdateSubscriptionQuantityUseCase
       if (!plan) {
         throw new DomainError(
           "PLAN_NOT_FOUND",
-          "Le plan de subscription n'existe pas",
+          "Subscription plan does not exist",
           { planId: subscription.planId }
         );
       }
@@ -135,7 +139,7 @@ export class UpdateSubscriptionQuantityUseCase
         if (tiers.length === 0) {
           throw new DomainError(
             "NO_PRICING_TIERS",
-            "Aucun palier de tarification trouvé pour ce plan",
+            "No pricing tier found for this plan",
             {
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
@@ -154,7 +158,7 @@ export class UpdateSubscriptionQuantityUseCase
         if (!previousTier) {
           throw new DomainError(
             "TIER_NOT_FOUND",
-            `Aucun palier de tarification trouvé pour ${previousQuantity} classe(s)`,
+            `No pricing tier found for ${previousQuantity} class(es)`,
             {
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
@@ -166,7 +170,7 @@ export class UpdateSubscriptionQuantityUseCase
         if (!newTier) {
           throw new DomainError(
             "TIER_NOT_FOUND",
-            `Aucun palier de tarification trouvé pour ${newQuantity} classe(s)`,
+            `No pricing tier found for ${newQuantity} class(es)`,
             {
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
@@ -185,6 +189,7 @@ export class UpdateSubscriptionQuantityUseCase
       let amountDueCents = 0;
       let effectiveDate: Date;
       let requiresPayment = false;
+      let stripeClientSecret: string | undefined = undefined;
 
       if (isUpgrade) {
         effectiveDate = new Date();
@@ -207,12 +212,101 @@ export class UpdateSubscriptionQuantityUseCase
           requiresPayment = amountDueCents > 0;
         }
 
+        if (subscription.stripeSubscriptionId && !plan.isFree) {
+          const tiers =
+            await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
+              subscription.planId,
+              subscription.billingPeriod
+            );
+          const newTier = tiers.find(
+            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+          );
+
+          if (!newTier?.stripePriceId) {
+            throw new DomainError(
+              "STRIPE_PRICE_ID_MISSING",
+              "Pricing tier does not have a Stripe price ID configured",
+              {
+                tierId: newTier?.id,
+                planId: subscription.planId,
+                billingPeriod: subscription.billingPeriod,
+              }
+            );
+          }
+
+          await this.stripeSyncService.updateSubscriptionQuantity(
+            subscription.stripeSubscriptionId,
+            newQuantity,
+            newTier.stripePriceId,
+            {
+              prorationBehavior: "create_prorations",
+            }
+          );
+
+          if (
+            requiresPayment &&
+            amountDueCents > 0 &&
+            subscription.stripeCustomerId
+          ) {
+            const paymentIntent =
+              await this.stripeSyncService.createPaymentIntent({
+                customerId: subscription.stripeCustomerId,
+                amountCents: amountDueCents,
+                currency: "eur",
+                createInvoice: true,
+                description: `Quantity update: ${previousQuantity} → ${newQuantity} classes`,
+                metadata: {
+                  subscriptionId: subscription.id,
+                  organizationId: subscription.organizationId,
+                  userId: subscription.userId,
+                  type: "quantity_update",
+                  previousQuantity: previousQuantity.toString(),
+                  newQuantity: newQuantity.toString(),
+                },
+              });
+
+            stripeClientSecret = paymentIntent.clientSecret;
+          }
+        }
+
         subscription.updateQuantity(newQuantity, true);
       } else {
         effectiveDate = subscription.currentPeriodEnd!;
         prorationApplied = false;
         requiresPayment = false;
         amountDueCents = 0;
+
+        if (subscription.stripeSubscriptionId && !plan.isFree) {
+          const tiers =
+            await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
+              subscription.planId,
+              subscription.billingPeriod
+            );
+          const newTier = tiers.find(
+            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+          );
+
+          if (!newTier?.stripePriceId) {
+            throw new DomainError(
+              "STRIPE_PRICE_ID_MISSING",
+              "Pricing tier does not have a Stripe price ID configured",
+              {
+                tierId: newTier?.id,
+                planId: subscription.planId,
+                billingPeriod: subscription.billingPeriod,
+              }
+            );
+          }
+
+          await this.stripeSyncService.updateSubscriptionQuantity(
+            subscription.stripeSubscriptionId,
+            newQuantity,
+            newTier.stripePriceId,
+            {
+              prorationBehavior: "none",
+            }
+          );
+        }
 
         subscription.updateQuantity(newQuantity, false);
       }
@@ -247,6 +341,8 @@ export class UpdateSubscriptionQuantityUseCase
         prorationApplied,
         requiresPayment,
         amountDueCents: requiresPayment ? amountDueCents : undefined,
+        stripeClientSecret: requiresPayment ? stripeClientSecret : undefined,
+        billingPeriod: subscription.billingPeriod,
       };
     } catch (error) {
       this.handleError(error);

@@ -75,7 +75,10 @@ export class StripeSyncService {
 
     for (const tier of tiers) {
       const existingPriceId = tier.stripePriceId;
-      const unitAmount = tier.pricePerClassCents;
+      const unitAmount =
+        tier.billingPeriod === "annual"
+          ? tier.pricePerClassCents * 12
+          : tier.pricePerClassCents;
 
       const interval: Stripe.PriceCreateParams.Recurring.Interval =
         tier.billingPeriod === "monthly" ? "month" : "year";

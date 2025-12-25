@@ -10,11 +10,6 @@ import { SubscriptionDeletedHandler } from "./application/handlers/subscription-
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { SyncInvoiceFromStripeUseCase } from "../subscription/application/use-cases/SyncInvoiceFromStripe.use-case";
 import { SyncSubscriptionFromStripeUseCase } from "../subscription/application/use-cases/SyncSubscriptionFromStripe.use-case";
-import { SendSubscriptionConfirmationEmailUseCase } from "../subscription/application/use-cases/SendSubscriptionConfirmationEmail.use-case";
-import {
-  ISubscriptionRepository,
-  SUBSCRIPTION_REPOSITORY,
-} from "../subscription/domain/repositories/subscription.repository";
 
 @Module({
   imports: [ConfigModule, CoreModule, forwardRef(() => SubscriptionModule)],
@@ -29,21 +24,9 @@ import {
     },
     {
       provide: InvoicePaidHandler,
-      useFactory: (
-        syncInvoiceUseCase: SyncInvoiceFromStripeUseCase,
-        sendConfirmationEmailUseCase: SendSubscriptionConfirmationEmailUseCase,
-        subscriptionRepository: ISubscriptionRepository
-      ) =>
-        new InvoicePaidHandler(
-          syncInvoiceUseCase,
-          sendConfirmationEmailUseCase,
-          subscriptionRepository
-        ),
-      inject: [
-        SyncInvoiceFromStripeUseCase,
-        SendSubscriptionConfirmationEmailUseCase,
-        SUBSCRIPTION_REPOSITORY,
-      ],
+      useFactory: (syncInvoiceUseCase: SyncInvoiceFromStripeUseCase) =>
+        new InvoicePaidHandler(syncInvoiceUseCase),
+      inject: [SyncInvoiceFromStripeUseCase],
     },
     {
       provide: PaymentIntentSucceededHandler,

@@ -59,8 +59,6 @@ export class StripeWebhookController extends BaseController {
     }
 
     try {
-      // req.body should be a Buffer for Stripe webhook verification
-      // The raw body middleware should have set this
       const rawBody = Buffer.isBuffer(req.body)
         ? req.body
         : typeof req.body === "string"
@@ -74,7 +72,6 @@ export class StripeWebhookController extends BaseController {
 
       this.logger.log(`Received Stripe event: ${event.type} (id: ${event.id})`);
 
-      // Route l'événement vers le handler approprié
       switch (event.type) {
         case "invoice.paid":
           await this.invoicePaidHandler.handle(
@@ -117,8 +114,6 @@ export class StripeWebhookController extends BaseController {
         });
       }
 
-      // Retourner 200 même en cas d'erreur pour éviter les retries Stripe
-      // (sauf pour les erreurs de signature)
       return res.status(HttpStatus.OK).json({
         received: true,
         error: error instanceof Error ? error.message : String(error),

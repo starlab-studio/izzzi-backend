@@ -1,6 +1,11 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { LoggerService, ILoggerService } from "src/core";
+import {
+  LoggerService,
+  ILoggerService,
+  IEventStore,
+  EventStore,
+} from "src/core";
 import { CoreModule } from "src/core/core.module";
 import { OrganizationModule } from "../organization";
 import { IUserRepository } from "../organization/domain/repositories/user.repository";
@@ -70,7 +75,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
     CoreModule,
     forwardRef(() => OrganizationModule),
     PaymentModule,
-    NotificationModule,
+    forwardRef(() => NotificationModule),
   ],
   controllers: [SubscriptionController],
   providers: [
@@ -282,19 +287,25 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         logger: ILoggerService,
         invoiceRepository: IInvoiceRepository,
         subscriptionRepository: ISubscriptionRepository,
-        stripeSyncService: StripeSyncService
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
+        stripeSyncService: StripeSyncService,
+        eventStore: IEventStore
       ) =>
         new SyncInvoiceFromStripeUseCase(
           logger,
           invoiceRepository,
           subscriptionRepository,
-          stripeSyncService
+          subscriptionPlanRepository,
+          stripeSyncService,
+          eventStore
         ),
       inject: [
         LoggerService,
         InvoiceRepository,
         SubscriptionRepository,
+        SubscriptionPlanRepository,
         StripeSyncService,
+        EventStore,
       ],
     },
     {

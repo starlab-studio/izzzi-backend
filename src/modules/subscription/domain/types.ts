@@ -81,3 +81,13 @@ export interface IInvoice {
   paidAt: Date | null;
   createdAt: Date;
 }
+
+export interface SubscriptionActivatedPayload {
+  subscriptionId: string;
+  organizationId: string;
+  planId: string;
+  planName: string;
+}
+
+export type ISubscriptionActivatedEvent =
+  import("src/core").IDomainEvent<SubscriptionActivatedPayload>;

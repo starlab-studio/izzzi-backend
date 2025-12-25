@@ -1,10 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { BaseUseCase, DomainError, IUseCase } from "src/core";
-import type { ILoggerService } from "src/core";
+import type { ILoggerService, IEventStore } from "src/core";
 import type { IInvoiceRepository } from "../../domain/repositories/invoice.repository";
 import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
+import type { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import { StripeSyncService } from "../../../payment/infrastructure/services/stripe-sync.service";
+import { SubscriptionActivatedEvent } from "../../domain/events/subscription-activated.event";
 import Stripe from "stripe";
 
 export interface SyncInvoiceFromStripeInput {
@@ -24,7 +26,9 @@ export class SyncInvoiceFromStripeUseCase
     logger: ILoggerService,
     private readonly invoiceRepository: IInvoiceRepository,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly stripeSyncService: StripeSyncService
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
+    private readonly stripeSyncService: StripeSyncService,
+    private readonly eventStore: IEventStore
   ) {
     super(logger);
   }
@@ -79,12 +83,36 @@ export class SyncInvoiceFromStripeUseCase
         invoice = await this.invoiceRepository.save(invoice);
       }
 
+      const previousStatus = subscription.status;
       if (
         stripeInvoice.status === "paid" &&
         subscription.status === "pending"
       ) {
         subscription.activate();
         await this.subscriptionRepository.save(subscription);
+
+        // Émettre l'event pour l'envoi de l'email de confirmation
+        const plan = await this.subscriptionPlanRepository.findById(
+          subscription.planId
+        );
+        const planName = plan
+          ? plan.name === "super-izzzi"
+            ? "Super Izzzi"
+            : "Izzzi"
+          : "Izzzi";
+
+        this.eventStore.publish(
+          new SubscriptionActivatedEvent({
+            subscriptionId: subscription.id,
+            organizationId: subscription.organizationId,
+            planId: subscription.planId,
+            planName,
+          })
+        );
+
+        this.logger.info(
+          `Subscription ${subscription.id} activated and event published`
+        );
       }
 
       this.logger.info(

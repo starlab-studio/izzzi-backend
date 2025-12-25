@@ -18,12 +18,17 @@ import { NotificationModel } from "./infrastructure/models/notification.model";
 import { InvitationSentEventHandler } from "./application/handlers/invitation-sent.handler";
 import { InvitationAcceptedEventHandler } from "./application/handlers/invitation-accepted.handler";
 import { ClassArchivedEventHandler } from "./application/handlers/class-archived.handler";
+import { SubscriptionActivatedEventHandler } from "./application/handlers/subscription-activated.handler";
+import { SubscriptionModule } from "../subscription/subscription.module";
+import { SendSubscriptionConfirmationEmailUseCase } from "../subscription/application/use-cases/SendSubscriptionConfirmationEmail.use-case";
+import { forwardRef } from "@nestjs/common";
 
 @Module({
   imports: [
     ConfigModule,
     TypeOrmModule.forFeature([NotificationModel]),
     CoreModule,
+    forwardRef(() => SubscriptionModule),
   ],
   providers: [
     LoggerService,
@@ -99,6 +104,18 @@ import { ClassArchivedEventHandler } from "./application/handlers/class-archived
         new ClassArchivedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
+    {
+      provide: SubscriptionActivatedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        sendSubscriptionConfirmationEmailUseCase: SendSubscriptionConfirmationEmailUseCase
+      ) =>
+        new SubscriptionActivatedEventHandler(
+          logger,
+          sendSubscriptionConfirmationEmailUseCase
+        ),
+      inject: [LoggerService, SendSubscriptionConfirmationEmailUseCase],
+    },
   ],
   exports: [CreateEmailNotificationUseCase],
 })
@@ -110,7 +127,8 @@ export class NotificationModule {
     private readonly emailNotificationProvider: EmailProvider,
     private readonly classCreatedEventHandler: ClassCreatedEventHandler,
     private readonly invitationAcceptedEventHandler: InvitationAcceptedEventHandler,
-    private readonly classArchivedEventHandler: ClassArchivedEventHandler
+    private readonly classArchivedEventHandler: ClassArchivedEventHandler,
+    private readonly subscriptionActivatedEventHandler: SubscriptionActivatedEventHandler
   ) {}
 
   async onModuleInit() {
@@ -142,6 +160,11 @@ export class NotificationModule {
     this.eventHandlerRegistry.registerHandler(
       "class.archived",
       this.classArchivedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "subscription.activated",
+      this.subscriptionActivatedEventHandler
     );
   }
 }

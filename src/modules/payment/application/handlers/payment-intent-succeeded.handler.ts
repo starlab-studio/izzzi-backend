@@ -20,7 +20,6 @@ export class PaymentIntentSucceededHandler {
         `Processing payment_intent.succeeded event for payment intent ${paymentIntent.id}`
       );
 
-      // Si le payment intent est lié à une facture, synchroniser la facture
       if (paymentIntent.invoice) {
         const invoiceId =
           typeof paymentIntent.invoice === "string"

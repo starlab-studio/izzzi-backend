@@ -4,7 +4,7 @@ import { ISubscriptionPlanRepository } from "../../domain/repositories/subscript
 import { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
 import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
 import { UserRole } from "src/core/domain/types";
-import { StripeSyncService } from "src/modules/payment/infrastructure/services/stripe-sync.service";
+import type { IStripeSyncService } from "src/modules/payment/domain/services/stripe-sync.service";
 
 export interface UpdateQuantityInput {
   subscriptionId: string;
@@ -47,7 +47,7 @@ export class UpdateSubscriptionQuantityUseCase
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly pricingTierRepository: IPricingTierRepository,
     private readonly userRepository: IUserRepository,
-    private readonly stripeSyncService: StripeSyncService
+    private readonly stripeSyncService: IStripeSyncService
   ) {
     super(logger);
   }

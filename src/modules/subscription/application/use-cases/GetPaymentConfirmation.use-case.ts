@@ -4,7 +4,7 @@ import type { ILoggerService } from "src/core";
 import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
 import type { IInvoiceRepository } from "../../domain/repositories/invoice.repository";
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
-import { StripeSyncService } from "../../../payment/infrastructure/services/stripe-sync.service";
+import type { IStripeSyncService } from "../../../payment/domain/services/stripe-sync.service";
 import { OrganizationAuthorizationService } from "src/modules/organization/domain/services/organization-authorization.service";
 
 export interface GetPaymentConfirmationInput {
@@ -35,7 +35,7 @@ export class GetPaymentConfirmationUseCase
     logger: ILoggerService,
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly invoiceRepository: IInvoiceRepository,
-    private readonly stripeSyncService: StripeSyncService,
+    private readonly stripeSyncService: IStripeSyncService,
     private readonly organizationAuthorizationService: OrganizationAuthorizationService
   ) {
     super(logger);

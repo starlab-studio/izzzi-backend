@@ -3,9 +3,10 @@ import { ConfigService } from "@nestjs/config";
 import Stripe from "stripe";
 import { SubscriptionPlanEntity } from "src/modules/subscription/domain/entities/subscription-plan.entity";
 import { PricingTierEntity } from "src/modules/subscription/domain/entities/pricing-tier.entity";
+import { IStripeSyncService } from "../../domain/services/stripe-sync.service";
 
 @Injectable()
-export class StripeSyncService {
+export class StripeSyncService implements IStripeSyncService {
   private readonly stripe: Stripe;
   private readonly logger = new Logger(StripeSyncService.name);
 

@@ -23,7 +23,10 @@ import { PricingTierRepository } from "./infrastructure/repositories/pricing-tie
 import { SubscriptionRepository } from "./infrastructure/repositories/subscription.repository";
 import { InvoiceRepository } from "./infrastructure/repositories/invoice.repository";
 
-import { ISubscriptionPlanRepository } from "./domain/repositories/subscription-plan.repository";
+import {
+  ISubscriptionPlanRepository,
+  SUBSCRIPTION_PLAN_REPOSITORY,
+} from "./domain/repositories/subscription-plan.repository";
 import { IPlanFeatureRepository } from "./domain/repositories/plan-feature.repository";
 import { IPricingTierRepository } from "./domain/repositories/pricing-tier.repository";
 import {
@@ -56,7 +59,10 @@ import {
   PAYMENT_SERVICE,
 } from "./domain/services/payment.service";
 import { StripePaymentService } from "./infrastructure/services/stripe-payment.service";
-import { StripeSyncService } from "../payment/infrastructure/services/stripe-sync.service";
+import {
+  IStripeSyncService,
+  STRIPE_SYNC_SERVICE,
+} from "../payment/domain/services/stripe-sync.service";
 import { NotificationModule } from "../notification/notification.module";
 import { CreateEmailNotificationUseCase } from "../notification/application/use-cases/create-email-notification.use-case";
 import { GetBillingPortalLinkUseCase } from "./application/use-cases/GetBillingPortalLink.use-case";
@@ -94,8 +100,14 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
       useClass: InvoiceRepository,
     },
     {
+      provide: SUBSCRIPTION_PLAN_REPOSITORY,
+      useClass: SubscriptionPlanRepository,
+    },
+    {
       provide: PAYMENT_SERVICE,
-      useClass: StripePaymentService,
+      useFactory: (stripeSyncService: IStripeSyncService) =>
+        new StripePaymentService(stripeSyncService),
+      inject: [STRIPE_SYNC_SERVICE],
     },
     {
       provide: GetPricingPlansUseCase,
@@ -176,7 +188,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         pricingTierRepository: IPricingTierRepository,
         userRepository: IUserRepository,
-        stripeSyncService: StripeSyncService
+        stripeSyncService: IStripeSyncService
       ) =>
         new UpdateSubscriptionQuantityUseCase(
           logger,
@@ -192,7 +204,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         SubscriptionPlanRepository,
         PricingTierRepository,
         UserRepository,
-        StripeSyncService,
+        STRIPE_SYNC_SERVICE,
       ],
     },
     {
@@ -242,7 +254,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         logger: ILoggerService,
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         pricingTierRepository: IPricingTierRepository,
-        stripeSyncService: StripeSyncService
+        stripeSyncService: IStripeSyncService
       ) =>
         new SyncPlansWithStripeUseCase(
           logger,
@@ -254,7 +266,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         LoggerService,
         SubscriptionPlanRepository,
         PricingTierRepository,
-        StripeSyncService,
+        STRIPE_SYNC_SERVICE,
       ],
     },
     {
@@ -263,7 +275,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         logger: ILoggerService,
         subscriptionRepository: ISubscriptionRepository,
         invoiceRepository: IInvoiceRepository,
-        stripeSyncService: StripeSyncService,
+        stripeSyncService: IStripeSyncService,
         organizationAuthorizationService: OrganizationAuthorizationService
       ) =>
         new GetPaymentConfirmationUseCase(
@@ -277,7 +289,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         LoggerService,
         SubscriptionRepository,
         InvoiceRepository,
-        StripeSyncService,
+        STRIPE_SYNC_SERVICE,
         OrganizationAuthorizationService,
       ],
     },
@@ -288,7 +300,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         invoiceRepository: IInvoiceRepository,
         subscriptionRepository: ISubscriptionRepository,
         subscriptionPlanRepository: ISubscriptionPlanRepository,
-        stripeSyncService: StripeSyncService,
+        stripeSyncService: IStripeSyncService,
         eventStore: IEventStore
       ) =>
         new SyncInvoiceFromStripeUseCase(
@@ -304,7 +316,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         InvoiceRepository,
         SubscriptionRepository,
         SubscriptionPlanRepository,
-        StripeSyncService,
+        STRIPE_SYNC_SERVICE,
         EventStore,
       ],
     },
@@ -322,7 +334,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
       useFactory: (
         logger: ILoggerService,
         subscriptionRepository: ISubscriptionRepository,
-        stripeSyncService: StripeSyncService,
+        stripeSyncService: IStripeSyncService,
         organizationAuthorizationService: OrganizationAuthorizationService
       ) =>
         new GetBillingPortalLinkUseCase(
@@ -334,7 +346,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
       inject: [
         LoggerService,
         SubscriptionRepository,
-        StripeSyncService,
+        STRIPE_SYNC_SERVICE,
         OrganizationAuthorizationService,
       ],
     },
@@ -406,8 +418,10 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
     SubscriptionFacade,
     InvoiceRepository,
     SubscriptionRepository,
+    SubscriptionPlanRepository,
     INVOICE_REPOSITORY,
     SUBSCRIPTION_REPOSITORY,
+    SUBSCRIPTION_PLAN_REPOSITORY,
     GetPaymentConfirmationUseCase,
     SyncInvoiceFromStripeUseCase,
     SyncSubscriptionFromStripeUseCase,

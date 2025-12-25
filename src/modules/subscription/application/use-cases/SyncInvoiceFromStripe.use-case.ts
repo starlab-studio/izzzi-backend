@@ -5,7 +5,7 @@ import type { IInvoiceRepository } from "../../domain/repositories/invoice.repos
 import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
 import type { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
-import { StripeSyncService } from "../../../payment/infrastructure/services/stripe-sync.service";
+import type { IStripeSyncService } from "../../../payment/domain/services/stripe-sync.service";
 import { SubscriptionActivatedEvent } from "../../domain/events/subscription-activated.event";
 import Stripe from "stripe";
 
@@ -27,7 +27,7 @@ export class SyncInvoiceFromStripeUseCase
     private readonly invoiceRepository: IInvoiceRepository,
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
-    private readonly stripeSyncService: StripeSyncService,
+    private readonly stripeSyncService: IStripeSyncService,
     private readonly eventStore: IEventStore
   ) {
     super(logger);

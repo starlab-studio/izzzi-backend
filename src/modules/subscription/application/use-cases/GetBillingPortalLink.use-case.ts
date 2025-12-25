@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { BaseUseCase, DomainError, IUseCase } from "src/core";
 import type { ILoggerService } from "src/core";
 import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
-import { StripeSyncService } from "../../../payment/infrastructure/services/stripe-sync.service";
+import type { IStripeSyncService } from "../../../payment/domain/services/stripe-sync.service";
 import { OrganizationAuthorizationService } from "src/modules/organization/domain/services/organization-authorization.service";
 
 export interface GetBillingPortalLinkInput {
@@ -23,7 +23,7 @@ export class GetBillingPortalLinkUseCase
   constructor(
     logger: ILoggerService,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly stripeSyncService: StripeSyncService,
+    private readonly stripeSyncService: IStripeSyncService,
     private readonly organizationAuthorizationService: OrganizationAuthorizationService
   ) {
     super(logger);

@@ -6,15 +6,15 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  Inject,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { BaseController } from "src/core";
-import { StripeSyncService } from "../../infrastructure/services/stripe-sync.service";
-import { InvoicePaidHandler } from "../../application/handlers/invoice-paid.handler";
-import { PaymentIntentSucceededHandler } from "../../application/handlers/payment-intent-succeeded.handler";
-import { SubscriptionUpdatedHandler } from "../../application/handlers/subscription-updated.handler";
-import { SubscriptionDeletedHandler } from "../../application/handlers/subscription-deleted.handler";
+import type { IStripeSyncService } from "../../domain/services/stripe-sync.service";
+import { STRIPE_SYNC_SERVICE } from "../../domain/services/stripe-sync.service";
+import { HandleStripeWebhookUseCase } from "../../application/use-cases/HandleStripeWebhook.use-case";
+import { WebhookEventMapper } from "../../infrastructure/mappers/webhook-event.mapper";
 import Stripe from "stripe";
 
 @ApiTags("webhooks")
@@ -23,11 +23,9 @@ export class StripeWebhookController extends BaseController {
   private readonly logger = new Logger(StripeWebhookController.name);
 
   constructor(
-    private readonly stripeSyncService: StripeSyncService,
-    private readonly invoicePaidHandler: InvoicePaidHandler,
-    private readonly paymentIntentSucceededHandler: PaymentIntentSucceededHandler,
-    private readonly subscriptionUpdatedHandler: SubscriptionUpdatedHandler,
-    private readonly subscriptionDeletedHandler: SubscriptionDeletedHandler
+    @Inject(STRIPE_SYNC_SERVICE)
+    private readonly stripeSyncService: IStripeSyncService,
+    private readonly handleStripeWebhookUseCase: HandleStripeWebhookUseCase
   ) {
     super();
   }
@@ -37,7 +35,7 @@ export class StripeWebhookController extends BaseController {
   @ApiOperation({
     summary: "Webhook endpoint pour recevoir les événements Stripe",
     description:
-      "Cet endpoint reçoit les événements Stripe et les route vers les handlers appropriés. La vérification de la signature est effectuée automatiquement.",
+      "Cet endpoint reçoit les événements Stripe et les route vers le use-case approprié. La vérification de la signature est effectuée automatiquement.",
   })
   @ApiResponse({
     status: 200,
@@ -65,41 +63,18 @@ export class StripeWebhookController extends BaseController {
           ? Buffer.from(req.body)
           : Buffer.from(JSON.stringify(req.body));
 
-      const event = this.stripeSyncService.constructWebhookEvent(
+      const stripeEvent = this.stripeSyncService.constructWebhookEvent(
         rawBody,
         signature
       );
 
-      this.logger.log(`Received Stripe event: ${event.type} (id: ${event.id})`);
+      this.logger.log(
+        `Received Stripe event: ${stripeEvent.type} (id: ${stripeEvent.id})`
+      );
 
-      switch (event.type) {
-        case "invoice.paid":
-          await this.invoicePaidHandler.handle(
-            event.data.object as Stripe.Invoice
-          );
-          break;
+      const domainEvent = WebhookEventMapper.toDomainEvent(stripeEvent);
 
-        case "payment_intent.succeeded":
-          await this.paymentIntentSucceededHandler.handle(
-            event.data.object as Stripe.PaymentIntent
-          );
-          break;
-
-        case "customer.subscription.updated":
-          await this.subscriptionUpdatedHandler.handle(
-            event.data.object as Stripe.Subscription
-          );
-          break;
-
-        case "customer.subscription.deleted":
-          await this.subscriptionDeletedHandler.handle(
-            event.data.object as Stripe.Subscription
-          );
-          break;
-
-        default:
-          this.logger.debug(`Unhandled event type: ${event.type}`);
-      }
+      await this.handleStripeWebhookUseCase.execute({ event: domainEvent });
 
       return res.status(HttpStatus.OK).json({ received: true });
     } catch (error) {

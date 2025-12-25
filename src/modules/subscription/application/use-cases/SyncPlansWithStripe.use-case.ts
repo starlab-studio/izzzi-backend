@@ -1,7 +1,7 @@
 import { IUseCase, BaseUseCase, type ILoggerService } from "src/core";
 import type { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
 import type { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
-import { StripeSyncService } from "src/modules/payment/infrastructure/services/stripe-sync.service";
+import type { IStripeSyncService } from "src/modules/payment/domain/services/stripe-sync.service";
 import { SubscriptionPlanEntity } from "../../domain/entities/subscription-plan.entity";
 import { PricingTierEntity } from "../../domain/entities/pricing-tier.entity";
 
@@ -24,7 +24,7 @@ export class SyncPlansWithStripeUseCase
     readonly logger: ILoggerService,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly pricingTierRepository: IPricingTierRepository,
-    private readonly stripeSyncService: StripeSyncService
+    private readonly stripeSyncService: IStripeSyncService
   ) {
     super(logger);
   }

@@ -25,21 +25,50 @@ import { ClassStudentRepository } from "./infrastructure/repositories/class-stud
 import { ClassFacade } from "./application/facades/class.facade";
 import { OrganizationModule } from "../organization/organization.module";
 import { OrganizationFacade } from "../organization/application/facades/organization.facade";
+import { SubscriptionModule } from "../subscription/subscription.module";
+import {
+  ISubscriptionRepository,
+  SUBSCRIPTION_REPOSITORY,
+} from "../subscription/domain/repositories/subscription.repository";
+import {
+  ISubscriptionPlanRepository,
+  SUBSCRIPTION_PLAN_REPOSITORY,
+} from "../subscription/domain/repositories/subscription-plan.repository";
+import { ClassLimitService } from "./domain/services/class-limit.service";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ClassModel, ClassStudentModel]),
     CoreModule,
     OrganizationModule,
+    forwardRef(() => SubscriptionModule),
   ],
   controllers: [ClassController],
   providers: [
     LoggerService,
     {
+      provide: ClassLimitService,
+      useFactory: (
+        subscriptionRepository: ISubscriptionRepository,
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
+        classRepository: IClassRepository
+      ) =>
+        new ClassLimitService(
+          subscriptionRepository,
+          subscriptionPlanRepository,
+          classRepository
+        ),
+      inject: [
+        SUBSCRIPTION_REPOSITORY,
+        SUBSCRIPTION_PLAN_REPOSITORY,
+        ClassRepository,
+      ],
+    },
+    {
       provide: ClassRepository,
       useFactory: (
         ormRepository: Repository<ClassModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new ClassRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(ClassModel), TypeOrmUnitOfWork],
     },
@@ -51,7 +80,7 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
       provide: ClassStudentRepository,
       useFactory: (
         ormRepository: Repository<ClassStudentModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new ClassStudentRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(ClassStudentModel), TypeOrmUnitOfWork],
     },
@@ -67,6 +96,7 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
         classStudentRepository: IClassStudentRepository,
         organizationFacade: OrganizationFacade,
         eventStore: EventStore,
+        classLimitService: ClassLimitService
       ) =>
         new CreateClassUseCase(
           logger,
@@ -74,6 +104,7 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
           classStudentRepository,
           organizationFacade,
           eventStore,
+          classLimitService
         ),
       inject: [
         LoggerService,
@@ -81,6 +112,7 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
         ClassStudentRepository,
         OrganizationFacade,
         EventStore,
+        ClassLimitService,
       ],
     },
     {
@@ -89,13 +121,13 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
         logger: ILoggerService,
         classRepository: IClassRepository,
         classStudentRepository: IClassStudentRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new GetClassesByOrganizationUseCase(
           logger,
           classRepository,
           classStudentRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -110,13 +142,13 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
         logger: ILoggerService,
         classRepository: IClassRepository,
         classStudentRepository: IClassStudentRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new GetClassByIdUseCase(
           logger,
           classRepository,
           classStudentRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -131,13 +163,13 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
         logger: ILoggerService,
         classRepository: IClassRepository,
         classStudentRepository: IClassStudentRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new UpdateClassUseCase(
           logger,
           classRepository,
           classStudentRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -152,20 +184,15 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
         logger: ILoggerService,
         classRepository: IClassRepository,
         organizationFacade: OrganizationFacade,
-        eventStore: EventStore,
+        eventStore: EventStore
       ) =>
         new ArchiveClassUseCase(
           logger,
           classRepository,
           organizationFacade,
-          eventStore,
+          eventStore
         ),
-      inject: [
-        LoggerService,
-        ClassRepository,
-        OrganizationFacade,
-        EventStore,
-      ],
+      inject: [LoggerService, ClassRepository, OrganizationFacade, EventStore],
     },
     {
       provide: ClassFacade,
@@ -174,14 +201,14 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
         getClassesByOrganizationUseCase: GetClassesByOrganizationUseCase,
         getClassByIdUseCase: GetClassByIdUseCase,
         updateClassUseCase: UpdateClassUseCase,
-        archiveClassUseCase: ArchiveClassUseCase,
+        archiveClassUseCase: ArchiveClassUseCase
       ) =>
         new ClassFacade(
           createClassUseCase,
           getClassesByOrganizationUseCase,
           getClassByIdUseCase,
           updateClassUseCase,
-          archiveClassUseCase,
+          archiveClassUseCase
         ),
       inject: [
         CreateClassUseCase,
@@ -192,6 +219,12 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
       ],
     },
   ],
-  exports: [ClassFacade, ClassRepository, ClassStudentRepository, "CLASS_REPOSITORY", "CLASS_STUDENT_REPOSITORY"],
+  exports: [
+    ClassFacade,
+    ClassRepository,
+    ClassStudentRepository,
+    "CLASS_REPOSITORY",
+    "CLASS_STUDENT_REPOSITORY",
+  ],
 })
 export class ClassModule {}

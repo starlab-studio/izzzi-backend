@@ -2,19 +2,22 @@ import { Module, forwardRef } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { CoreModule } from "src/core/core.module";
 import { StripeSyncService } from "./infrastructure/services/stripe-sync.service";
+import {
+  IStripeSyncService,
+  STRIPE_SYNC_SERVICE,
+} from "./domain/services/stripe-sync.service";
 import { StripeWebhookController } from "./interface/controllers/stripe-webhook.controller";
-import { InvoicePaidHandler } from "./application/handlers/invoice-paid.handler";
-import { PaymentIntentSucceededHandler } from "./application/handlers/payment-intent-succeeded.handler";
-import { SubscriptionUpdatedHandler } from "./application/handlers/subscription-updated.handler";
-import { SubscriptionDeletedHandler } from "./application/handlers/subscription-deleted.handler";
+import { HandleStripeWebhookUseCase } from "./application/use-cases/HandleStripeWebhook.use-case";
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { SyncInvoiceFromStripeUseCase } from "../subscription/application/use-cases/SyncInvoiceFromStripe.use-case";
 import { SyncSubscriptionFromStripeUseCase } from "../subscription/application/use-cases/SyncSubscriptionFromStripe.use-case";
+import { LoggerService, ILoggerService } from "src/core";
 
 @Module({
   imports: [ConfigModule, CoreModule, forwardRef(() => SubscriptionModule)],
   controllers: [StripeWebhookController],
   providers: [
+    LoggerService,
     {
       provide: StripeSyncService,
       useFactory: (configService: ConfigService) => {
@@ -23,44 +26,31 @@ import { SyncSubscriptionFromStripeUseCase } from "../subscription/application/u
       inject: [ConfigService],
     },
     {
-      provide: InvoicePaidHandler,
-      useFactory: (syncInvoiceUseCase: SyncInvoiceFromStripeUseCase) =>
-        new InvoicePaidHandler(syncInvoiceUseCase),
-      inject: [SyncInvoiceFromStripeUseCase],
+      provide: STRIPE_SYNC_SERVICE,
+      useExisting: StripeSyncService,
     },
     {
-      provide: PaymentIntentSucceededHandler,
+      provide: HandleStripeWebhookUseCase,
       useFactory: (
-        syncSubscriptionUseCase: SyncSubscriptionFromStripeUseCase,
+        logger: ILoggerService,
         syncInvoiceUseCase: SyncInvoiceFromStripeUseCase,
-        stripeSyncService: StripeSyncService
+        syncSubscriptionUseCase: SyncSubscriptionFromStripeUseCase,
+        stripeSyncService: IStripeSyncService
       ) =>
-        new PaymentIntentSucceededHandler(
-          syncSubscriptionUseCase,
+        new HandleStripeWebhookUseCase(
+          logger,
           syncInvoiceUseCase,
+          syncSubscriptionUseCase,
           stripeSyncService
         ),
       inject: [
-        SyncSubscriptionFromStripeUseCase,
+        LoggerService,
         SyncInvoiceFromStripeUseCase,
-        StripeSyncService,
+        SyncSubscriptionFromStripeUseCase,
+        STRIPE_SYNC_SERVICE,
       ],
     },
-    {
-      provide: SubscriptionUpdatedHandler,
-      useFactory: (
-        syncSubscriptionUseCase: SyncSubscriptionFromStripeUseCase
-      ) => new SubscriptionUpdatedHandler(syncSubscriptionUseCase),
-      inject: [SyncSubscriptionFromStripeUseCase],
-    },
-    {
-      provide: SubscriptionDeletedHandler,
-      useFactory: (
-        syncSubscriptionUseCase: SyncSubscriptionFromStripeUseCase
-      ) => new SubscriptionDeletedHandler(syncSubscriptionUseCase),
-      inject: [SyncSubscriptionFromStripeUseCase],
-    },
   ],
-  exports: [StripeSyncService],
+  exports: [StripeSyncService, STRIPE_SYNC_SERVICE],
 })
 export class PaymentModule {}

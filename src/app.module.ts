@@ -11,6 +11,7 @@ import { SubjectModule } from "./modules/subject";
 import { QuizModule } from "./modules/quiz/quiz.module";
 import { SubscriptionModule } from "./modules/subscription/subscription.module";
 import { UserModule } from "./modules/user/user.module";
+import { FeedbackModule } from "./modules/feedback/feedback.module";
 
 import AppConfig from "./core/interfaces/config.global";
 import { FaqModule } from "./modules/faq/faq.module";
@@ -48,6 +49,7 @@ import { FaqModule } from "./modules/faq/faq.module";
     SubscriptionModule,
     UserModule,
     FaqModule,
+    FeedbackModule,
   ],
 })
 export class AppModule {}

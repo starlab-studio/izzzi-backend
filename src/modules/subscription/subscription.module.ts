@@ -74,6 +74,7 @@ import { TrialEndingCheckerService } from "./infrastructure/scheduled/trial-endi
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 import { ClassModule } from "../class/class.module";
 import { IClassRepository } from "../class/domain/repositories/class.repository";
+import { SubscriptionFeatureService } from "./domain/services/subscription-feature.service";
 
 @Module({
   imports: [
@@ -465,6 +466,18 @@ import { IClassRepository } from "../class/domain/repositories/class.repository"
         EventStore,
       ],
     },
+    {
+      provide: SubscriptionFeatureService,
+      useFactory: (
+        subscriptionRepository: ISubscriptionRepository,
+        subscriptionPlanRepository: ISubscriptionPlanRepository
+      ) =>
+        new SubscriptionFeatureService(
+          subscriptionRepository,
+          subscriptionPlanRepository
+        ),
+      inject: [SUBSCRIPTION_REPOSITORY, SUBSCRIPTION_PLAN_REPOSITORY],
+    },
   ],
   exports: [
     SubscriptionFacade,
@@ -480,6 +493,7 @@ import { IClassRepository } from "../class/domain/repositories/class.repository"
     ApplyPendingQuantityUseCase,
     GetBillingPortalLinkUseCase,
     SendSubscriptionConfirmationEmailUseCase,
+    SubscriptionFeatureService,
   ],
 })
 export class SubscriptionModule {}

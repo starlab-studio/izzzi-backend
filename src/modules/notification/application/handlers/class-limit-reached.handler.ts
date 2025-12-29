@@ -59,6 +59,7 @@ export class ClassLimitReachedEventHandler extends BaseEventHandler {
         maxClasses: event.payload.maxClasses.toString(),
         planName: event.payload.planName,
         subscriptionManagementUrl: `${frontendUrl}/dashboard/admin/subscription`,
+        isPlural: parseInt(event.payload.currentClassCount.toString()) > 1,
       };
 
       const template = GeneralUtils.htmlTemplateReader(

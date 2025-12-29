@@ -84,6 +84,8 @@ import {
   ISubscriptionPlanRepository,
   SUBSCRIPTION_PLAN_REPOSITORY,
 } from "../subscription/domain/repositories/subscription-plan.repository";
+import { ResponseVisibilityService } from "./domain/services/response-visibility.service";
+import { SubscriptionFeatureService } from "../subscription/domain/services/subscription-feature.service";
 
 @Module({
   imports: [
@@ -99,7 +101,7 @@ import {
     ]),
     CoreModule,
     OrganizationModule,
-    SubjectModule,
+    forwardRef(() => SubjectModule),
     ClassModule,
     NotificationModule,
     forwardRef(
@@ -549,7 +551,11 @@ import {
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationRepository: IOrganizationRepository
+        organizationRepository: IOrganizationRepository,
+        responseVisibilityService: ResponseVisibilityService,
+        subscriptionFeatureService: SubscriptionFeatureService,
+        subscriptionRepository: ISubscriptionRepository,
+        subscriptionPlanRepository: ISubscriptionPlanRepository
       ) =>
         new GetQuizStatisticsUseCase(
           logger,
@@ -561,7 +567,11 @@ import {
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationRepository
+          organizationRepository,
+          responseVisibilityService,
+          subscriptionFeatureService,
+          subscriptionRepository,
+          subscriptionPlanRepository
         ),
       inject: [
         LoggerService,
@@ -574,6 +584,10 @@ import {
         SubjectAssignmentRepository,
         ClassRepository,
         OrganizationRepository,
+        ResponseVisibilityService,
+        SubscriptionFeatureService,
+        SUBSCRIPTION_REPOSITORY,
+        SUBSCRIPTION_PLAN_REPOSITORY,
       ],
     },
     {
@@ -627,6 +641,7 @@ import {
         GetQuizStatisticsUseCase,
       ],
     },
+    ResponseVisibilityService,
   ],
   controllers: [
     QuizTemplateController,
@@ -635,6 +650,13 @@ import {
     QuizPublicController,
     QuizPublicSubmitController,
   ],
-  exports: [QuizFacade],
+  exports: [
+    QuizFacade,
+    ResponseVisibilityService,
+    "QUIZ_REPOSITORY",
+    "RESPONSE_REPOSITORY",
+    "ANSWER_REPOSITORY",
+    "QUIZ_TEMPLATE_REPOSITORY",
+  ],
 })
 export class QuizModule {}

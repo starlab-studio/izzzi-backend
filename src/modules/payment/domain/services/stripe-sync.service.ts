@@ -1,6 +1,14 @@
-import Stripe from "stripe";
 import { SubscriptionPlanEntity } from "src/modules/subscription/domain/entities/subscription-plan.entity";
 import { PricingTierEntity } from "src/modules/subscription/domain/entities/pricing-tier.entity";
+import type {
+  StripeSubscription,
+  StripeSubscriptionStatus,
+  StripeInvoice,
+  StripePaymentMethod,
+  StripeEvent,
+  StripeProrationBehavior,
+  StripePrice,
+} from "../types/stripe.types";
 
 export interface IStripeSyncService {
   syncPlanToStripe(plan: SubscriptionPlanEntity): Promise<string>;
@@ -25,7 +33,7 @@ export interface IStripeSyncService {
   }): Promise<{
     subscriptionId: string;
     clientSecret: string | null;
-    status: Stripe.Subscription.Status;
+    status: StripeSubscriptionStatus;
   }>;
 
   updateSubscriptionQuantity(
@@ -33,9 +41,9 @@ export interface IStripeSyncService {
     newQuantity: number,
     newPriceId?: string,
     options?: {
-      prorationBehavior?: Stripe.SubscriptionUpdateParams.ProrationBehavior;
+      prorationBehavior?: StripeProrationBehavior;
     }
-  ): Promise<Stripe.Subscription>;
+  ): Promise<StripeSubscription>;
 
   createPaymentIntent(params: {
     customerId: string;
@@ -50,20 +58,25 @@ export interface IStripeSyncService {
     invoiceId?: string;
   }>;
 
-  getSubscription(subscriptionId: string): Promise<Stripe.Subscription | null>;
+  getSubscription(subscriptionId: string): Promise<StripeSubscription | null>;
 
-  getInvoice(invoiceId: string): Promise<Stripe.Invoice | null>;
+  getInvoice(invoiceId: string): Promise<StripeInvoice | null>;
 
   getPaymentMethod(
     paymentMethodId: string
-  ): Promise<Stripe.PaymentMethod | null>;
+  ): Promise<StripePaymentMethod | null>;
+
+  getPrice(priceId: string): Promise<StripePrice | null>;
 
   createBillingPortalSession(params: {
     customerId: string;
     returnUrl: string;
   }): Promise<string>;
 
-  constructWebhookEvent(payload: Buffer, signature: string): Stripe.Event;
+  // Note: This method returns Stripe.Event (from the Stripe library) because
+  // webhook controllers need the full Stripe event object for processing.
+  // The domain StripeEvent type is for internal use in other contexts.
+  constructWebhookEvent(payload: Buffer, signature: string): any;
 
   previewQuantityChange(params: {
     customerId: string;

@@ -18,7 +18,10 @@ import { IClassStudentRepository } from "../../domain/repositories/class-student
 import { GeneralUtils } from "src/utils/general.utils";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { ClassCreatedEvent } from "../../domain/events/classCreated.event";
+import { ClassLimitReachedEvent } from "../../domain/events/class-limit-reached.event";
 import { ClassLimitService } from "../../domain/services/class-limit.service";
+import { ISubscriptionRepository } from "src/modules/subscription/domain/repositories/subscription.repository";
+import { ISubscriptionPlanRepository } from "src/modules/subscription/domain/repositories/subscription-plan.repository";
 
 export class CreateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -27,7 +30,9 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
     private readonly classStudentRepository: IClassStudentRepository,
     private readonly organizationFacade: OrganizationFacade,
     private readonly eventStore: IEventStore,
-    private readonly classLimitService: ClassLimitService
+    private readonly classLimitService: ClassLimitService,
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
   ) {
     super(logger);
   }
@@ -107,6 +112,38 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
           userEmail: data.userEmail,
         })
       );
+
+      // Check if limit is reached after creating the class
+      const subscription =
+        await this.subscriptionRepository.findActiveByOrganizationId(
+          data.organizationId
+        );
+
+      if (subscription && subscription.status !== "pending") {
+        const plan = await this.subscriptionPlanRepository.findById(
+          subscription.planId
+        );
+
+        if (plan && !plan.isFree) {
+          const currentClassCount =
+            await this.classRepository.countByOrganization(data.organizationId);
+          const currentQuantity = subscription.quantity;
+
+          if (currentClassCount >= currentQuantity) {
+            const planName =
+              plan.name === "super-izzzi" ? "Super Izzzi" : "Izzzi";
+
+            this.eventStore.publish(
+              new ClassLimitReachedEvent({
+                organizationId: data.organizationId,
+                currentClassCount,
+                maxClasses: currentQuantity,
+                planName,
+              })
+            );
+          }
+        }
+      }
 
       return createdClass.toPersistence();
     } catch (error) {

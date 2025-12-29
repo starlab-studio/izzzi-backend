@@ -121,7 +121,7 @@ export class CreateSubscriptionUseCase
           billingPeriod
         );
 
-      if (tiers.length === 0 && !plan.isFree) {
+      if (tiers.length === 0) {
         throw new DomainError(
           "NO_PRICING_TIERS",
           "Aucun palier de tarification trouvé pour ce plan",
@@ -131,7 +131,7 @@ export class CreateSubscriptionUseCase
 
       let pricePerClassCents = 0;
       let selectedTier: PricingTierEntity | null = null;
-      if (!plan.isFree && tiers.length > 0) {
+      if (tiers.length > 0) {
         selectedTier =
           tiers.find(
             (t) => quantity >= t.minClasses && quantity <= t.maxClasses
@@ -158,6 +158,7 @@ export class CreateSubscriptionUseCase
 
       const totalPriceCents = pricePerClassCents * quantity;
       const requiresPayment = !plan.isFree && totalPriceCents > 0;
+      const isFreePlan = plan.isFree || totalPriceCents === 0;
 
       let trialDays: number | undefined;
       if (plan.trialPeriodDays > 0) {
@@ -169,14 +170,24 @@ export class CreateSubscriptionUseCase
       let stripeSubscriptionId: string | null = null;
       let stripeCustomerId: string | null = null;
 
-      if (requiresPayment) {
-        const pendingSubscription = SubscriptionEntity.createPending({
-          userId,
-          organizationId,
-          planId,
-          billingPeriod,
-          quantity,
-        });
+      // For free plans, we still create a Stripe subscription to track invoices
+      if (requiresPayment || isFreePlan) {
+        const pendingSubscription = isFreePlan
+          ? SubscriptionEntity.create({
+              userId,
+              organizationId,
+              planId,
+              billingPeriod,
+              quantity,
+              trialDays,
+            })
+          : SubscriptionEntity.createPending({
+              userId,
+              organizationId,
+              planId,
+              billingPeriod,
+              quantity,
+            });
 
         savedSubscription =
           await this.subscriptionRepository.save(pendingSubscription);

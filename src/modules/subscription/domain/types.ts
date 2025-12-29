@@ -91,3 +91,17 @@ export interface SubscriptionActivatedPayload {
 
 export type ISubscriptionActivatedEvent =
   import("src/core").IDomainEvent<SubscriptionActivatedPayload>;
+
+export interface SubscriptionUpgradedPayload {
+  userId: string;
+  userEmail: string;
+  organizationId: string;
+  planName: string;
+  previousQuantity: number;
+  newQuantity: number;
+  previousPriceCents: number;
+  newPriceCents: number;
+}
+
+export type ISubscriptionUpgradedEvent =
+  import("src/core").IDomainEvent<SubscriptionUpgradedPayload>;

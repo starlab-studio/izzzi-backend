@@ -1,19 +1,17 @@
-import { Injectable } from "@nestjs/common";
 import { BaseUseCase, DomainError, IUseCase } from "src/core";
 import type { ILoggerService } from "src/core";
 import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
 import { SubscriptionEntity } from "../../domain/entities/subscription.entity";
-import Stripe from "stripe";
+import type { StripeSubscription } from "../../../payment/domain/types/stripe.types";
 
 export interface SyncSubscriptionFromStripeInput {
-  stripeSubscription: Stripe.Subscription;
+  stripeSubscription: StripeSubscription;
 }
 
 export interface SyncSubscriptionFromStripeOutput {
   subscription: SubscriptionEntity;
 }
 
-@Injectable()
 export class SyncSubscriptionFromStripeUseCase
   extends BaseUseCase
   implements
@@ -57,7 +55,7 @@ export class SyncSubscriptionFromStripeUseCase
             stripeSubscription.id,
             typeof stripeSubscription.customer === "string"
               ? stripeSubscription.customer
-              : stripeSubscription.customer?.id || ""
+              : stripeSubscription.customer.id
           );
         }
       }
@@ -106,6 +104,50 @@ export class SyncSubscriptionFromStripeUseCase
         (subscription as any).props.currentPeriodEnd = new Date(
           stripeSubscription.current_period_end * 1000
         );
+      }
+
+      if (stripeSubscription.items?.data?.[0]?.quantity) {
+        const stripeQuantity = stripeSubscription.items.data[0].quantity;
+
+        const now = new Date();
+        if (
+          subscription.currentPeriodEnd &&
+          subscription.currentPeriodEnd <= now
+        ) {
+          if (subscription.pendingQuantity !== null) {
+            (subscription as any).props.quantity = subscription.pendingQuantity;
+            (subscription as any).props.pendingQuantity = null;
+          }
+        }
+
+        if (
+          stripeQuantity !== subscription.quantity &&
+          subscription.pendingQuantity === null
+        ) {
+          (subscription as any).props.quantity = stripeQuantity;
+        }
+      }
+
+      if (stripeSubscription.cancel_at_period_end !== undefined) {
+        if (stripeSubscription.cancel_at_period_end) {
+          if (
+            !subscription.cancelledAt ||
+            subscription.cancelledAt > subscription.currentPeriodEnd!
+          ) {
+            (subscription as any).props.cancelledAt =
+              subscription.currentPeriodEnd;
+          }
+        } else {
+          if (
+            subscription.cancelledAt &&
+            subscription.cancelledAt > new Date()
+          ) {
+            (subscription as any).props.cancelledAt = null;
+            if (subscription.status === "cancelled") {
+              (subscription as any).props.status = "active";
+            }
+          }
+        }
       }
 
       if (

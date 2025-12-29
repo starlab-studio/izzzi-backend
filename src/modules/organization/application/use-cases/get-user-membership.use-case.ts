@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import {
   IUseCase,
   BaseUseCase,
@@ -10,7 +9,6 @@ import { type IMembershipRepository } from "../../domain/repositories/membership
 import { MembershipWithOrganizationData } from "../../domain/types";
 import { MembershipEntity } from "../../domain/entities/membership.entity";
 
-@Injectable()
 export class GetUserMembershipsUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,

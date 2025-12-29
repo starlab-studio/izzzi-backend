@@ -96,7 +96,9 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
         classStudentRepository: IClassStudentRepository,
         organizationFacade: OrganizationFacade,
         eventStore: EventStore,
-        classLimitService: ClassLimitService
+        classLimitService: ClassLimitService,
+        subscriptionRepository: ISubscriptionRepository,
+        subscriptionPlanRepository: ISubscriptionPlanRepository
       ) =>
         new CreateClassUseCase(
           logger,
@@ -104,7 +106,9 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
           classStudentRepository,
           organizationFacade,
           eventStore,
-          classLimitService
+          classLimitService,
+          subscriptionRepository,
+          subscriptionPlanRepository
         ),
       inject: [
         LoggerService,
@@ -113,6 +117,8 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
         OrganizationFacade,
         EventStore,
         ClassLimitService,
+        SUBSCRIPTION_REPOSITORY,
+        SUBSCRIPTION_PLAN_REPOSITORY,
       ],
     },
     {

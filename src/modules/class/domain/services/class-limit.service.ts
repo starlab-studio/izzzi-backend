@@ -25,6 +25,14 @@ export class ClassLimitService {
       return { canCreate: true };
     }
 
+    if (subscription.status === "pending") {
+      return {
+        canCreate: false,
+        reason:
+          "Your subscription is pending payment confirmation. Please complete your payment to create classes.",
+      };
+    }
+
     const plan = await this.subscriptionPlanRepository.findById(
       subscription.planId
     );
@@ -41,13 +49,29 @@ export class ClassLimitService {
       return { canCreate: true };
     }
 
+    // ✅ Utiliser la quantité actuelle (pas pendingQuantity) car les downgrades prennent effet à la fin de période
+    const currentQuantity = subscription.quantity;
+
+    if (currentQuantity <= 0) {
+      return {
+        canCreate: false,
+        reason:
+          "Your subscription does not allow creating classes. Please contact support or upgrade your plan.",
+      };
+    }
+
     const currentClassCount =
       await this.classRepository.countByOrganization(organizationId);
 
-    if (currentClassCount >= subscription.quantity) {
+    if (currentClassCount >= currentQuantity) {
+      const pendingInfo =
+        subscription.pendingQuantity !== null
+          ? ` (Note: Your subscription will be reduced to ${subscription.pendingQuantity} class${subscription.pendingQuantity > 1 ? "es" : ""} at the end of your current billing period)`
+          : "";
+
       return {
         canCreate: false,
-        reason: "You have reached the class limit allowed by your subscription",
+        reason: `You have reached your class limit. You currently have ${currentClassCount} active class${currentClassCount > 1 ? "es" : ""} out of ${currentQuantity} allowed by your subscription.${pendingInfo} Please upgrade your plan to create more classes.`,
       };
     }
 

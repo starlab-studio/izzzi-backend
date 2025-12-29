@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { BaseUseCase, DomainError, IUseCase } from "src/core";
 import type { ILoggerService } from "src/core";
 import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
@@ -26,7 +25,6 @@ export interface GetPaymentConfirmationOutput {
   hostedInvoiceUrl: string | null;
 }
 
-@Injectable()
 export class GetPaymentConfirmationUseCase
   extends BaseUseCase
   implements IUseCase<GetPaymentConfirmationInput, GetPaymentConfirmationOutput>
@@ -67,7 +65,6 @@ export class GetPaymentConfirmationUseCase
         );
       }
 
-      // Vérifier que l'utilisateur a accès à cette organisation
       await this.organizationAuthorizationService.assertCanAccess(
         userId,
         organizationId
@@ -115,7 +112,7 @@ export class GetPaymentConfirmationUseCase
             await this.stripeSyncService.getInvoice(invoiceId);
 
           if (stripeInvoice) {
-            invoice = InvoiceEntity.syncFromStripe(
+            invoice = InvoiceEntity.syncFromDomainInvoice(
               stripeInvoice,
               subscription.userId,
               subscription.organizationId,

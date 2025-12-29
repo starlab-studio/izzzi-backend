@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { BaseUseCase, DomainError, IUseCase } from "src/core";
 import type { ILoggerService, IEventStore } from "src/core";
 import type { IInvoiceRepository } from "../../domain/repositories/invoice.repository";
@@ -6,18 +5,17 @@ import type { ISubscriptionRepository } from "../../domain/repositories/subscrip
 import type { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import type { IStripeSyncService } from "../../../payment/domain/services/stripe-sync.service";
+import type { StripeInvoice } from "../../../payment/domain/types/stripe.types";
 import { SubscriptionActivatedEvent } from "../../domain/events/subscription-activated.event";
-import Stripe from "stripe";
 
 export interface SyncInvoiceFromStripeInput {
-  stripeInvoice: Stripe.Invoice;
+  stripeInvoice: StripeInvoice;
 }
 
 export interface SyncInvoiceFromStripeOutput {
   invoice: InvoiceEntity;
 }
 
-@Injectable()
 export class SyncInvoiceFromStripeUseCase
   extends BaseUseCase
   implements IUseCase<SyncInvoiceFromStripeInput, SyncInvoiceFromStripeOutput>
@@ -43,7 +41,7 @@ export class SyncInvoiceFromStripeUseCase
         stripeInvoice.metadata?.subscriptionId ||
         (typeof stripeInvoice.subscription === "string"
           ? stripeInvoice.subscription
-          : stripeInvoice.subscription?.id);
+          : stripeInvoice.subscription?.id || null);
 
       if (!subscriptionId) {
         throw new DomainError(
@@ -71,10 +69,10 @@ export class SyncInvoiceFromStripeUseCase
       );
 
       if (invoice) {
-        invoice.updateFromStripe(stripeInvoice);
+        invoice.updateFromDomainInvoice(stripeInvoice);
         invoice = await this.invoiceRepository.save(invoice);
       } else {
-        invoice = InvoiceEntity.syncFromStripe(
+        invoice = InvoiceEntity.syncFromDomainInvoice(
           stripeInvoice,
           subscription.userId,
           subscription.organizationId,
@@ -86,12 +84,13 @@ export class SyncInvoiceFromStripeUseCase
       const previousStatus = subscription.status;
       if (
         stripeInvoice.status === "paid" &&
-        subscription.status === "pending"
+        (subscription.status === "pending" || subscription.status === "trial")
       ) {
-        subscription.activate();
-        await this.subscriptionRepository.save(subscription);
+        if (subscription.status === "pending") {
+          subscription.activate();
+          await this.subscriptionRepository.save(subscription);
+        }
 
-        // Émettre l'event pour l'envoi de l'email de confirmation
         const plan = await this.subscriptionPlanRepository.findById(
           subscription.planId
         );

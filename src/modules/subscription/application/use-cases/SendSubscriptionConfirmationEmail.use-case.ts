@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { BaseUseCase, DomainError, IUseCase } from "src/core";
 import type { ILoggerService } from "src/core";
 import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
@@ -19,7 +18,6 @@ export interface SendSubscriptionConfirmationEmailOutput {
   success: boolean;
 }
 
-@Injectable()
 export class SendSubscriptionConfirmationEmailUseCase
   extends BaseUseCase
   implements
@@ -56,7 +54,6 @@ export class SendSubscriptionConfirmationEmailUseCase
         );
       }
 
-      // Récupérer l'utilisateur pour obtenir son email
       const user = await this.userRepository.findById(subscription.userId);
 
       if (!user) {
@@ -65,11 +62,9 @@ export class SendSubscriptionConfirmationEmailUseCase
         });
       }
 
-      // Déterminer le nom du plan
       const planName =
         subscription.planId === "super-izzzi" ? "Super Izzzi" : "Izzzi";
 
-      // Générer le lien du billing portal
       const billingPortalResult =
         await this.getBillingPortalLinkUseCase.execute({
           organizationId,
@@ -77,7 +72,6 @@ export class SendSubscriptionConfirmationEmailUseCase
           returnUrl: `${process.env.FRONTEND_DOMAIN_URL || "http://localhost:3001"}/profile/admin`,
         });
 
-      // Lire et traiter le template
       const templatePath = path.join(
         __dirname,
         "../../../../templates/subscription-confirmation.html"
@@ -94,13 +88,11 @@ export class SendSubscriptionConfirmationEmailUseCase
       const templateContent = fs.readFileSync(templatePath, "utf-8");
       const template = Handlebars.compile(templateContent);
 
-      // Remplacer les placeholders dans le template
       const htmlContent = template({
         planName,
         billingPortalUrl: billingPortalResult.url,
       });
 
-      // Envoyer l'email
       await this.createEmailNotificationUseCase.execute({
         target: user.email,
         subject: `Votre abonnement à ${planName} est confirmé !`,

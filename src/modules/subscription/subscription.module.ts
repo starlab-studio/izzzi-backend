@@ -49,6 +49,7 @@ import { SyncPlansWithStripeUseCase } from "./application/use-cases/SyncPlansWit
 import { GetPaymentConfirmationUseCase } from "./application/use-cases/GetPaymentConfirmation.use-case";
 import { SyncInvoiceFromStripeUseCase } from "./application/use-cases/SyncInvoiceFromStripe.use-case";
 import { SyncSubscriptionFromStripeUseCase } from "./application/use-cases/SyncSubscriptionFromStripe.use-case";
+import { ApplyPendingQuantityUseCase } from "./application/use-cases/ApplyPendingQuantity.use-case";
 
 import { SubscriptionFacade } from "./application/facades/subscription.facade";
 
@@ -188,7 +189,8 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         pricingTierRepository: IPricingTierRepository,
         userRepository: IUserRepository,
-        stripeSyncService: IStripeSyncService
+        stripeSyncService: IStripeSyncService,
+        eventStore: IEventStore
       ) =>
         new UpdateSubscriptionQuantityUseCase(
           logger,
@@ -196,7 +198,8 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
           subscriptionPlanRepository,
           pricingTierRepository,
           userRepository,
-          stripeSyncService
+          stripeSyncService,
+          eventStore
         ),
       inject: [
         LoggerService,
@@ -205,6 +208,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         PricingTierRepository,
         UserRepository,
         STRIPE_SYNC_SERVICE,
+        EventStore,
       ],
     },
     {
@@ -330,6 +334,14 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
       inject: [LoggerService, SubscriptionRepository],
     },
     {
+      provide: ApplyPendingQuantityUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionRepository: ISubscriptionRepository
+      ) => new ApplyPendingQuantityUseCase(logger, subscriptionRepository),
+      inject: [LoggerService, SubscriptionRepository],
+    },
+    {
       provide: GetBillingPortalLinkUseCase,
       useFactory: (
         logger: ILoggerService,
@@ -425,6 +437,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
     GetPaymentConfirmationUseCase,
     SyncInvoiceFromStripeUseCase,
     SyncSubscriptionFromStripeUseCase,
+    ApplyPendingQuantityUseCase,
     GetBillingPortalLinkUseCase,
     SendSubscriptionConfirmationEmailUseCase,
   ],

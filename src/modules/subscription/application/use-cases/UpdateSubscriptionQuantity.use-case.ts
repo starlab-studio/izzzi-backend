@@ -1,10 +1,17 @@
-import { IUseCase, ILoggerService, BaseUseCase, DomainError } from "src/core";
+import {
+  IUseCase,
+  ILoggerService,
+  BaseUseCase,
+  DomainError,
+  IEventStore,
+} from "src/core";
 import { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
 import { ISubscriptionPlanRepository } from "../../domain/repositories/subscription-plan.repository";
 import { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
 import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
 import { UserRole } from "src/core/domain/types";
 import type { IStripeSyncService } from "src/modules/payment/domain/services/stripe-sync.service";
+import { SubscriptionUpgradedEvent } from "../../domain/events/subscription-upgraded.event";
 
 export interface UpdateQuantityInput {
   subscriptionId: string;
@@ -47,7 +54,8 @@ export class UpdateSubscriptionQuantityUseCase
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly pricingTierRepository: IPricingTierRepository,
     private readonly userRepository: IUserRepository,
-    private readonly stripeSyncService: IStripeSyncService
+    private readonly stripeSyncService: IStripeSyncService,
+    private readonly eventStore: IEventStore
   ) {
     super(logger);
   }
@@ -314,7 +322,26 @@ export class UpdateSubscriptionQuantityUseCase
       const savedSubscription =
         await this.subscriptionRepository.save(subscription);
 
-      const planName = plan.name;
+      const planName = plan.name === "super-izzzi" ? "Super Izzzi" : "Izzzi";
+
+      // Emit upgrade event if upgrade occurred and no payment is required
+      if (isUpgrade && !requiresPayment) {
+        const user = await this.userRepository.findById(subscription.userId);
+        if (user) {
+          this.eventStore.publish(
+            new SubscriptionUpgradedEvent({
+              userId: subscription.userId,
+              userEmail: user.email,
+              organizationId: subscription.organizationId,
+              planName,
+              previousQuantity,
+              newQuantity,
+              previousPriceCents,
+              newPriceCents,
+            })
+          );
+        }
+      }
 
       const displayQuantity =
         savedSubscription.pendingQuantity !== null

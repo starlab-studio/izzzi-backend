@@ -39,6 +39,10 @@ import { OrganizationController } from "./interface/controllers/organization.con
 import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-membership.use-case";
 import { GetOrganizationUseCase } from "./application/use-cases/GetOrganization.use-case";
 import { OrganizationAuthorizationService } from "./domain/services/organization-authorization.service";
+import {
+  ISubscriptionRepository,
+  SUBSCRIPTION_REPOSITORY,
+} from "../subscription/domain/repositories/subscription.repository";
 
 @Module({
   imports: [
@@ -50,6 +54,9 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
     ]),
     forwardRef(() => CoreModule),
     forwardRef(() => require("../auth/auth.module").AuthModule),
+    forwardRef(
+      () => require("../subscription/subscription.module").SubscriptionModule
+    ),
   ],
   controllers: [OrganizationController, UserController],
   providers: [
@@ -180,7 +187,8 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         authorizationService: InvitationAuthorizationService,
         userRepository: IUserRepository,
         organizationRepository: IOrganizationRepository,
-        invitationRepository: IInvitationRepository
+        invitationRepository: IInvitationRepository,
+        subscriptionRepository: ISubscriptionRepository
       ) =>
         new SendInvitationUseCase(
           logger,
@@ -188,7 +196,8 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
           authorizationService,
           userRepository,
           organizationRepository,
-          invitationRepository
+          invitationRepository,
+          subscriptionRepository
         ),
       inject: [
         LoggerService,
@@ -197,6 +206,7 @@ import { OrganizationAuthorizationService } from "./domain/services/organization
         UserRepository,
         OrganizationRepository,
         InvitationRepository,
+        SUBSCRIPTION_REPOSITORY,
       ],
     },
     {

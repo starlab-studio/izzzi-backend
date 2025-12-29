@@ -4,6 +4,15 @@ import Stripe from "stripe";
 import { SubscriptionPlanEntity } from "src/modules/subscription/domain/entities/subscription-plan.entity";
 import { PricingTierEntity } from "src/modules/subscription/domain/entities/pricing-tier.entity";
 import { IStripeSyncService } from "../../domain/services/stripe-sync.service";
+import type {
+  StripeSubscription,
+  StripeSubscriptionStatus,
+  StripeInvoice,
+  StripePaymentMethod,
+  StripeEvent,
+  StripePrice,
+} from "../../domain/types/stripe.types";
+import { StripeDomainMapper } from "../mappers/stripe-domain.mapper";
 
 @Injectable()
 export class StripeSyncService implements IStripeSyncService {
@@ -221,8 +230,14 @@ export class StripeSyncService implements IStripeSyncService {
   }): Promise<{
     subscriptionId: string;
     clientSecret: string | null;
-    status: Stripe.Subscription.Status;
+    status: StripeSubscriptionStatus;
   }> {
+    const price = await this.getPrice(params.priceId);
+    if (!price) {
+      throw new Error(`Price ${params.priceId} not found`);
+    }
+    const isZeroPrice = price.unit_amount === 0 || price.unit_amount === null;
+
     const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: params.customerId,
       items: [
@@ -232,12 +247,16 @@ export class StripeSyncService implements IStripeSyncService {
         },
       ],
       metadata: params.metadata || {},
-      payment_behavior: "default_incomplete",
+      payment_behavior: isZeroPrice
+        ? "default_incomplete"
+        : "default_incomplete",
       expand: ["latest_invoice", "pending_setup_intent"],
     };
 
     if (params.trialDays && params.trialDays > 0) {
       subscriptionParams.trial_period_days = params.trialDays;
+      subscriptionParams.payment_behavior = "allow_incomplete";
+    } else if (isZeroPrice) {
       subscriptionParams.payment_behavior = "allow_incomplete";
     }
 
@@ -273,7 +292,7 @@ export class StripeSyncService implements IStripeSyncService {
     return {
       subscriptionId: subscription.id,
       clientSecret,
-      status: subscription.status,
+      status: subscription.status as StripeSubscriptionStatus,
     };
   }
 
@@ -282,9 +301,9 @@ export class StripeSyncService implements IStripeSyncService {
     newQuantity: number,
     newPriceId?: string,
     options?: {
-      prorationBehavior?: Stripe.SubscriptionUpdateParams.ProrationBehavior;
+      prorationBehavior?: "create_prorations" | "none" | "always_invoice";
     }
-  ): Promise<Stripe.Subscription> {
+  ): Promise<StripeSubscription> {
     const subscription =
       await this.stripe.subscriptions.retrieve(subscriptionId);
 
@@ -313,7 +332,7 @@ export class StripeSyncService implements IStripeSyncService {
       `Updated subscription ${subscriptionId} quantity to ${newQuantity}`
     );
 
-    return updated;
+    return StripeDomainMapper.toDomainSubscription(updated);
   }
 
   async cancelSubscription(
@@ -348,9 +367,11 @@ export class StripeSyncService implements IStripeSyncService {
 
   async getSubscription(
     subscriptionId: string
-  ): Promise<Stripe.Subscription | null> {
+  ): Promise<StripeSubscription | null> {
     try {
-      return await this.stripe.subscriptions.retrieve(subscriptionId);
+      const subscription =
+        await this.stripe.subscriptions.retrieve(subscriptionId);
+      return StripeDomainMapper.toDomainSubscription(subscription);
     } catch (error) {
       if (
         error instanceof Stripe.errors.StripeError &&
@@ -450,9 +471,10 @@ export class StripeSyncService implements IStripeSyncService {
     return invoices.data;
   }
 
-  async getInvoice(invoiceId: string): Promise<Stripe.Invoice | null> {
+  async getInvoice(invoiceId: string): Promise<StripeInvoice | null> {
     try {
-      return await this.stripe.invoices.retrieve(invoiceId);
+      const invoice = await this.stripe.invoices.retrieve(invoiceId);
+      return StripeDomainMapper.toDomainInvoice(invoice);
     } catch (error) {
       if (
         error instanceof Stripe.errors.StripeError &&
@@ -483,9 +505,26 @@ export class StripeSyncService implements IStripeSyncService {
 
   async getPaymentMethod(
     paymentMethodId: string
-  ): Promise<Stripe.PaymentMethod | null> {
+  ): Promise<StripePaymentMethod | null> {
     try {
-      return await this.stripe.paymentMethods.retrieve(paymentMethodId);
+      const paymentMethod =
+        await this.stripe.paymentMethods.retrieve(paymentMethodId);
+      return StripeDomainMapper.toDomainPaymentMethod(paymentMethod);
+    } catch (error) {
+      if (
+        error instanceof Stripe.errors.StripeError &&
+        error.code === "resource_missing"
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async getPrice(priceId: string): Promise<StripePrice | null> {
+    try {
+      const price = await this.stripe.prices.retrieve(priceId);
+      return StripeDomainMapper.toDomainPrice(price);
     } catch (error) {
       if (
         error instanceof Stripe.errors.StripeError &&

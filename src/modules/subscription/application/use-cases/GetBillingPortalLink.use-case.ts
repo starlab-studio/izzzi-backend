@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { BaseUseCase, DomainError, IUseCase } from "src/core";
 import type { ILoggerService } from "src/core";
 import type { ISubscriptionRepository } from "../../domain/repositories/subscription.repository";
@@ -15,7 +14,6 @@ export interface GetBillingPortalLinkOutput {
   url: string;
 }
 
-@Injectable()
 export class GetBillingPortalLinkUseCase
   extends BaseUseCase
   implements IUseCase<GetBillingPortalLinkInput, GetBillingPortalLinkOutput>

@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { IInvoice } from "../types";
-import Stripe from "stripe";
+import type { StripeInvoice } from "src/modules/payment/domain/types/stripe.types";
 
 export class InvoiceEntity {
   private props: IInvoice;
@@ -35,54 +35,6 @@ export class InvoiceEntity {
 
   public static reconstitute(data: IInvoice): InvoiceEntity {
     return new InvoiceEntity(data);
-  }
-
-  public static syncFromStripe(
-    stripeInvoice: Stripe.Invoice,
-    userId: string,
-    organizationId: string,
-    subscriptionId: string | null
-  ): InvoiceEntity {
-    const invoiceNumber = stripeInvoice.number || stripeInvoice.id || null;
-    const amountCents = stripeInvoice.amount_due;
-    const taxCents = stripeInvoice.tax || 0;
-    const currency = stripeInvoice.currency.toUpperCase();
-    const status = stripeInvoice.status as
-      | "draft"
-      | "open"
-      | "paid"
-      | "void"
-      | "uncollectible";
-    const pdfUrl = stripeInvoice.invoice_pdf || null;
-    const hostedInvoiceUrl = stripeInvoice.hosted_invoice_url || null;
-    const issuedAt = stripeInvoice.created
-      ? new Date(stripeInvoice.created * 1000)
-      : null;
-    const paidAt =
-      stripeInvoice.status === "paid" &&
-      stripeInvoice.status_transitions?.paid_at
-        ? new Date(stripeInvoice.status_transitions.paid_at * 1000)
-        : null;
-
-    return InvoiceEntity.create({
-      userId,
-      organizationId,
-      subscriptionId,
-      stripeInvoiceId: stripeInvoice.id,
-      stripeCustomerId:
-        typeof stripeInvoice.customer === "string"
-          ? stripeInvoice.customer
-          : stripeInvoice.customer?.id || "",
-      invoiceNumber,
-      amountCents,
-      taxCents,
-      currency,
-      status,
-      pdfUrl,
-      hostedInvoiceUrl,
-      issuedAt,
-      paidAt,
-    });
   }
 
   get id(): string {
@@ -149,24 +101,53 @@ export class InvoiceEntity {
     return this.props.createdAt;
   }
 
-  updateFromStripe(stripeInvoice: Stripe.Invoice): void {
+  public static syncFromDomainInvoice(
+    stripeInvoice: StripeInvoice,
+    userId: string,
+    organizationId: string,
+    subscriptionId: string | null
+  ): InvoiceEntity {
+    const invoiceNumber = stripeInvoice.id || null;
+    const amountCents = stripeInvoice.amount_due;
+    const taxCents = 0;
+    const currency = stripeInvoice.currency.toUpperCase();
+    const status = stripeInvoice.status;
+    const pdfUrl = stripeInvoice.invoice_pdf || null;
+    const hostedInvoiceUrl = stripeInvoice.hosted_invoice_url || null;
+    const issuedAt = stripeInvoice.created
+      ? new Date(stripeInvoice.created * 1000)
+      : null;
+    const paidAt = stripeInvoice.paid ? new Date(stripeInvoice.paid) : null;
+
+    return InvoiceEntity.create({
+      userId,
+      organizationId,
+      subscriptionId,
+      stripeInvoiceId: stripeInvoice.id,
+      stripeCustomerId:
+        typeof stripeInvoice.customer === "string"
+          ? stripeInvoice.customer
+          : stripeInvoice.customer.id,
+      invoiceNumber,
+      amountCents,
+      taxCents,
+      currency,
+      status,
+      pdfUrl,
+      hostedInvoiceUrl,
+      issuedAt,
+      paidAt,
+    });
+  }
+
+  updateFromDomainInvoice(stripeInvoice: StripeInvoice): void {
     this.props.amountCents = stripeInvoice.amount_due;
-    this.props.taxCents = stripeInvoice.tax || 0;
-    this.props.status = stripeInvoice.status as
-      | "draft"
-      | "open"
-      | "paid"
-      | "void"
-      | "uncollectible";
+    this.props.taxCents = 0;
+    this.props.status = stripeInvoice.status;
     this.props.pdfUrl = stripeInvoice.invoice_pdf || null;
     this.props.hostedInvoiceUrl = stripeInvoice.hosted_invoice_url || null;
-    if (
-      stripeInvoice.status === "paid" &&
-      stripeInvoice.status_transitions?.paid_at
-    ) {
-      this.props.paidAt = new Date(
-        stripeInvoice.status_transitions.paid_at * 1000
-      );
+    if (stripeInvoice.paid) {
+      this.props.paidAt = new Date(stripeInvoice.paid);
     }
   }
 

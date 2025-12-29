@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { BaseUseCase, IUseCase } from "src/core";
 import type { ILoggerService } from "src/core";
 import type { IStripeSyncService } from "../../domain/services/stripe-sync.service";
@@ -20,7 +19,6 @@ export interface HandleStripeWebhookOutput {
   eventType: string;
 }
 
-@Injectable()
 export class HandleStripeWebhookUseCase
   extends BaseUseCase
   implements IUseCase<HandleStripeWebhookInput, HandleStripeWebhookOutput>

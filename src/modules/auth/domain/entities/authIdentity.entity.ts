@@ -100,7 +100,7 @@ export class AuthIdentityEntity {
   }
 
   verifyEmail(email: string): void {
-    if (email !== this.props.username) {
+    if (email.toLowerCase().trim() !== this.props.username?.toLowerCase().trim()) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
         "Invalid email for email verification"

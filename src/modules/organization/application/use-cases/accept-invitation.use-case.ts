@@ -68,7 +68,7 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
         );
       }
 
-      if (user.email !== invitation.email) {
+      if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
         throw new DomainError(
           ErrorCode.INVALID_OR_EXPIRED_INVITATION,
           "Invitation email does not match user email",

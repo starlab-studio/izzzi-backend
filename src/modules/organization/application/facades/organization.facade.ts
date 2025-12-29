@@ -94,6 +94,18 @@ export class OrganizationFacade {
     }
   }
 
+  async activateUser(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+    }
+    
+    if (!user.isActive()) {
+      user.activate();
+      await this.userRepository.save(user);
+    }
+  }
+
   async validateUserCanCreateClass(
     userId: string,
     organizationId: string,

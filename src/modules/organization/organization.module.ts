@@ -56,6 +56,8 @@ import { SubjectRepository } from "../subject/infrastructure/repositories/subjec
 import { AuthIdentityModel } from "../auth/infrastructure/models/authIdentity.model";
 import { AuthIdentityRepository } from "../auth/infrastructure/repositories/authIdentity.repository";
 import { IAuthIdentityRepository } from "../auth/domain/repositories/authIdentity.repository";
+import { IRefreshTokenRepository } from "../auth/domain/repositories/refreshToken.repository";
+import { RefreshTokenRepository } from "../auth/infrastructure/repositories/refreshToken.repository";
 // @ts-ignore - Circular dependency resolved with forwardRef
 import { AuthModule } from "../auth/auth.module";
 
@@ -280,24 +282,21 @@ import { AuthModule } from "../auth/auth.module";
         logger: ILoggerService,
         membershipRepository: IMembershipRepository,
         userRepository: IUserRepository,
-        authIdentityRepository: IAuthIdentityRepository,
-        moduleRef: ModuleRef,
+        refreshTokenRepository: IRefreshTokenRepository,
         unitOfWork: IUnitOfWork
       ) =>
         new RemoveMemberUseCase(
           logger,
           membershipRepository,
           userRepository,
-          authIdentityRepository,
-          moduleRef,
+          refreshTokenRepository,
           unitOfWork
         ),
       inject: [
         LoggerService,
         MembershipRepository,
         UserRepository,
-        "AUTH_IDENTITY_REPOSITORY",
-        ModuleRef,
+        RefreshTokenRepository,
         TypeOrmUnitOfWork,
       ],
     },

@@ -28,7 +28,8 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
   }
 
   async findByUsername(username: string): Promise<AuthIdentityEntity | null> {
-    const ormEntity = await this.ormRepository.findOne({ where: { username } });
+    const normalizedUsername = username.trim().toLowerCase();
+    const ormEntity = await this.ormRepository.findOne({ where: { username: normalizedUsername } });
     if (!ormEntity) return null;
 
     return AuthIdentityEntity.reconstitute(ormEntity);
@@ -38,8 +39,9 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
     provider: AuthIdentityName,
     username: string
   ): Promise<AuthIdentityEntity | null> {
+    const normalizedUsername = username.trim().toLowerCase();
     const ormEntity = await this.ormRepository.findOne({
-      where: { provider, username },
+      where: { provider, username: normalizedUsername },
     });
     if (!ormEntity) return null;
 

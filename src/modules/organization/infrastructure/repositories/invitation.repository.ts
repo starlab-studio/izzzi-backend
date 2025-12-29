@@ -36,7 +36,8 @@ export class InvitationRepository
   }
 
   async findByEmail(email: string): Promise<InvitationEntity[]> {
-    const ormEntities = await this.directRepository.findBy({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const ormEntities = await this.directRepository.findBy({ email: normalizedEmail });
     return this.toEntities(ormEntities);
   }
 
@@ -63,8 +64,9 @@ export class InvitationRepository
     email: string,
     organizationId: string
   ): Promise<InvitationEntity | null> {
+    const normalizedEmail = email.trim().toLowerCase();
     const ormEntity = await this.directRepository.findOneBy({
-      email,
+      email: normalizedEmail,
       organizationId,
     });
     return this.toEntity(ormEntity);

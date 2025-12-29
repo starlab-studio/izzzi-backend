@@ -5,11 +5,9 @@ import {
   UserRole,
   IUnitOfWork,
 } from "src/core";
-import { ModuleRef } from "@nestjs/core";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
 import { IUserRepository } from "../../domain/repositories/user.repository";
-import { IAuthIdentityRepository } from "../../../auth/domain/repositories/authIdentity.repository";
-import { IAuthStrategy } from "../../../auth/domain/types";
+import { IRefreshTokenRepository } from "../../../auth/domain/repositories/refreshToken.repository";
 
 export interface RemoveMemberData {
   membershipId: string;
@@ -22,8 +20,7 @@ export class RemoveMemberUseCase {
     private readonly logger: ILoggerService,
     private readonly membershipRepository: IMembershipRepository,
     private readonly userRepository: IUserRepository,
-    private readonly authIdentityRepository: IAuthIdentityRepository,
-    private readonly moduleRef: ModuleRef,
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
     private readonly unitOfWork: IUnitOfWork
   ) {}
 
@@ -77,32 +74,18 @@ export class RemoveMemberUseCase {
 
       if (activeMemberships.length === 0) {
         this.logger.info(
-          `User ${membership.userId} has no other organizations. Deleting user account completely.`
+          `User ${membership.userId} has no other organizations. Marking user as deleted (soft delete).`
         );
 
         const user = await this.userRepository.findById(membership.userId);
         if (user) {
-          const authIdentity = await this.authIdentityRepository.findByUsername(
-            user.email
-          );
-          if (authIdentity) {
-            try {
-              const authStrategy = this.moduleRef.get<IAuthStrategy>(
-                "AUTH_IDENTITY_PROVIDER",
-                { strict: false }
-              );
-              if (authStrategy) {
-                await authStrategy.deleteIdentity(user.email);
-              }
-            } catch (error) {
-              this.logger.warn(
-                `Failed to delete auth identity for ${user.email}: ${error}`
-              );
-            }
-          }
+          user.markAsDeleted();
+          await this.userRepository.save(user);
+          await this.refreshTokenRepository.revokeAllByUserId(user.id);
 
-          await this.userRepository.delete(user.id);
-          this.logger.info(`User ${membership.userId} deleted successfully.`);
+          this.logger.info(
+            `User ${membership.userId} marked as deleted and all tokens revoked.`
+          );
         }
       } else {
         this.logger.info(

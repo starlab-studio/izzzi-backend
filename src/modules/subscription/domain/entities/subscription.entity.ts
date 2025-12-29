@@ -216,6 +216,14 @@ export class SubscriptionEntity {
     return this.props.status === "trial";
   }
 
+  get isTrialActive(): boolean {
+    if (!this.props.trialEndDate) {
+      return false;
+    }
+    const now = new Date();
+    return this.props.trialEndDate > now;
+  }
+
   get canUpgrade(): boolean {
     return this.isActive && this.props.quantity < 20;
   }

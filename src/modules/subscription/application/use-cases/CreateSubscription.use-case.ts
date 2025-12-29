@@ -8,6 +8,7 @@ import { SubscriptionEntity } from "../../domain/entities/subscription.entity";
 import { PricingTierEntity } from "../../domain/entities/pricing-tier.entity";
 import { UserRole } from "src/core/domain/types";
 import type { IPaymentService } from "../../domain/services/payment.service";
+import type { IStripeSyncService } from "src/modules/payment/domain/services/stripe-sync.service";
 
 export interface CreateSubscriptionInput {
   userId: string;
@@ -44,7 +45,8 @@ export class CreateSubscriptionUseCase
     private readonly pricingTierRepository: IPricingTierRepository,
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly userRepository: IUserRepository,
-    private readonly paymentService: IPaymentService
+    private readonly paymentService: IPaymentService,
+    private readonly stripeSyncService: IStripeSyncService
   ) {
     super(logger);
   }
@@ -115,11 +117,52 @@ export class CreateSubscriptionUseCase
         );
       }
 
-      const tiers =
+      let tiers =
         await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
           planId,
           billingPeriod
         );
+
+      // For free plans, create missing pricing tiers if they don't exist
+      if (plan.isFree && tiers.length === 0) {
+        this.logger.info(
+          `Creating missing pricing tiers for free plan ${plan.name} (${planId}) with billing period ${billingPeriod}`
+        );
+
+        const freeTier = PricingTierEntity.create({
+          planId,
+          billingPeriod,
+          minClasses: 1,
+          maxClasses: 20,
+          pricePerClassCents: 0,
+          stripePriceId: null,
+        });
+
+        const savedTier = await this.pricingTierRepository.save(freeTier);
+
+        // Sync with Stripe to get stripePriceId
+        if (plan.stripeProductId) {
+          const tierToPriceIdMap =
+            await this.stripeSyncService.syncPricingTiersToStripe(
+              plan.stripeProductId,
+              [savedTier]
+            );
+
+          const priceId = tierToPriceIdMap.get(savedTier.id);
+          if (priceId) {
+            const updatedTier = PricingTierEntity.reconstitute({
+              ...savedTier.toPersistence(),
+              stripePriceId: priceId,
+            });
+            const finalTier = await this.pricingTierRepository.save(updatedTier);
+            tiers = [finalTier];
+          } else {
+            tiers = [savedTier];
+          }
+        } else {
+          tiers = [savedTier];
+        }
+      }
 
       if (tiers.length === 0) {
         throw new DomainError(
@@ -154,6 +197,31 @@ export class CreateSubscriptionUseCase
         }
 
         pricePerClassCents = selectedTier.pricePerClassCents;
+
+        // For free plans, sync tier with Stripe if stripePriceId is missing
+        if (plan.isFree && selectedTier && !selectedTier.stripePriceId) {
+          this.logger.info(
+            `Syncing pricing tier ${selectedTier.id} with Stripe for free plan`
+          );
+
+          if (plan.stripeProductId) {
+            const tierToPriceIdMap =
+              await this.stripeSyncService.syncPricingTiersToStripe(
+                plan.stripeProductId,
+                [selectedTier]
+              );
+
+            const priceId = tierToPriceIdMap.get(selectedTier.id);
+            if (priceId) {
+              const updatedTier = PricingTierEntity.reconstitute({
+                ...selectedTier.toPersistence(),
+                stripePriceId: priceId,
+              });
+              await this.pricingTierRepository.save(updatedTier);
+              selectedTier = updatedTier;
+            }
+          }
+        }
       }
 
       const totalPriceCents = pricePerClassCents * quantity;

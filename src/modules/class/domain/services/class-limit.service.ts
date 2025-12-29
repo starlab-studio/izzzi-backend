@@ -46,6 +46,13 @@ export class ClassLimitService {
     }
 
     if (plan.isFree) {
+      if (!subscription.isTrialActive) {
+        return {
+          canCreate: false,
+          reason:
+            "Votre période d'essai est terminée. Vous devez souscrire à un abonnement payant pour continuer à créer des classes.",
+        };
+      }
       return { canCreate: true };
     }
 

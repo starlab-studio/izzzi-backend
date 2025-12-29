@@ -86,32 +86,39 @@ export class SyncInvoiceFromStripeUseCase
         stripeInvoice.status === "paid" &&
         (subscription.status === "pending" || subscription.status === "trial")
       ) {
+        const plan = await this.subscriptionPlanRepository.findById(
+          subscription.planId
+        );
+
         if (subscription.status === "pending") {
           subscription.activate();
           await this.subscriptionRepository.save(subscription);
         }
 
-        const plan = await this.subscriptionPlanRepository.findById(
-          subscription.planId
-        );
-        const planName = plan
-          ? plan.name === "super-izzzi"
-            ? "Super Izzzi"
-            : "Izzzi"
-          : "Izzzi";
+        if (!plan || !plan.isFree) {
+          const planName = plan
+            ? plan.name === "super-izzzi"
+              ? "Super Izzzi"
+              : "Izzzi"
+            : "Izzzi";
 
-        this.eventStore.publish(
-          new SubscriptionActivatedEvent({
-            subscriptionId: subscription.id,
-            organizationId: subscription.organizationId,
-            planId: subscription.planId,
-            planName,
-          })
-        );
+          this.eventStore.publish(
+            new SubscriptionActivatedEvent({
+              subscriptionId: subscription.id,
+              organizationId: subscription.organizationId,
+              planId: subscription.planId,
+              planName,
+            })
+          );
 
-        this.logger.info(
-          `Subscription ${subscription.id} activated and event published`
-        );
+          this.logger.info(
+            `Subscription ${subscription.id} activated and event published`
+          );
+        } else {
+          this.logger.info(
+            `Free plan subscription ${subscription.id} - keeping trial status after invoice payment`
+          );
+        }
       }
 
       this.logger.info(

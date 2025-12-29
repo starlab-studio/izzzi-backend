@@ -15,6 +15,7 @@ export interface ISubscriptionRepository
   ): Promise<SubscriptionEntity | null>;
   findAllActive(): Promise<SubscriptionEntity[]>;
   findExpiring(beforeDate: Date): Promise<SubscriptionEntity[]>;
+  findTrialsEndingIn(days: number): Promise<SubscriptionEntity[]>;
 }
 
 export const SUBSCRIPTION_REPOSITORY = Symbol("ISubscriptionRepository");

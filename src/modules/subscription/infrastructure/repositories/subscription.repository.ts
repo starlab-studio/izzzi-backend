@@ -95,6 +95,35 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     );
   }
 
+  async findTrialsEndingIn(days: number): Promise<SubscriptionEntity[]> {
+    const now = new Date();
+    const targetDate = new Date(now);
+    targetDate.setDate(targetDate.getDate() + days);
+
+    // Set time to start of day for comparison
+    const startOfTargetDay = new Date(targetDate);
+    startOfTargetDay.setHours(0, 0, 0, 0);
+
+    const endOfTargetDay = new Date(targetDate);
+    endOfTargetDay.setHours(23, 59, 59, 999);
+
+    const ormEntities = await this.ormRepository
+      .createQueryBuilder("subscription")
+      .where("subscription.status = :status", { status: "trial" })
+      .andWhere("subscription.trial_end_date >= :startDate", {
+        startDate: startOfTargetDay,
+      })
+      .andWhere("subscription.trial_end_date <= :endDate", {
+        endDate: endOfTargetDay,
+      })
+      .orderBy("subscription.trial_end_date", "ASC")
+      .getMany();
+
+    return ormEntities.map((ormEntity) =>
+      SubscriptionEntity.reconstitute(ormEntity)
+    );
+  }
+
   async save(entity: SubscriptionEntity): Promise<SubscriptionEntity> {
     const data = entity.toPersistence();
     const saved = await this.ormRepository.save(data);

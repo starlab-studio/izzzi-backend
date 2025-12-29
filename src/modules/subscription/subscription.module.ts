@@ -1,4 +1,5 @@
 import { Module, forwardRef } from "@nestjs/common";
+import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import {
   LoggerService,
@@ -69,6 +70,8 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
 import { GetBillingPortalLinkUseCase } from "./application/use-cases/GetBillingPortalLink.use-case";
 import { SendSubscriptionConfirmationEmailUseCase } from "./application/use-cases/SendSubscriptionConfirmationEmail.use-case";
 import { OrganizationAuthorizationService } from "../organization/domain/services/organization-authorization.service";
+import { TrialEndingCheckerService } from "./infrastructure/scheduled/trial-ending-checker.service";
+import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 
 @Module({
   imports: [
@@ -80,6 +83,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
       InvoiceModel,
     ]),
     CoreModule,
+    ScheduleModule.forRoot(),
     forwardRef(() => OrganizationModule),
     PaymentModule,
     forwardRef(() => NotificationModule),
@@ -162,7 +166,8 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         pricingTierRepository: IPricingTierRepository,
         subscriptionRepository: ISubscriptionRepository,
         userRepository: IUserRepository,
-        paymentService: IPaymentService
+        paymentService: IPaymentService,
+        stripeSyncService: IStripeSyncService
       ) =>
         new CreateSubscriptionUseCase(
           logger,
@@ -170,7 +175,8 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
           pricingTierRepository,
           subscriptionRepository,
           userRepository,
-          paymentService
+          paymentService,
+          stripeSyncService
         ),
       inject: [
         LoggerService,
@@ -179,6 +185,7 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         SubscriptionRepository,
         UserRepository,
         PAYMENT_SERVICE,
+        STRIPE_SYNC_SERVICE,
       ],
     },
     {
@@ -423,6 +430,33 @@ import { OrganizationAuthorizationService } from "../organization/domain/service
         SyncPlansWithStripeUseCase,
         GetPaymentConfirmationUseCase,
         GetBillingPortalLinkUseCase,
+      ],
+    },
+    {
+      provide: TrialEndingCheckerService,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionRepository: ISubscriptionRepository,
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
+        membershipRepository: IMembershipRepository,
+        userRepository: IUserRepository,
+        eventStore: IEventStore
+      ) =>
+        new TrialEndingCheckerService(
+          logger,
+          subscriptionRepository,
+          subscriptionPlanRepository,
+          membershipRepository,
+          userRepository,
+          eventStore
+        ),
+      inject: [
+        LoggerService,
+        SUBSCRIPTION_REPOSITORY,
+        SUBSCRIPTION_PLAN_REPOSITORY,
+        "MEMBERSHIP_REPOSITORY",
+        "USER_REPOSITORY",
+        EventStore,
       ],
     },
   ],

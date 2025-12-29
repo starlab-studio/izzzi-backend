@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -53,8 +53,14 @@ import { GetQuizStatisticsUseCase } from "./application/use-cases/GetQuizStatist
 import { QuizFacade } from "./application/facades/quiz.facade";
 
 import { QuizTemplateController } from "./interface/controllers/quiz-template.controller";
-import { QuizController, QuizDetailController } from "./interface/controllers/quiz.controller";
-import { QuizPublicController, QuizPublicSubmitController } from "./interface/controllers/quiz-public.controller";
+import {
+  QuizController,
+  QuizDetailController,
+} from "./interface/controllers/quiz.controller";
+import {
+  QuizPublicController,
+  QuizPublicSubmitController,
+} from "./interface/controllers/quiz-public.controller";
 
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { ISubjectRepository } from "../subject/domain/repositories/subject.repository";
@@ -70,6 +76,14 @@ import { OrganizationRepository } from "../organization/infrastructure/repositor
 import { OrganizationModel } from "../organization/infrastructure/models/organization.model";
 import { NotificationModule } from "../notification/notification.module";
 import { CreateEmailNotificationUseCase } from "../notification/application/use-cases/create-email-notification.use-case";
+import {
+  ISubscriptionRepository,
+  SUBSCRIPTION_REPOSITORY,
+} from "../subscription/domain/repositories/subscription.repository";
+import {
+  ISubscriptionPlanRepository,
+  SUBSCRIPTION_PLAN_REPOSITORY,
+} from "../subscription/domain/repositories/subscription-plan.repository";
 
 @Module({
   imports: [
@@ -88,6 +102,9 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
     SubjectModule,
     ClassModule,
     NotificationModule,
+    forwardRef(
+      () => require("../subscription/subscription.module").SubscriptionModule
+    ),
   ],
   providers: [
     LoggerService,
@@ -95,7 +112,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       provide: OrganizationRepository,
       useFactory: (
         ormRepository: Repository<OrganizationModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new OrganizationRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(OrganizationModel), TypeOrmUnitOfWork],
     },
@@ -103,7 +120,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       provide: QuizTemplatePairRepository,
       useFactory: (
         directRepository: Repository<QuizTemplatePairModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new QuizTemplatePairRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(QuizTemplatePairModel), TypeOrmUnitOfWork],
     },
@@ -116,8 +133,13 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       useFactory: (
         directRepository: Repository<QuizTemplateModel>,
         questionRepository: Repository<QuizTemplateQuestionModel>,
-        unitOfWork: IUnitOfWork,
-      ) => new QuizTemplateRepository(directRepository, questionRepository, unitOfWork),
+        unitOfWork: IUnitOfWork
+      ) =>
+        new QuizTemplateRepository(
+          directRepository,
+          questionRepository,
+          unitOfWork
+        ),
       inject: [
         getRepositoryToken(QuizTemplateModel),
         getRepositoryToken(QuizTemplateQuestionModel),
@@ -132,7 +154,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       provide: QuizRepository,
       useFactory: (
         directRepository: Repository<QuizModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new QuizRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(QuizModel), TypeOrmUnitOfWork],
     },
@@ -144,7 +166,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       provide: ResponseRepository,
       useFactory: (
         directRepository: Repository<ResponseModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new ResponseRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(ResponseModel), TypeOrmUnitOfWork],
     },
@@ -156,7 +178,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       provide: AnswerRepository,
       useFactory: (
         directRepository: Repository<AnswerModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new AnswerRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(AnswerModel), TypeOrmUnitOfWork],
     },
@@ -168,7 +190,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       provide: StudentQuizTokenRepository,
       useFactory: (
         directRepository: Repository<StudentQuizTokenModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new StudentQuizTokenRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(StudentQuizTokenModel), TypeOrmUnitOfWork],
     },
@@ -182,13 +204,13 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         logger: ILoggerService,
         quizTemplatePairRepository: IQuizTemplatePairRepository,
         quizTemplateRepository: IQuizTemplateRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new GetQuizTemplatePairsUseCase(
           logger,
           quizTemplatePairRepository,
           quizTemplateRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -202,36 +224,28 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       useFactory: (
         logger: ILoggerService,
         quizTemplateRepository: IQuizTemplateRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new GetQuizTemplateByIdUseCase(
           logger,
           quizTemplateRepository,
-          organizationFacade,
+          organizationFacade
         ),
-      inject: [
-        LoggerService,
-        "QUIZ_TEMPLATE_REPOSITORY",
-        OrganizationFacade,
-      ],
+      inject: [LoggerService, "QUIZ_TEMPLATE_REPOSITORY", OrganizationFacade],
     },
     {
       provide: CreateQuizTemplateUseCase,
       useFactory: (
         logger: ILoggerService,
         quizTemplateRepository: IQuizTemplateRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new CreateQuizTemplateUseCase(
           logger,
           quizTemplateRepository,
-          organizationFacade,
+          organizationFacade
         ),
-      inject: [
-        LoggerService,
-        "QUIZ_TEMPLATE_REPOSITORY",
-        OrganizationFacade,
-      ],
+      inject: [LoggerService, "QUIZ_TEMPLATE_REPOSITORY", OrganizationFacade],
     },
     {
       provide: AssignQuizPairToSubjectUseCase,
@@ -242,7 +256,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new AssignQuizPairToSubjectUseCase(
           logger,
@@ -251,7 +265,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -273,7 +287,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new ReassignQuizPairToSubjectUseCase(
           logger,
@@ -283,7 +297,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -306,7 +320,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         organizationFacade: OrganizationFacade,
         studentQuizTokenRepository: IStudentQuizTokenRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
-        classStudentRepository: IClassStudentRepository,
+        classStudentRepository: IClassStudentRepository
       ) =>
         new GetQuizzesBySubjectUseCase(
           logger,
@@ -316,7 +330,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           organizationFacade,
           studentQuizTokenRepository,
           subjectAssignmentRepository,
-          classStudentRepository,
+          classStudentRepository
         ),
       inject: [
         LoggerService,
@@ -338,7 +352,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new GetQuizByIdUseCase(
           logger,
@@ -347,7 +361,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -365,13 +379,13 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         logger: ILoggerService,
         quizRepository: IQuizRepository,
         subjectRepository: ISubjectRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new GetQuizLinkUseCase(
           logger,
           quizRepository,
           subjectRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -389,7 +403,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationRepository: IOrganizationRepository,
+        organizationRepository: IOrganizationRepository
       ) =>
         new GetQuizByAccessTokenUseCase(
           logger,
@@ -398,7 +412,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationRepository,
+          organizationRepository
         ),
       inject: [
         LoggerService,
@@ -421,6 +435,8 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         classStudentRepository: IClassStudentRepository,
         organizationFacade: OrganizationFacade,
         createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        subscriptionRepository: ISubscriptionRepository,
+        subscriptionPlanRepository: ISubscriptionPlanRepository
       ) =>
         new SendQuizToStudentsUseCase(
           logger,
@@ -431,6 +447,8 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           classStudentRepository,
           organizationFacade,
           createEmailNotificationUseCase,
+          subscriptionRepository,
+          subscriptionPlanRepository
         ),
       inject: [
         LoggerService,
@@ -441,6 +459,8 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         ClassStudentRepository,
         OrganizationFacade,
         CreateEmailNotificationUseCase,
+        SUBSCRIPTION_REPOSITORY,
+        SUBSCRIPTION_PLAN_REPOSITORY,
       ],
     },
     {
@@ -453,7 +473,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classStudentRepository: IClassStudentRepository,
         organizationFacade: OrganizationFacade,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
       ) =>
         new RemindQuizToStudentsUseCase(
           logger,
@@ -463,7 +483,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           subjectAssignmentRepository,
           classStudentRepository,
           organizationFacade,
-          createEmailNotificationUseCase,
+          createEmailNotificationUseCase
         ),
       inject: [
         LoggerService,
@@ -484,7 +504,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         quizTemplateRepository: IQuizTemplateRepository,
         responseRepository: IResponseRepository,
         answerRepository: IAnswerRepository,
-        studentQuizTokenRepository: IStudentQuizTokenRepository,
+        studentQuizTokenRepository: IStudentQuizTokenRepository
       ) =>
         new SubmitQuizResponseUseCase(
           logger,
@@ -492,7 +512,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           quizTemplateRepository,
           responseRepository,
           answerRepository,
-          studentQuizTokenRepository,
+          studentQuizTokenRepository
         ),
       inject: [
         LoggerService,
@@ -508,18 +528,14 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       useFactory: (
         logger: ILoggerService,
         quizRepository: IQuizRepository,
-        responseRepository: IResponseRepository,
+        responseRepository: IResponseRepository
       ) =>
         new CheckQuizResponseStatusUseCase(
           logger,
           quizRepository,
-          responseRepository,
+          responseRepository
         ),
-      inject: [
-        LoggerService,
-        "QUIZ_REPOSITORY",
-        "RESPONSE_REPOSITORY",
-      ],
+      inject: [LoggerService, "QUIZ_REPOSITORY", "RESPONSE_REPOSITORY"],
     },
     {
       provide: GetQuizStatisticsUseCase,
@@ -533,7 +549,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationRepository: IOrganizationRepository,
+        organizationRepository: IOrganizationRepository
       ) =>
         new GetQuizStatisticsUseCase(
           logger,
@@ -545,7 +561,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationRepository,
+          organizationRepository
         ),
       inject: [
         LoggerService,
@@ -576,7 +592,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
         getQuizByAccessTokenUseCase: GetQuizByAccessTokenUseCase,
         submitQuizResponseUseCase: SubmitQuizResponseUseCase,
         checkQuizResponseStatusUseCase: CheckQuizResponseStatusUseCase,
-        getQuizStatisticsUseCase: GetQuizStatisticsUseCase,
+        getQuizStatisticsUseCase: GetQuizStatisticsUseCase
       ) =>
         new QuizFacade(
           getQuizTemplatePairsUseCase,
@@ -592,7 +608,7 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
           getQuizByAccessTokenUseCase,
           submitQuizResponseUseCase,
           checkQuizResponseStatusUseCase,
-          getQuizStatisticsUseCase,
+          getQuizStatisticsUseCase
         ),
       inject: [
         GetQuizTemplatePairsUseCase,
@@ -612,8 +628,13 @@ import { CreateEmailNotificationUseCase } from "../notification/application/use-
       ],
     },
   ],
-  controllers: [QuizTemplateController, QuizController, QuizDetailController, QuizPublicController, QuizPublicSubmitController],
+  controllers: [
+    QuizTemplateController,
+    QuizController,
+    QuizDetailController,
+    QuizPublicController,
+    QuizPublicSubmitController,
+  ],
   exports: [QuizFacade],
 })
 export class QuizModule {}
-

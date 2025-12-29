@@ -59,18 +59,6 @@ export class SyncPlansWithStripeUseCase
           const tiers = await this.pricingTierRepository.findByPlanId(plan.id);
 
           if (tiers.length === 0) {
-            if (plan.isFree) {
-              this.logger.info(
-                `Free plan ${plan.name} (${plan.id}) synchronized with Stripe product ${productId}. Pricing tiers will be created separately.`
-              );
-              details.push({
-                planId: plan.id,
-                planName: plan.name,
-                productId,
-                tiersSynced: 0,
-              });
-              continue;
-            }
             this.logger.warn(
               `No pricing tiers found for plan ${plan.name} (${plan.id})`
             );

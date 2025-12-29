@@ -24,6 +24,7 @@ import { SendSubscriptionConfirmationEmailUseCase } from "../subscription/applic
 import { OrganizationModule } from "../organization/organization.module";
 import { ClassLimitReachedEventHandler } from "./application/handlers/class-limit-reached.handler";
 import { SubscriptionUpgradedEventHandler } from "./application/handlers/subscription-upgraded.handler";
+import { TrialEndingSoonEventHandler } from "./application/handlers/trial-ending-soon.handler";
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 import { IUserRepository } from "../organization/domain/repositories/user.repository";
 import { forwardRef } from "@nestjs/common";
@@ -155,6 +156,15 @@ import { forwardRef } from "@nestjs/common";
         ),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
+    {
+      provide: TrialEndingSoonEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new TrialEndingSoonEventHandler(logger, createEmailNotificationUseCase),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
   ],
   exports: [CreateEmailNotificationUseCase],
 })
@@ -169,7 +179,8 @@ export class NotificationModule {
     private readonly classArchivedEventHandler: ClassArchivedEventHandler,
     private readonly subscriptionActivatedEventHandler: SubscriptionActivatedEventHandler,
     private readonly classLimitReachedEventHandler: ClassLimitReachedEventHandler,
-    private readonly subscriptionUpgradedEventHandler: SubscriptionUpgradedEventHandler
+    private readonly subscriptionUpgradedEventHandler: SubscriptionUpgradedEventHandler,
+    private readonly trialEndingSoonEventHandler: TrialEndingSoonEventHandler
   ) {}
 
   async onModuleInit() {
@@ -216,6 +227,11 @@ export class NotificationModule {
     this.eventHandlerRegistry.registerHandler(
       "subscription.upgraded",
       this.subscriptionUpgradedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "subscription.trial.ending.soon",
+      this.trialEndingSoonEventHandler
     );
   }
 }

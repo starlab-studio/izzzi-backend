@@ -105,3 +105,13 @@ export interface SubscriptionUpgradedPayload {
 
 export type ISubscriptionUpgradedEvent =
   import("src/core").IDomainEvent<SubscriptionUpgradedPayload>;
+
+export interface TrialEndingSoonPayload {
+  organizationId: string;
+  trialEndDate: Date;
+  planName: string;
+  adminEmails: string[];
+}
+
+export type ITrialEndingSoonEvent =
+  import("src/core").IDomainEvent<TrialEndingSoonPayload>;

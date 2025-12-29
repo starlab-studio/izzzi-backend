@@ -17,6 +17,8 @@ import { IClassStudentRepository } from "src/modules/class/domain/repositories/c
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { StudentQuizTokenEntity } from "../../domain/entities/student-quiz-token.entity";
 import { CreateEmailNotificationUseCase } from "src/modules/notification/application/use-cases/create-email-notification.use-case";
+import { ISubscriptionRepository } from "src/modules/subscription/domain/repositories/subscription.repository";
+import { ISubscriptionPlanRepository } from "src/modules/subscription/domain/repositories/subscription-plan.repository";
 import { GeneralUtils } from "src/utils/general.utils";
 import { randomBytes } from "crypto";
 
@@ -30,6 +32,8 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
     private readonly classStudentRepository: IClassStudentRepository,
     private readonly organizationFacade: OrganizationFacade,
     private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
   ) {
     super(logger);
   }
@@ -53,6 +57,26 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
 
       if (subject.organizationId !== data.organizationId) {
         throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to quiz");
+      }
+
+      // Check subscription and trial status for free plans
+      const subscription =
+        await this.subscriptionRepository.findActiveByOrganizationId(
+          data.organizationId
+        );
+
+      if (subscription) {
+        const plan = await this.subscriptionPlanRepository.findById(
+          subscription.planId
+        );
+
+        if (plan && plan.isFree && !subscription.isTrialActive) {
+          throw new DomainError(
+            ErrorCode.TRIAL_ENDED,
+            "Votre période d'essai est terminée. Vous devez souscrire à un abonnement payant pour continuer à partager des questionnaires.",
+            { organizationId: data.organizationId }
+          );
+        }
       }
 
       const assignments = await this.subjectAssignmentRepository.findBySubject(subject.id);

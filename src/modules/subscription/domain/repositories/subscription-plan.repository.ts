@@ -7,3 +7,7 @@ export interface ISubscriptionPlanRepository
   findByName(name: string): Promise<SubscriptionPlanEntity | null>;
   findById(id: string): Promise<SubscriptionPlanEntity | null>;
 }
+
+export const SUBSCRIPTION_PLAN_REPOSITORY = Symbol(
+  "ISubscriptionPlanRepository"
+);

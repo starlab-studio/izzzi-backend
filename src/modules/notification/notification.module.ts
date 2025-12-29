@@ -18,12 +18,24 @@ import { NotificationModel } from "./infrastructure/models/notification.model";
 import { InvitationSentEventHandler } from "./application/handlers/invitation-sent.handler";
 import { InvitationAcceptedEventHandler } from "./application/handlers/invitation-accepted.handler";
 import { ClassArchivedEventHandler } from "./application/handlers/class-archived.handler";
+import { SubscriptionActivatedEventHandler } from "./application/handlers/subscription-activated.handler";
+import { SubscriptionModule } from "../subscription/subscription.module";
+import { SendSubscriptionConfirmationEmailUseCase } from "../subscription/application/use-cases/SendSubscriptionConfirmationEmail.use-case";
+import { OrganizationModule } from "../organization/organization.module";
+import { ClassLimitReachedEventHandler } from "./application/handlers/class-limit-reached.handler";
+import { SubscriptionUpgradedEventHandler } from "./application/handlers/subscription-upgraded.handler";
+import { TrialEndingSoonEventHandler } from "./application/handlers/trial-ending-soon.handler";
+import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
+import { IUserRepository } from "../organization/domain/repositories/user.repository";
+import { forwardRef } from "@nestjs/common";
 
 @Module({
   imports: [
     ConfigModule,
     TypeOrmModule.forFeature([NotificationModel]),
     CoreModule,
+    forwardRef(() => SubscriptionModule),
+    forwardRef(() => OrganizationModule),
   ],
   providers: [
     LoggerService,
@@ -99,6 +111,60 @@ import { ClassArchivedEventHandler } from "./application/handlers/class-archived
         new ClassArchivedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
+    {
+      provide: SubscriptionActivatedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        sendSubscriptionConfirmationEmailUseCase: SendSubscriptionConfirmationEmailUseCase
+      ) =>
+        new SubscriptionActivatedEventHandler(
+          logger,
+          sendSubscriptionConfirmationEmailUseCase
+        ),
+      inject: [LoggerService, SendSubscriptionConfirmationEmailUseCase],
+    },
+    {
+      provide: ClassLimitReachedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        membershipRepository: IMembershipRepository,
+        userRepository: IUserRepository
+      ) =>
+        new ClassLimitReachedEventHandler(
+          logger,
+          createEmailNotificationUseCase,
+          membershipRepository,
+          userRepository
+        ),
+      inject: [
+        LoggerService,
+        CreateEmailNotificationUseCase,
+        "MEMBERSHIP_REPOSITORY",
+        "USER_REPOSITORY",
+      ],
+    },
+    {
+      provide: SubscriptionUpgradedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new SubscriptionUpgradedEventHandler(
+          logger,
+          createEmailNotificationUseCase
+        ),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
+    {
+      provide: TrialEndingSoonEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new TrialEndingSoonEventHandler(logger, createEmailNotificationUseCase),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
   ],
   exports: [CreateEmailNotificationUseCase],
 })
@@ -110,7 +176,11 @@ export class NotificationModule {
     private readonly emailNotificationProvider: EmailProvider,
     private readonly classCreatedEventHandler: ClassCreatedEventHandler,
     private readonly invitationAcceptedEventHandler: InvitationAcceptedEventHandler,
-    private readonly classArchivedEventHandler: ClassArchivedEventHandler
+    private readonly classArchivedEventHandler: ClassArchivedEventHandler,
+    private readonly subscriptionActivatedEventHandler: SubscriptionActivatedEventHandler,
+    private readonly classLimitReachedEventHandler: ClassLimitReachedEventHandler,
+    private readonly subscriptionUpgradedEventHandler: SubscriptionUpgradedEventHandler,
+    private readonly trialEndingSoonEventHandler: TrialEndingSoonEventHandler
   ) {}
 
   async onModuleInit() {
@@ -142,6 +212,26 @@ export class NotificationModule {
     this.eventHandlerRegistry.registerHandler(
       "class.archived",
       this.classArchivedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "subscription.activated",
+      this.subscriptionActivatedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "class.limit.reached",
+      this.classLimitReachedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "subscription.upgraded",
+      this.subscriptionUpgradedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "subscription.trial.ending.soon",
+      this.trialEndingSoonEventHandler
     );
   }
 }

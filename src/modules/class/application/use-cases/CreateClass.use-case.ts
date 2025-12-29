@@ -18,6 +18,10 @@ import { IClassStudentRepository } from "../../domain/repositories/class-student
 import { GeneralUtils } from "src/utils/general.utils";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { ClassCreatedEvent } from "../../domain/events/classCreated.event";
+import { ClassLimitReachedEvent } from "../../domain/events/class-limit-reached.event";
+import { ClassLimitService } from "../../domain/services/class-limit.service";
+import { ISubscriptionRepository } from "src/modules/subscription/domain/repositories/subscription.repository";
+import { ISubscriptionPlanRepository } from "src/modules/subscription/domain/repositories/subscription-plan.repository";
 
 export class CreateClassUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -26,6 +30,9 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
     private readonly classStudentRepository: IClassStudentRepository,
     private readonly organizationFacade: OrganizationFacade,
     private readonly eventStore: IEventStore,
+    private readonly classLimitService: ClassLimitService,
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
   ) {
     super(logger);
   }
@@ -38,15 +45,27 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
         [UserRole.LEARNING_MANAGER, UserRole.ADMIN]
       );
 
-      const existingClass = await this.classRepository.findByNameAndOrganization(
-        data.name,
-        data.organizationId,
+      const limitCheck = await this.classLimitService.canCreateClass(
+        data.organizationId
       );
+      if (!limitCheck.canCreate) {
+        throw new DomainError(
+          ErrorCode.CLASS_LIMIT_REACHED,
+          limitCheck.reason ||
+            "You have reached the class limit allowed by your subscription"
+        );
+      }
+
+      const existingClass =
+        await this.classRepository.findByNameAndOrganization(
+          data.name,
+          data.organizationId
+        );
 
       if (existingClass) {
         throw new DomainError(
           ErrorCode.CLASS_ALREADY_EXISTS,
-          "A class with this name already exists in this organization",
+          "A class with this name already exists in this organization"
         );
       }
 
@@ -62,14 +81,14 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
         data.numberOfStudents,
         validatedEmails,
         data.organizationId,
-        data.userId,
+        data.userId
       );
 
       const createdClass = await this.classRepository.create(classEntity);
       if (!createdClass) {
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Failed to create class. Please try again later.",
+          "Failed to create class. Please try again later."
         );
       }
 
@@ -91,8 +110,40 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
           organizationId: createdClass.organizationId,
           userId: createdClass.userId,
           userEmail: data.userEmail,
-        }),
+        })
       );
+
+      // Check if limit is reached after creating the class
+      const subscription =
+        await this.subscriptionRepository.findActiveByOrganizationId(
+          data.organizationId
+        );
+
+      if (subscription && subscription.status !== "pending") {
+        const plan = await this.subscriptionPlanRepository.findById(
+          subscription.planId
+        );
+
+        if (plan && !plan.isFree) {
+          const currentClassCount =
+            await this.classRepository.countByOrganization(data.organizationId);
+          const currentQuantity = subscription.quantity;
+
+          if (currentClassCount >= currentQuantity) {
+            const planName =
+              plan.name === "super-izzzi" ? "Super Izzzi" : "Izzzi";
+
+            this.eventStore.publish(
+              new ClassLimitReachedEvent({
+                organizationId: data.organizationId,
+                currentClassCount,
+                maxClasses: currentQuantity,
+                planName,
+              })
+            );
+          }
+        }
+      }
 
       return createdClass.toPersistence();
     } catch (error) {

@@ -408,6 +408,8 @@ export interface TemporalDataPoint {
 export interface GetQuizStatisticsOutput {
   quizId: string;
   totalResponses: number;
+  visibleResponses?: number;
+  hiddenResponses?: number;
   questions: QuestionStatistics[];
   temporalEvolution: TemporalDataPoint[];
   subject?: {
@@ -423,4 +425,3 @@ export interface GetQuizStatisticsOutput {
     };
   };
 }
-

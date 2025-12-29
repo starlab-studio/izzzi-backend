@@ -28,6 +28,36 @@ export class SeedSubscriptionPlans1766151243000 implements MigrationInterface {
       )
     `);
 
+    await queryRunner.query(`
+      INSERT INTO "pricing_tiers" (
+        "id", "plan_id", "billing_period", "min_classes", 
+        "max_classes", "price_per_class_cents", "created_at"
+      ) VALUES (
+        uuid_generate_v4(),
+        '${izzziPlanId}',
+        'monthly',
+        1,
+        20,
+        0,
+        NOW()
+      )
+    `);
+
+    await queryRunner.query(`
+      INSERT INTO "pricing_tiers" (
+        "id", "plan_id", "billing_period", "min_classes", 
+        "max_classes", "price_per_class_cents", "created_at"
+      ) VALUES (
+        uuid_generate_v4(),
+        '${izzziPlanId}',
+        'annual',
+        1,
+        20,
+        0,
+        NOW()
+      )
+    `);
+
     // Features pour Izzzi (main section)
     await queryRunner.query(`
       INSERT INTO "plan_features" (

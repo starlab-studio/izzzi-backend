@@ -154,6 +154,11 @@ AWS_REGION=us-east-1
 AWS_COGNITO_USER_POOL_ID=your_pool_id
 AWS_COGNITO_CLIENT_ID=your_client_id
 
+# Stripe (Payment)
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
 # Application
 PORT=3000
 NODE_ENV=development

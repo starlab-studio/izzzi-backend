@@ -22,7 +22,10 @@ export class ClassLimitService {
       );
 
     if (!subscription) {
-      return { canCreate: true };
+      return {
+        canCreate: false,
+        reason: "Vous devez souscrire à un abonnement pour créer des classes.",
+      };
     }
 
     if (subscription.status === "pending") {

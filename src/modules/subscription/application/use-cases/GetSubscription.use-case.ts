@@ -4,6 +4,7 @@ import { ISubscriptionPlanRepository } from "../../domain/repositories/subscript
 import { IPricingTierRepository } from "../../domain/repositories/pricing-tier.repository";
 import { IPlanFeatureRepository } from "../../domain/repositories/plan-feature.repository";
 import { IUserRepository } from "src/modules/organization/domain/repositories/user.repository";
+import { IClassRepository } from "src/modules/class/domain/repositories/class.repository";
 import { SubscriptionEntity } from "../../domain/entities/subscription.entity";
 
 export interface GetSubscriptionInput {
@@ -30,6 +31,7 @@ export interface SubscriptionDetailOutput {
     name: string;
     variant: "default" | "premium";
     displayPrice: string;
+    isFree: boolean;
   };
   pricing: {
     pricePerClassCents: number;
@@ -45,7 +47,7 @@ export interface SubscriptionDetailOutput {
   }[];
   usage?: {
     classesUsed: number;
-    classesRemaining: number;
+    classesRemaining: number | null;
   };
 }
 
@@ -59,7 +61,8 @@ export class GetSubscriptionUseCase
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly pricingTierRepository: IPricingTierRepository,
     private readonly planFeatureRepository: IPlanFeatureRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly classRepository: IClassRepository
   ) {
     super(logger);
   }
@@ -171,6 +174,21 @@ export class GetSubscriptionUseCase
           ? subscription.pendingQuantity
           : subscription.quantity;
 
+      const classesUsed = await this.classRepository.countByOrganization(
+        subscription.organizationId
+      );
+
+      let classesRemaining: number | null = null;
+      if (plan.isFree) {
+        if (subscription.isTrialActive) {
+          classesRemaining = null;
+        } else {
+          classesRemaining = 0;
+        }
+      } else {
+        classesRemaining = Math.max(0, subscription.quantity - classesUsed);
+      }
+
       return {
         subscription: {
           id: subscription.id,
@@ -189,6 +207,7 @@ export class GetSubscriptionUseCase
           name: plan.name,
           variant: plan.variant,
           displayPrice: plan.displayPrice,
+          isFree: plan.isFree,
         },
         pricing: {
           pricePerClassCents,
@@ -202,6 +221,10 @@ export class GetSubscriptionUseCase
           featureSubtext: f.featureSubtext,
           isComingSoon: f.isComingSoon,
         })),
+        usage: {
+          classesUsed,
+          classesRemaining,
+        },
       };
     } catch (error) {
       this.handleError(error);

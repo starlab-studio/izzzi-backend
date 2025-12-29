@@ -72,6 +72,8 @@ import { SendSubscriptionConfirmationEmailUseCase } from "./application/use-case
 import { OrganizationAuthorizationService } from "../organization/domain/services/organization-authorization.service";
 import { TrialEndingCheckerService } from "./infrastructure/scheduled/trial-ending-checker.service";
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
+import { ClassModule } from "../class/class.module";
+import { IClassRepository } from "../class/domain/repositories/class.repository";
 
 @Module({
   imports: [
@@ -87,6 +89,7 @@ import { IMembershipRepository } from "../organization/domain/repositories/membe
     forwardRef(() => OrganizationModule),
     PaymentModule,
     forwardRef(() => NotificationModule),
+    forwardRef(() => ClassModule),
   ],
   controllers: [SubscriptionController],
   providers: [
@@ -240,7 +243,8 @@ import { IMembershipRepository } from "../organization/domain/repositories/membe
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         pricingTierRepository: IPricingTierRepository,
         planFeatureRepository: IPlanFeatureRepository,
-        userRepository: IUserRepository
+        userRepository: IUserRepository,
+        classRepository: IClassRepository
       ) =>
         new GetSubscriptionUseCase(
           logger,
@@ -248,7 +252,8 @@ import { IMembershipRepository } from "../organization/domain/repositories/membe
           subscriptionPlanRepository,
           pricingTierRepository,
           planFeatureRepository,
-          userRepository
+          userRepository,
+          classRepository
         ),
       inject: [
         LoggerService,
@@ -257,6 +262,7 @@ import { IMembershipRepository } from "../organization/domain/repositories/membe
         PricingTierRepository,
         PlanFeatureRepository,
         UserRepository,
+        "CLASS_REPOSITORY",
       ],
     },
     {

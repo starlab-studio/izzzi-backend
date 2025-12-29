@@ -16,6 +16,7 @@ export class PricingTierEntity {
       | "minClasses"
       | "maxClasses"
       | "pricePerClassCents"
+      | "stripePriceId"
     >
   ): PricingTierEntity {
     return new PricingTierEntity({
@@ -55,6 +56,10 @@ export class PricingTierEntity {
 
   get createdAt(): Date {
     return this.props.createdAt;
+  }
+
+  get stripePriceId(): string | null {
+    return this.props.stripePriceId;
   }
 
   toPersistence(): IPricingTier {

@@ -19,6 +19,7 @@ export class SubscriptionPlanEntity {
       | "isFree"
       | "variant"
       | "displayOrder"
+      | "stripeProductId"
     >
   ): SubscriptionPlanEntity {
     const now = new Date();
@@ -81,6 +82,10 @@ export class SubscriptionPlanEntity {
 
   get updatedAt(): Date {
     return this.props.updatedAt;
+  }
+
+  get stripeProductId(): string | null {
+    return this.props.stripeProductId;
   }
 
   toPersistence(): ISubscriptionPlan {

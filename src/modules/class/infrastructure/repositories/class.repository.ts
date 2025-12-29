@@ -1,10 +1,10 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import {
-    type IUnitOfWork,
-    BaseTransactionalRepository,
-    TypeOrmUnitOfWork,
-  } from "src/core";
+  type IUnitOfWork,
+  BaseTransactionalRepository,
+  TypeOrmUnitOfWork,
+} from "src/core";
 
 import { IClass } from "../../domain/types";
 import { ClassModel } from "../models/class.model";
@@ -46,7 +46,8 @@ export class ClassRepository
     return ClassEntity.reconstitute(result);
   }
 
-  async findByNameAndOrganization( // Renommé
+  async findByNameAndOrganization(
+    // Renommé
     name: string,
     organizationId: string
   ): Promise<ClassEntity | null> {
@@ -70,7 +71,10 @@ export class ClassRepository
     return results.map((result) => ClassEntity.reconstitute(result));
   }
 
-  async findByOrganizationAndStatus(organizationId: string, status: "active" | "archived"): Promise<ClassEntity[]> {
+  async findByOrganizationAndStatus(
+    organizationId: string,
+    status: "active" | "archived"
+  ): Promise<ClassEntity[]> {
     const results = await this.directRepository.find({
       where: { organizationId, status },
     });
@@ -82,6 +86,13 @@ export class ClassRepository
       where: { userId },
     });
     return results.map((result) => ClassEntity.reconstitute(result));
+  }
+
+  async countByOrganization(organizationId: string): Promise<number> {
+    const count = await this.directRepository.count({
+      where: { organizationId, status: "active" },
+    });
+    return count;
   }
 
   async findAll(): Promise<ClassEntity[]> {

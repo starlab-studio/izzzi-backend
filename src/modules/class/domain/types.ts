@@ -59,7 +59,10 @@ export interface IClassStudent {
   updatedAt: Date;
 }
 
-export type IClassStudentCreate = Omit<IClassStudent, "id" | "createdAt" | "updatedAt">;
+export type IClassStudentCreate = Omit<
+  IClassStudent,
+  "id" | "createdAt" | "updatedAt"
+>;
 
 // Use-case Input/Output types
 export interface CreateClassInput extends IClassCreate {
@@ -127,3 +130,12 @@ export interface ArchiveClassInput {
   userId: string;
   userEmail: string;
 }
+
+export interface ClassLimitReachedPayload {
+  organizationId: string;
+  currentClassCount: number;
+  maxClasses: number;
+  planName: string;
+}
+
+export type IClassLimitReachedEvent = IDomainEvent<ClassLimitReachedPayload>;

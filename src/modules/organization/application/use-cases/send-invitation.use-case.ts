@@ -8,6 +8,7 @@ import {
   ILoggerService,
   IUseCase,
   HTTP_STATUS,
+  UserRole,
 } from "src/core";
 import { IInvitationRepository } from "../../domain/repositories/invitation.repository";
 
@@ -17,6 +18,7 @@ import { IUserRepository } from "../../domain/repositories/user.repository";
 import { InvitationEntity } from "../../domain/entities/invitation.entity";
 import { IOrganizationRepository } from "../../domain/repositories/organization.repository";
 import { InvitationSentEvent } from "../../domain/events/invitation-sent.event";
+import { ISubscriptionRepository } from "src/modules/subscription/domain/repositories/subscription.repository";
 
 export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
   constructor(
@@ -25,7 +27,8 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
     private readonly authorizationService: InvitationAuthorizationService,
     private readonly userRepository: IUserRepository,
     private readonly organizationRepository: IOrganizationRepository,
-    private readonly invitationRepository: IInvitationRepository
+    private readonly invitationRepository: IInvitationRepository,
+    private readonly subscriptionRepository: ISubscriptionRepository
   ) {
     super(logger);
   }
@@ -91,6 +94,23 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
       );
 
       this.authorizationService.validateInvitedRole(data.role);
+
+      // Check if subscription is required for learning_manager invitations
+      if (data.role === UserRole.LEARNING_MANAGER) {
+        const activeSubscription =
+          await this.subscriptionRepository.findActiveByOrganizationId(
+            organization.id
+          );
+
+        if (!activeSubscription || activeSubscription.status === "pending") {
+          throw new DomainError(
+            ErrorCode.SUBSCRIPTION_REQUIRED_FOR_INVITATION,
+            "An active subscription is required to invite learning managers. Please subscribe to a plan first.",
+            undefined,
+            HTTP_STATUS.FORBIDDEN
+          );
+        }
+      }
 
       const invitation = InvitationEntity.create({
         email: emailVO.value,

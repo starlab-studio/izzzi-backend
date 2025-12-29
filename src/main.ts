@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { ConsoleLogger, ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
+import express from "express";
 
 import { AppModule } from "./app.module";
 import {
@@ -41,6 +42,9 @@ async function bootstrap() {
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   });
+
+  // Configure raw body for Stripe webhook (must be before cookieParser)
+  app.use("/api/v1/webhooks/stripe", express.raw({ type: "application/json" }));
 
   app.use(cookieParser());
 

@@ -17,6 +17,8 @@ import { IClassStudentRepository } from "src/modules/class/domain/repositories/c
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 import { StudentQuizTokenEntity } from "../../domain/entities/student-quiz-token.entity";
 import { CreateEmailNotificationUseCase } from "src/modules/notification/application/use-cases/create-email-notification.use-case";
+import { ISubscriptionRepository } from "src/modules/subscription/domain/repositories/subscription.repository";
+import { ISubscriptionPlanRepository } from "src/modules/subscription/domain/repositories/subscription-plan.repository";
 import { GeneralUtils } from "src/utils/general.utils";
 import { randomBytes } from "crypto";
 
@@ -30,15 +32,19 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
     private readonly classStudentRepository: IClassStudentRepository,
     private readonly organizationFacade: OrganizationFacade,
     private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
   ) {
     super(logger);
   }
 
-  async execute(data: SendQuizToStudentsInput): Promise<SendQuizToStudentsOutput> {
+  async execute(
+    data: SendQuizToStudentsInput
+  ): Promise<SendQuizToStudentsOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId,
+        data.organizationId
       );
 
       const quiz = await this.quizRepository.findById(data.quizId);
@@ -52,18 +58,46 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
       }
 
       if (subject.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to quiz");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to quiz"
+        );
       }
 
-      const assignments = await this.subjectAssignmentRepository.findBySubject(subject.id);
+      // Check subscription and trial status for free plans
+      const subscription =
+        await this.subscriptionRepository.findActiveByOrganizationId(
+          data.organizationId
+        );
+
+      if (subscription) {
+        const plan = await this.subscriptionPlanRepository.findById(
+          subscription.planId
+        );
+
+        if (plan && plan.isFree && !subscription.isTrialActive) {
+          throw new DomainError(
+            ErrorCode.TRIAL_ENDED,
+            "Votre période d'essai est terminée. Vous devez souscrire à un abonnement payant pour continuer à partager des questionnaires.",
+            { organizationId: data.organizationId }
+          );
+        }
+      }
+
+      const assignments = await this.subjectAssignmentRepository.findBySubject(
+        subject.id
+      );
       const activeAssignment = assignments.find((a) => a.isActive);
       if (!activeAssignment) {
-        throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject is not assigned to any class");
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "Subject is not assigned to any class"
+        );
       }
 
       const students = await this.classStudentRepository.findByClassAndActive(
         activeAssignment.classId,
-        true,
+        true
       );
 
       if (students.length === 0) {
@@ -77,9 +111,11 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
       let alreadySentCount = 0;
 
       for (const student of students) {
-        const existingTokens = await this.studentQuizTokenRepository.findByQuiz(data.quizId);
+        const existingTokens = await this.studentQuizTokenRepository.findByQuiz(
+          data.quizId
+        );
         const existingToken = existingTokens.find(
-          (t) => t.classStudentId === student.id,
+          (t) => t.classStudentId === student.id
         );
 
         if (existingToken && existingToken.emailSentAt) {
@@ -98,7 +134,8 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
             classStudentId: student.id,
             token,
           });
-          tokenEntity = await this.studentQuizTokenRepository.create(tokenEntity);
+          tokenEntity =
+            await this.studentQuizTokenRepository.create(tokenEntity);
         }
         // Mark email as sent
         tokenEntity.markEmailSent();
@@ -110,16 +147,17 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
 
         if (studentUrl) {
           try {
-            const quizTypeLabel = quiz.type === "during_course" 
-              ? "Pendant le cours" 
-              : "Fin du cours";
-            
+            const quizTypeLabel =
+              quiz.type === "during_course"
+                ? "Pendant le cours"
+                : "Fin du cours";
+
             const template = GeneralUtils.htmlTemplateReader("quiz-send.html", {
               subjectName: subject.name,
               quizUrl: studentUrl,
               quizType: quizTypeLabel,
             });
-            
+
             await this.createEmailNotificationUseCase.execute({
               target: student.email,
               subject: `Questionnaire de retour - ${subject.name}`,
@@ -127,7 +165,10 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
             });
             sentCount++;
           } catch (error) {
-            this.logger.error(`Failed to send email to ${student.email}:`, error);
+            this.logger.error(
+              `Failed to send email to ${student.email}:`,
+              error
+            );
           }
         }
       }
@@ -147,4 +188,3 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

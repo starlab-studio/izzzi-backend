@@ -21,7 +21,14 @@ export class PricingTierModel implements IPricingTier {
   @Column({ name: "price_per_class_cents", type: "integer" })
   pricePerClassCents: number;
 
+  @Column({
+    name: "stripe_price_id",
+    type: "varchar",
+    length: 255,
+    nullable: true,
+  })
+  stripePriceId: string | null;
+
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

@@ -60,6 +60,10 @@ import { IRefreshTokenRepository } from "../auth/domain/repositories/refreshToke
 import { RefreshTokenRepository } from "../auth/infrastructure/repositories/refreshToken.repository";
 // @ts-ignore - Circular dependency resolved with forwardRef
 import { AuthModule } from "../auth/auth.module";
+import {
+  ISubscriptionRepository,
+  SUBSCRIPTION_REPOSITORY,
+} from "../subscription/domain/repositories/subscription.repository";
 
 @Module({
   imports: [
@@ -75,6 +79,9 @@ import { AuthModule } from "../auth/auth.module";
     forwardRef(() => ClassModule),
     forwardRef(() => SubjectModule),
     forwardRef(() => QuizModule),
+    forwardRef(
+      () => require("../subscription/subscription.module").SubscriptionModule
+    ),
   ],
   controllers: [OrganizationController, UserController],
   providers: [
@@ -211,7 +218,8 @@ import { AuthModule } from "../auth/auth.module";
         authorizationService: InvitationAuthorizationService,
         userRepository: IUserRepository,
         organizationRepository: IOrganizationRepository,
-        invitationRepository: IInvitationRepository
+        invitationRepository: IInvitationRepository,
+        subscriptionRepository: ISubscriptionRepository
       ) =>
         new SendInvitationUseCase(
           logger,
@@ -219,7 +227,8 @@ import { AuthModule } from "../auth/auth.module";
           authorizationService,
           userRepository,
           organizationRepository,
-          invitationRepository
+          invitationRepository,
+          subscriptionRepository
         ),
       inject: [
         LoggerService,
@@ -228,6 +237,7 @@ import { AuthModule } from "../auth/auth.module";
         UserRepository,
         OrganizationRepository,
         InvitationRepository,
+        SUBSCRIPTION_REPOSITORY,
       ],
     },
     {
@@ -442,6 +452,12 @@ import { AuthModule } from "../auth/auth.module";
       inject: [LoggerService, EventStore],
     },
   ],
-  exports: [OrganizationFacade, "MEMBERSHIP_REPOSITORY"],
+  exports: [
+    OrganizationFacade,
+    "MEMBERSHIP_REPOSITORY",
+    UserRepository,
+    "USER_REPOSITORY",
+    OrganizationAuthorizationService,
+  ],
 })
 export class OrganizationModule {}

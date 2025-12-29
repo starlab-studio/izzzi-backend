@@ -12,7 +12,12 @@ export class SubscriptionPlanModel implements ISubscriptionPlan {
   @Column({ name: "display_price", type: "varchar", length: 50 })
   displayPrice: string;
 
-  @Column({ name: "price_subtext", type: "varchar", length: 100, nullable: true })
+  @Column({
+    name: "price_subtext",
+    type: "varchar",
+    length: 100,
+    nullable: true,
+  })
   priceSubtext: string | null;
 
   @Column({ name: "base_price_cents", type: "integer", default: 0 })
@@ -33,10 +38,17 @@ export class SubscriptionPlanModel implements ISubscriptionPlan {
   @Column({ name: "display_order", type: "integer", default: 0 })
   displayOrder: number;
 
+  @Column({
+    name: "stripe_product_id",
+    type: "varchar",
+    length: 255,
+    nullable: true,
+  })
+  stripeProductId: string | null;
+
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 
   @Column({ name: "updated_at", type: "timestamp" })
   updatedAt: Date;
 }
-

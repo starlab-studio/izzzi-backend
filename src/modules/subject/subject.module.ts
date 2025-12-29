@@ -28,7 +28,6 @@ import { SubjectRepository } from "./infrastructure/repositories/subject.reposit
 import { SubjectFacade } from "./application/facades/subject.facade";
 import { MembershipModel } from "src/modules/organization/infrastructure/models/membership.model";
 import { MembershipRepository } from "src/modules/organization/infrastructure/repositories/membership.repository";
-import { IMembershipRepository } from "src/modules/organization/domain/repositories/membership.repository";
 import { ClassModule } from "../class/class.module";
 import { IClassRepository } from "../class/domain/repositories/class.repository";
 import { ISubjectAssignmentRepository } from "./domain/repositories/subject-assignment.repository";
@@ -36,6 +35,16 @@ import { OrganizationFacade } from "../organization/application/facades/organiza
 import { SubjectCreatedEventHandler } from "./application/handlers/subject-created.handler";
 import { EventHandlerRegistry } from "src/core";
 import { CreateEmailNotificationUseCase } from "src/modules/notification/application/use-cases/create-email-notification.use-case";
+import { QuizModule } from "../quiz/quiz.module";
+import { SubscriptionModule } from "../subscription/subscription.module";
+import { IQuizRepository } from "../quiz/domain/repositories/quiz.repository";
+import { IResponseRepository } from "../quiz/domain/repositories/response.repository";
+import { ResponseVisibilityService } from "../quiz/domain/services/response-visibility.service";
+import { SubscriptionFeatureService } from "../subscription/domain/services/subscription-feature.service";
+import { ISubscriptionRepository } from "../subscription/domain/repositories/subscription.repository";
+import { ISubscriptionPlanRepository } from "../subscription/domain/repositories/subscription-plan.repository";
+import { SUBSCRIPTION_REPOSITORY } from "../subscription/domain/repositories/subscription.repository";
+import { SUBSCRIPTION_PLAN_REPOSITORY } from "../subscription/domain/repositories/subscription-plan.repository";
 
 @Module({
   imports: [
@@ -48,6 +57,8 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
     NotificationModule,
     forwardRef(() => OrganizationModule),
     forwardRef(() => ClassModule),
+    forwardRef(() => QuizModule),
+    forwardRef(() => SubscriptionModule),
   ],
   controllers: [SubjectController],
   providers: [
@@ -56,7 +67,7 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
       provide: SubjectRepository,
       useFactory: (
         ormRepository: Repository<SubjectModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new SubjectRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(SubjectModel), TypeOrmUnitOfWork],
     },
@@ -68,7 +79,7 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
       provide: SubjectAssignmentRepository,
       useFactory: (
         ormRepository: Repository<SubjectAssignmentModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new SubjectAssignmentRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(SubjectAssignmentModel), TypeOrmUnitOfWork],
     },
@@ -80,7 +91,7 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
       provide: "MEMBERSHIP_REPOSITORY",
       useFactory: (
         ormRepository: Repository<MembershipModel>,
-        unitOfWork: IUnitOfWork,
+        unitOfWork: IUnitOfWork
       ) => new MembershipRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(MembershipModel), TypeOrmUnitOfWork],
     },
@@ -92,7 +103,7 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         organizationFacade: OrganizationFacade,
-        eventStore: EventStore,
+        eventStore: EventStore
       ) =>
         new CreateSubjectUseCase(
           logger,
@@ -100,7 +111,7 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
           subjectRepository,
           subjectAssignmentRepository,
           organizationFacade,
-          eventStore,
+          eventStore
         ),
       inject: [
         LoggerService,
@@ -119,6 +130,12 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         organizationFacade: OrganizationFacade,
+        quizRepository: IQuizRepository,
+        responseRepository: IResponseRepository,
+        responseVisibilityService: ResponseVisibilityService,
+        subscriptionFeatureService: SubscriptionFeatureService,
+        subscriptionRepository: ISubscriptionRepository,
+        subscriptionPlanRepository: ISubscriptionPlanRepository
       ) =>
         new GetSubjectsByClassUseCase(
           logger,
@@ -126,6 +143,12 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
           subjectRepository,
           subjectAssignmentRepository,
           organizationFacade,
+          quizRepository,
+          responseRepository,
+          responseVisibilityService,
+          subscriptionFeatureService,
+          subscriptionRepository,
+          subscriptionPlanRepository
         ),
       inject: [
         LoggerService,
@@ -133,6 +156,12 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
         SubjectRepository,
         SubjectAssignmentRepository,
         OrganizationFacade,
+        "QUIZ_REPOSITORY",
+        "RESPONSE_REPOSITORY",
+        ResponseVisibilityService,
+        SubscriptionFeatureService,
+        SUBSCRIPTION_REPOSITORY,
+        SUBSCRIPTION_PLAN_REPOSITORY,
       ],
     },
     {
@@ -140,18 +169,10 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
       useFactory: (
         logger: ILoggerService,
         subjectRepository: ISubjectRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
-        new UpdateSubjectUseCase(
-          logger,
-          subjectRepository,
-          organizationFacade,
-        ),
-      inject: [
-        LoggerService,
-        SubjectRepository,
-        OrganizationFacade,
-      ],
+        new UpdateSubjectUseCase(logger, subjectRepository, organizationFacade),
+      inject: [LoggerService, SubjectRepository, OrganizationFacade],
     },
     {
       provide: DeleteSubjectUseCase,
@@ -159,13 +180,13 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
         logger: ILoggerService,
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
-        organizationFacade: OrganizationFacade,
+        organizationFacade: OrganizationFacade
       ) =>
         new DeleteSubjectUseCase(
           logger,
           subjectRepository,
           subjectAssignmentRepository,
-          organizationFacade,
+          organizationFacade
         ),
       inject: [
         LoggerService,
@@ -178,16 +199,9 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
       provide: BulkCreateSubjectsUseCase,
       useFactory: (
         logger: ILoggerService,
-        createSubjectUseCase: CreateSubjectUseCase,
-      ) =>
-        new BulkCreateSubjectsUseCase(
-          logger,
-          createSubjectUseCase,
-        ),
-      inject: [
-        LoggerService,
-        CreateSubjectUseCase,
-      ],
+        createSubjectUseCase: CreateSubjectUseCase
+      ) => new BulkCreateSubjectsUseCase(logger, createSubjectUseCase),
+      inject: [LoggerService, CreateSubjectUseCase],
     },
     {
       provide: SubjectFacade,
@@ -196,14 +210,15 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
         getSubjectsByClassUseCase: GetSubjectsByClassUseCase,
         updateSubjectUseCase: UpdateSubjectUseCase,
         deleteSubjectUseCase: DeleteSubjectUseCase,
-        bulkCreateSubjectsUseCase: BulkCreateSubjectsUseCase,
-      ) => new SubjectFacade(
-        createSubjectUseCase,
-        getSubjectsByClassUseCase,
-        updateSubjectUseCase,
-        deleteSubjectUseCase,
-        bulkCreateSubjectsUseCase,
-      ),
+        bulkCreateSubjectsUseCase: BulkCreateSubjectsUseCase
+      ) =>
+        new SubjectFacade(
+          createSubjectUseCase,
+          getSubjectsByClassUseCase,
+          updateSubjectUseCase,
+          deleteSubjectUseCase,
+          bulkCreateSubjectsUseCase
+        ),
       inject: [
         CreateSubjectUseCase,
         GetSubjectsByClassUseCase,
@@ -216,8 +231,9 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
       provide: SubjectCreatedEventHandler,
       useFactory: (
         logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
-      ) => new SubjectCreatedEventHandler(logger, createEmailNotificationUseCase),
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new SubjectCreatedEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
   ],
@@ -232,13 +248,13 @@ import { CreateEmailNotificationUseCase } from "src/modules/notification/applica
 export class SubjectModule {
   constructor(
     private readonly eventHandlerRegistry: EventHandlerRegistry,
-    private readonly subjectCreatedEventHandler: SubjectCreatedEventHandler,
+    private readonly subjectCreatedEventHandler: SubjectCreatedEventHandler
   ) {}
 
   async onModuleInit() {
     this.eventHandlerRegistry.registerHandler(
       "subject.created",
-      this.subjectCreatedEventHandler,
+      this.subjectCreatedEventHandler
     );
   }
 }

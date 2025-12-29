@@ -9,6 +9,7 @@ export interface ISubscriptionPlan {
   variant: "default" | "premium";
   isActive: boolean;
   displayOrder: number;
+  stripeProductId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,6 +21,7 @@ export interface IPlanFeature {
   featureSubtext: string | null;
   section: "main" | "additional";
   displayOrder: number;
+  isComingSoon: boolean;
   createdAt: Date;
 }
 
@@ -30,6 +32,7 @@ export interface IPricingTier {
   minClasses: number;
   maxClasses: number;
   pricePerClassCents: number;
+  stripePriceId: string | null;
   createdAt: Date;
 }
 
@@ -39,7 +42,16 @@ export interface IUserSubscription {
   organizationId: string;
   planId: string;
   billingPeriod: "monthly" | "annual";
-  status: "trial" | "active" | "past_due" | "cancelled" | "expired";
+  quantity: number;
+  pendingQuantity: number | null;
+  status:
+    | "trial"
+    | "active"
+    | "past_due"
+    | "cancelled"
+    | "expired"
+    | "pending"
+    | "failed";
   trialStartDate: Date | null;
   trialEndDate: Date | null;
   currentPeriodStart: Date | null;
@@ -70,3 +82,36 @@ export interface IInvoice {
   createdAt: Date;
 }
 
+export interface SubscriptionActivatedPayload {
+  subscriptionId: string;
+  organizationId: string;
+  planId: string;
+  planName: string;
+}
+
+export type ISubscriptionActivatedEvent =
+  import("src/core").IDomainEvent<SubscriptionActivatedPayload>;
+
+export interface SubscriptionUpgradedPayload {
+  userId: string;
+  userEmail: string;
+  organizationId: string;
+  planName: string;
+  previousQuantity: number;
+  newQuantity: number;
+  previousPriceCents: number;
+  newPriceCents: number;
+}
+
+export type ISubscriptionUpgradedEvent =
+  import("src/core").IDomainEvent<SubscriptionUpgradedPayload>;
+
+export interface TrialEndingSoonPayload {
+  organizationId: string;
+  trialEndDate: Date;
+  planName: string;
+  adminEmails: string[];
+}
+
+export type ITrialEndingSoonEvent =
+  import("src/core").IDomainEvent<TrialEndingSoonPayload>;

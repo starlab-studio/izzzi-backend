@@ -23,8 +23,13 @@ export class UserRepository
   }
 
   private getTypeOrmRepository(): Repository<UserModel> {
-    const typeOrmUow = this.unitOfWork as any;
-    return typeOrmUow.getEntityManager().getRepository(UserModel);
+    try {
+      const typeOrmUow = this.unitOfWork as any;
+      const entityManager = typeOrmUow.getEntityManager();
+      return entityManager.getRepository(UserModel);
+    } catch {
+      return this.directRepository;
+    }
   }
 
   async create(entity: UserEntity): Promise<UserEntity> {

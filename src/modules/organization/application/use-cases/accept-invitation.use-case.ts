@@ -47,17 +47,6 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
           );
         }
 
-        if (!invitation.isValid()) {
-          throw new DomainError(
-            ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-            invitation.isExpired()
-              ? "Invitation has expired"
-              : "Invitation is no longer valid",
-            undefined,
-            HTTP_STATUS.BAD_REQUEST
-          );
-        }
-
         const user = await this.userRepository.findById(data.userId);
 
         if (!user) {
@@ -66,6 +55,34 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
             "User not found",
             undefined,
             HTTP_STATUS.NOT_FOUND
+          );
+        }
+
+        if (!invitation.isValid()) {
+          if (invitation.isExpired()) {
+            throw new DomainError(
+              ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+              "Invitation has expired",
+              undefined,
+              HTTP_STATUS.BAD_REQUEST
+            );
+          }
+          
+          const existingMembership = await this.membershipRepository.findByUserAndOrganization(
+            user.id,
+            invitation.organizationId
+          );
+          
+          if (existingMembership && existingMembership.isActive()) {
+            this.logger.info(`Invitation already accepted for user ${user.id}, membership already active`);
+            return;
+          }
+          
+          throw new DomainError(
+            ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+            "Invitation is no longer valid",
+            undefined,
+            HTTP_STATUS.BAD_REQUEST
           );
         }
 

@@ -185,9 +185,7 @@ export class OrganizationFacade {
 
   async acceptInvitation(data: AcceptInvitationData): Promise<void> {
     try {
-      return await this.unitOfWork.withTransaction(async () => {
-        return await this.acceptInvitationUseCase.execute(data);
-      });
+      return await this.acceptInvitationUseCase.execute(data);
     } catch (error) {
       throw error;
     }
@@ -358,9 +356,8 @@ export class OrganizationFacade {
       );
     }
     try {
-      return await this.unitOfWork.withTransaction(async () => {
-        return await this.updateMemberRoleUseCase!.execute(data);
-      });
+      // Don't wrap in transaction - the use case has its own transaction
+      return await this.updateMemberRoleUseCase!.execute(data);
     } catch (error) {
       throw error;
     }

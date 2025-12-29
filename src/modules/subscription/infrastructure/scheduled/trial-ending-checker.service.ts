@@ -26,9 +26,8 @@ export class TrialEndingCheckerService {
     this.logger.info("Checking for trials ending in 7 days...");
 
     try {
-      const subscriptions = await this.subscriptionRepository.findTrialsEndingIn(
-        7
-      );
+      const subscriptions =
+        await this.subscriptionRepository.findTrialsEndingIn(7);
 
       for (const subscription of subscriptions) {
         try {
@@ -42,9 +41,10 @@ export class TrialEndingCheckerService {
           }
 
           // Get admin emails for the organization
-          const memberships = await this.membershipRepository.findByOrganization(
-            subscription.organizationId
-          );
+          const memberships =
+            await this.membershipRepository.findByOrganization(
+              subscription.organizationId
+            );
 
           const adminMemberships = memberships.filter(
             (membership) =>
@@ -113,4 +113,3 @@ export class TrialEndingCheckerService {
     }
   }
 }
-

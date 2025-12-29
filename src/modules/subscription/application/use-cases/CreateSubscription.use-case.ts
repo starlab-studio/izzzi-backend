@@ -117,11 +117,10 @@ export class CreateSubscriptionUseCase
         );
       }
 
-      let tiers =
-        await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
-          planId,
-          billingPeriod
-        );
+      let tiers = await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
+        planId,
+        billingPeriod
+      );
 
       // For free plans, create missing pricing tiers if they don't exist
       if (plan.isFree && tiers.length === 0) {
@@ -154,7 +153,8 @@ export class CreateSubscriptionUseCase
               ...savedTier.toPersistence(),
               stripePriceId: priceId,
             });
-            const finalTier = await this.pricingTierRepository.save(updatedTier);
+            const finalTier =
+              await this.pricingTierRepository.save(updatedTier);
             tiers = [finalTier];
           } else {
             tiers = [savedTier];

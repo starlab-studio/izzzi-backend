@@ -44,6 +44,7 @@ import {
 } from "../use-cases/GetOrganizationStats.use-case";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
 import { MembershipEntity } from "../../domain/entities/membership.entity";
+import { UserEntity } from "../../domain/entities/user.entity";
 
 export type ReactivationResult = {
   success: boolean;
@@ -103,17 +104,15 @@ export class OrganizationFacade {
   }
 
   async activateUser(userId: string): Promise<void> {
-    return await this.unitOfWork.withTransaction(async () => {
-      const user = await this.userRepository.findById(userId);
-      if (!user) {
-        throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
-      }
-      
-      if (!user.isActive()) {
-        user.activate();
-        await this.userRepository.save(user);
-      }
-    });
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+    }
+    
+    if (!user.isActive()) {
+      user.activate();
+      await this.userRepository.save(user);
+    }
   }
 
   async validateUserCanCreateClass(
@@ -221,6 +220,46 @@ export class OrganizationFacade {
     }
   }
 
+  async findDeletedUserById(userId: string): Promise<IUser | null> {
+    try {
+      const user = await this.userRepository.findById(userId);
+      if (user && user.isDeleted()) {
+        return {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          avatarUrl: user.avatarUrl,
+          lastLogin: user.lastLogin,
+          status: user.status,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        };
+      }
+      return null;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async acceptInvitationByToken(token: string): Promise<void> {
+    try {
+      const invitation = await this.invitationRepository.findByToken(token);
+      if (!invitation) {
+        throw new DomainError(
+          ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+          "Invitation not found"
+        );
+      }
+      invitation.markAsAccepted();
+      await this.invitationRepository.save(invitation);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async createUser(data: IUserCreate): Promise<IUser> {
     try {
       return await this.unitOfWork.withTransaction(async () => {
@@ -262,7 +301,13 @@ export class OrganizationFacade {
           addedBy: data.invitedBy,
         });
 
-        await this.activateUser(user.id);
+        // Activate user directly instead of calling activateUser(user.id)
+        // to avoid re-fetching the user within the same transaction
+        const userEntity = user as unknown as UserEntity;
+        if (!userEntity.isActive()) {
+          userEntity.activate();
+          await this.userRepository.save(userEntity);
+        }
 
         return user;
       });
@@ -367,41 +412,52 @@ export class OrganizationFacade {
     userId: string,
     organizationId: string,
     role: UserRole,
-    invitedBy: string | null
+    invitedBy: string | null,
+    invitationToken?: string
   ): Promise<ReactivationResult> {
     try {
-      const user = await this.userRepository.findById(userId);
-      if (!user) {
-        return { success: false, error: "User not found" };
-      }
-
-      if (user.isDeleted()) {
-        user.activate();
-        await this.userRepository.save(user);
-      }
-
-      const existingMembership =
-        await this.membershipRepository.findByUserAndOrganization(
-          userId,
-          organizationId
-        );
-
-      if (existingMembership) {
-        if (!existingMembership.isActive()) {
-          existingMembership.reactivate(role);
-          await this.membershipRepository.save(existingMembership);
+      return await this.unitOfWork.withTransaction(async () => {
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+          return { success: false, error: "User not found" };
         }
-      } else {
-        const membership = MembershipEntity.create({
-          userId,
-          organizationId,
-          role,
-          addedBy: invitedBy,
-        });
-        await this.membershipRepository.create(membership);
-      }
 
-      return { success: true };
+        if (user.isDeleted()) {
+          user.activate();
+          await this.userRepository.save(user);
+        }
+
+        const existingMembership =
+          await this.membershipRepository.findByUserAndOrganization(
+            userId,
+            organizationId
+          );
+
+        if (existingMembership) {
+          if (!existingMembership.isActive()) {
+            existingMembership.reactivate(role);
+            await this.membershipRepository.save(existingMembership);
+          }
+        } else {
+          const membership = MembershipEntity.create({
+            userId,
+            organizationId,
+            role,
+            addedBy: invitedBy,
+          });
+          await this.membershipRepository.create(membership);
+        }
+
+        if (invitationToken) {
+          const invitation = await this.invitationRepository.findByToken(invitationToken);
+          if (invitation) {
+            invitation.markAsAccepted();
+            await this.invitationRepository.save(invitation);
+          }
+        }
+
+        return { success: true };
+      });
     } catch (error) {
       return {
         success: false,

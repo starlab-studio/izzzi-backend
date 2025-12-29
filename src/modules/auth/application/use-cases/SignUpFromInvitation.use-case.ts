@@ -61,9 +61,9 @@ export class SignUpFromInvitationUseCase
         );
       }
 
-      if (
-        Email.create(data.email).value !== Email.create(invitation.email).value
-      ) {
+      const normalizedEmail = Email.create(invitation.email).value;
+
+      if (Email.create(data.email).value !== normalizedEmail) {
         throw new DomainError(
           ErrorCode.INVALID_OR_EXPIRED_INVITATION,
           "Email does not match the invitation email",
@@ -72,23 +72,95 @@ export class SignUpFromInvitationUseCase
         );
       }
 
-      const userExists = await this.organizationFacade.checkUserExistsByEmail(
-        invitation.email
-      );
+      const existingAuthIdentity = await this.authIdentityRepository.findByUsername(normalizedEmail);
+      
+      if (existingAuthIdentity) {
+        if (existingAuthIdentity.userId) {
+          const deletedUser = await this.organizationFacade.findDeletedUserById(existingAuthIdentity.userId);
+          
+          if (deletedUser) {
+            this.logger.info(`Reactivating deleted user ${deletedUser.id} via invitation`);
+            
+            await this.organizationFacade.reactivateUserFromInvitation(
+              deletedUser.id,
+              invitation.organizationId,
+              invitation.role,
+              invitation.invitedBy,
+              data.token
+            );
 
-      if (userExists) {
-        throw new DomainError(
-          ErrorCode.USER_ALREADY_EXISTS,
-          "User with this email already exists. Please sign in and accept the invitation.",
-          undefined,
-          HTTP_STATUS.CONFLICT
+            this.eventStore.publish(
+              new InvitationAcceptedEvent({
+                userId: deletedUser.id,
+                organizationId: invitation.organizationId,
+                email: invitation.email,
+                firstName: deletedUser.firstName,
+              })
+            );
+
+            return {
+              firstName: deletedUser.firstName,
+              lastName: deletedUser.lastName,
+              email: normalizedEmail,
+              authIdentityId: existingAuthIdentity.id,
+              organization: "",
+              verificationToken: "",
+              sendVerificationToken: false,
+            };
+          }
+
+          throw new DomainError(
+            ErrorCode.USER_ALREADY_EXISTS,
+            "User with this email already exists. Please sign in and accept the invitation.",
+            undefined,
+            HTTP_STATUS.CONFLICT
+          );
+        }
+
+        this.logger.info(`Found orphan auth identity for ${normalizedEmail}, creating user and linking`);
+        
+        const user = await this.organizationFacade.createUserAndAcceptInvitation({
+          userData: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: normalizedEmail,
+            authIdentityId: existingAuthIdentity.id,
+            organization: "",
+          },
+          invitationToken: data.token,
+          organizationId: invitation.organizationId,
+          role: invitation.role,
+          invitedBy: invitation.invitedBy,
+        });
+
+        existingAuthIdentity.setUser(user.id);
+        existingAuthIdentity.verifyEmail(normalizedEmail);
+        await this.authIdentityRepository.save(existingAuthIdentity);
+
+        this.eventStore.publish(
+          new InvitationAcceptedEvent({
+            userId: user.id,
+            organizationId: invitation.organizationId,
+            email: invitation.email,
+            firstName: user.firstName,
+          })
         );
+
+        return {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: normalizedEmail,
+          authIdentityId: existingAuthIdentity.id,
+          organization: "",
+          verificationToken: "",
+          sendVerificationToken: false,
+        };
       }
 
       const signUpData: SignUpData = {
         firstName: data.firstName,
         lastName: data.lastName,
-        email: invitation.email,
+        email: normalizedEmail,
         password: data.password,
         organization: "",
       };
@@ -122,7 +194,7 @@ export class SignUpFromInvitationUseCase
       }
 
       authIdentity.setUser(user.id);
-      authIdentity.verifyEmail(invitation.email);
+      authIdentity.verifyEmail(normalizedEmail);
       await this.authIdentityRepository.save(authIdentity);
 
       this.eventStore.publish(

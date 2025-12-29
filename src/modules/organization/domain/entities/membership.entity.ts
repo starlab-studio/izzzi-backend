@@ -67,6 +67,16 @@ export class MembershipEntity {
     };
   }
 
+  reactivate(role?: UserRole): void {
+    this.props = {
+      ...this.props,
+      status: MembershipStatus.ACTIVE,
+      role: role ?? this.props.role,
+      leftAt: null,
+      updatedAt: new Date(),
+    };
+  }
+
   get id(): string {
     return this.props.id;
   }

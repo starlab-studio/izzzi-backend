@@ -57,7 +57,7 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
         );
       }
 
-      const existingUser = await this.userRepository.findByEmailWithMemberships(
+      const existingUser = await this.userRepository.findByEmailWithActiveMemberships(
         emailVO.value
       );
 

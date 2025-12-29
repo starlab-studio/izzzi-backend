@@ -237,14 +237,16 @@ import { AuthModule } from "../auth/auth.module";
         eventStore: IEventStore,
         invitationRepository: IInvitationRepository,
         userRepository: IUserRepository,
-        membershipRepository: IMembershipRepository
+        membershipRepository: IMembershipRepository,
+        unitOfWork: IUnitOfWork
       ) =>
         new AcceptInvitationUseCase(
           logger,
           eventStore,
           invitationRepository,
           userRepository,
-          membershipRepository
+          membershipRepository,
+          unitOfWork
         ),
       inject: [
         LoggerService,
@@ -252,6 +254,7 @@ import { AuthModule } from "../auth/auth.module";
         InvitationRepository,
         UserRepository,
         MembershipRepository,
+        TypeOrmUnitOfWork,
       ],
     },
     {
@@ -259,22 +262,33 @@ import { AuthModule } from "../auth/auth.module";
       useFactory: (
         logger: ILoggerService,
         invitationRepository: IInvitationRepository,
-        userRepository: IUserRepository
+        userRepository: IUserRepository,
+        membershipRepository: IMembershipRepository,
+        unitOfWork: IUnitOfWork
       ) =>
         new ValidateInvitationUseCase(
           logger,
           invitationRepository,
-          userRepository
+          userRepository,
+          membershipRepository,
+          unitOfWork
         ),
-      inject: [LoggerService, InvitationRepository, UserRepository],
+      inject: [
+        LoggerService,
+        InvitationRepository,
+        UserRepository,
+        MembershipRepository,
+        TypeOrmUnitOfWork,
+      ],
     },
     {
       provide: UpdateMemberRoleUseCase,
       useFactory: (
         logger: ILoggerService,
-        membershipRepository: IMembershipRepository
-      ) => new UpdateMemberRoleUseCase(logger, membershipRepository),
-      inject: [LoggerService, MembershipRepository],
+        membershipRepository: IMembershipRepository,
+        unitOfWork: IUnitOfWork
+      ) => new UpdateMemberRoleUseCase(logger, membershipRepository, unitOfWork),
+      inject: [LoggerService, MembershipRepository, TypeOrmUnitOfWork],
     },
     {
       provide: RemoveMemberUseCase,
@@ -376,6 +390,7 @@ import { AuthModule } from "../auth/auth.module";
         createUserUseCase: CreateUserUseCase,
         addUserToOrganizationUseCase: AddUserToOrganizationUseCase,
         unitOfWork: IUnitOfWork,
+        membershipRepository: IMembershipRepository,
         updateMemberRoleUseCase: UpdateMemberRoleUseCase,
         removeMemberUseCase: RemoveMemberUseCase,
         getOrganizationMembersUseCase: GetOrganizationMembersUseCase,
@@ -394,6 +409,7 @@ import { AuthModule } from "../auth/auth.module";
           createUserUseCase,
           addUserToOrganizationUseCase,
           unitOfWork,
+          membershipRepository,
           updateMemberRoleUseCase,
           removeMemberUseCase,
           getOrganizationMembersUseCase,
@@ -412,6 +428,7 @@ import { AuthModule } from "../auth/auth.module";
         CreateUserUseCase,
         AddUserToOrganizationUseCase,
         TypeOrmUnitOfWork,
+        MembershipRepository,
         UpdateMemberRoleUseCase,
         RemoveMemberUseCase,
         GetOrganizationMembersUseCase,

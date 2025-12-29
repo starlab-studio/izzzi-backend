@@ -4,6 +4,7 @@ import {
   ErrorCode,
   IEventStore,
   ILoggerService,
+  IUnitOfWork,
   IUseCase,
   HTTP_STATUS,
 } from "src/core";
@@ -24,85 +25,102 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
     private readonly eventStore: IEventStore,
     private readonly invitationRepository: IInvitationRepository,
     private readonly userRepository: IUserRepository,
-    private readonly membershipRepository: IMembershipRepository
+    private readonly membershipRepository: IMembershipRepository,
+    private readonly unitOfWork: IUnitOfWork
   ) {
     super(logger);
   }
 
   async execute(data: AcceptInvitationData): Promise<void> {
     try {
-      const invitation = await this.invitationRepository.findByToken(
-        data.token
-      );
-
-      if (!invitation) {
-        throw new DomainError(
-          ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-          "Invalid invitation token",
-          undefined,
-          HTTP_STATUS.NOT_FOUND
+      return await this.unitOfWork.withTransaction(async () => {
+        const invitation = await this.invitationRepository.findByToken(
+          data.token
         );
-      }
 
-      if (!invitation.isValid()) {
-        throw new DomainError(
-          ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-          invitation.isExpired()
-            ? "Invitation has expired"
-            : "Invitation is no longer valid",
-          undefined,
-          HTTP_STATUS.BAD_REQUEST
+        if (!invitation) {
+          throw new DomainError(
+            ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+            "Invalid invitation token",
+            undefined,
+            HTTP_STATUS.NOT_FOUND
+          );
+        }
+
+        if (!invitation.isValid()) {
+          throw new DomainError(
+            ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+            invitation.isExpired()
+              ? "Invitation has expired"
+              : "Invitation is no longer valid",
+            undefined,
+            HTTP_STATUS.BAD_REQUEST
+          );
+        }
+
+        const user = await this.userRepository.findById(data.userId);
+
+        if (!user) {
+          throw new DomainError(
+            ErrorCode.USER_NOT_FOUND,
+            "User not found",
+            undefined,
+            HTTP_STATUS.NOT_FOUND
+          );
+        }
+
+        if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+          throw new DomainError(
+            ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+            "Invitation email does not match user email",
+            undefined,
+            HTTP_STATUS.FORBIDDEN
+          );
+        }
+
+        if (user.isDeleted()) {
+          user.activate();
+          await this.userRepository.save(user);
+          this.logger.info(`Reactivated deleted user ${user.id} via invitation`);
+        }
+
+        const existingMembership = await this.membershipRepository.findByUserAndOrganization(
+          user.id,
+          invitation.organizationId
         );
-      }
 
-      const user = await this.userRepository.findByIdWithActiveMemberships(
-        data.userId
-      );
+        if (existingMembership) {
+          if (existingMembership.isActive()) {
+            invitation.markAsAccepted();
+            await this.invitationRepository.save(invitation);
+            return;
+          }
+          
+          existingMembership.reactivate(invitation.role);
+          await this.membershipRepository.save(existingMembership);
+          this.logger.info(`Reactivated membership ${existingMembership.id} for user ${user.id}`);
+        } else {
+          const membership = MembershipEntity.create({
+            userId: user.id,
+            organizationId: invitation.organizationId,
+            role: invitation.role,
+            addedBy: invitation.invitedBy,
+          });
 
-      if (!user) {
-        throw new DomainError(
-          ErrorCode.USER_NOT_FOUND,
-          "User not found",
-          undefined,
-          HTTP_STATUS.NOT_FOUND
-        );
-      }
+          await this.membershipRepository.create(membership);
+        }
 
-      if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
-        throw new DomainError(
-          ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-          "Invitation email does not match user email",
-          undefined,
-          HTTP_STATUS.FORBIDDEN
-        );
-      }
-
-      if (user.belongsToOrganization(invitation.organizationId)) {
         invitation.markAsAccepted();
         await this.invitationRepository.save(invitation);
-        return;
-      }
 
-      const membership = MembershipEntity.create({
-        userId: user.id,
-        organizationId: invitation.organizationId,
-        role: invitation.role,
-        addedBy: invitation.invitedBy,
+        this.eventStore.publish(
+          new InvitationAcceptedEvent({
+            userId: user.id,
+            organizationId: invitation.organizationId,
+            email: invitation.email,
+          })
+        );
       });
-
-      await this.membershipRepository.create(membership);
-
-      invitation.markAsAccepted();
-      await this.invitationRepository.save(invitation);
-
-      this.eventStore.publish(
-        new InvitationAcceptedEvent({
-          userId: user.id,
-          organizationId: invitation.organizationId,
-          email: invitation.email,
-        })
-      );
-      return;
     } catch (error) {
       this.handleError(error);
     }

@@ -125,8 +125,6 @@ export class SignUpFromInvitationUseCase
       authIdentity.verifyEmail(invitation.email);
       await this.authIdentityRepository.save(authIdentity);
 
-      await this.organizationFacade.activateUser(user.id);
-
       this.eventStore.publish(
         new InvitationAcceptedEvent({
           userId: user.id,

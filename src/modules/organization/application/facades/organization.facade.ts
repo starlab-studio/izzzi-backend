@@ -42,6 +42,13 @@ import {
   GetOrganizationStatsData,
   OrganizationStats,
 } from "../use-cases/GetOrganizationStats.use-case";
+import { IMembershipRepository } from "../../domain/repositories/membership.repository";
+import { MembershipEntity } from "../../domain/entities/membership.entity";
+
+export type ReactivationResult = {
+  success: boolean;
+  error?: string;
+};
 
 export class OrganizationFacade {
   constructor(
@@ -57,6 +64,7 @@ export class OrganizationFacade {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly addUserToOrganizationUseCase: AddUserToOrganizationUseCase,
     private readonly unitOfWork: IUnitOfWork,
+    private readonly membershipRepository: IMembershipRepository,
     private readonly updateMemberRoleUseCase?: UpdateMemberRoleUseCase,
     private readonly removeMemberUseCase?: RemoveMemberUseCase,
     private readonly getOrganizationMembersUseCase?: GetOrganizationMembersUseCase,
@@ -95,15 +103,17 @@ export class OrganizationFacade {
   }
 
   async activateUser(userId: string): Promise<void> {
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
-    }
-    
-    if (!user.isActive()) {
-      user.activate();
-      await this.userRepository.save(user);
-    }
+    return await this.unitOfWork.withTransaction(async () => {
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+      }
+      
+      if (!user.isActive()) {
+        user.activate();
+        await this.userRepository.save(user);
+      }
+    });
   }
 
   async validateUserCanCreateClass(
@@ -205,7 +215,7 @@ export class OrganizationFacade {
   async checkUserExistsByEmail(email: string): Promise<boolean> {
     try {
       const user = await this.userRepository.findByEmail(email);
-      return !!user;
+      return !!user && !user.isDeleted();
     } catch (error) {
       throw error;
     }
@@ -251,6 +261,8 @@ export class OrganizationFacade {
           role: data.role,
           addedBy: data.invitedBy,
         });
+
+        await this.activateUser(user.id);
 
         return user;
       });
@@ -348,6 +360,53 @@ export class OrganizationFacade {
       return await this.getOrganizationStatsUseCase.execute(data);
     } catch (error) {
       throw error;
+    }
+  }
+
+  async reactivateUserFromInvitation(
+    userId: string,
+    organizationId: string,
+    role: UserRole,
+    invitedBy: string | null
+  ): Promise<ReactivationResult> {
+    try {
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        return { success: false, error: "User not found" };
+      }
+
+      if (user.isDeleted()) {
+        user.activate();
+        await this.userRepository.save(user);
+      }
+
+      const existingMembership =
+        await this.membershipRepository.findByUserAndOrganization(
+          userId,
+          organizationId
+        );
+
+      if (existingMembership) {
+        if (!existingMembership.isActive()) {
+          existingMembership.reactivate(role);
+          await this.membershipRepository.save(existingMembership);
+        }
+      } else {
+        const membership = MembershipEntity.create({
+          userId,
+          organizationId,
+          role,
+          addedBy: invitedBy,
+        });
+        await this.membershipRepository.create(membership);
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   }
 }

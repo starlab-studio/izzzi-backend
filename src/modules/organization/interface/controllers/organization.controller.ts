@@ -12,6 +12,8 @@ import {
   UseGuards,
   Get,
   Post,
+  Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -30,7 +32,7 @@ import {
   type JWTPayload,
   BaseController,
 } from "src/core";
-import { InvitationDto } from "../dto/invitation.dto";
+import { InvitationDto, UpdateMemberRoleDto } from "../dto/invitation.dto";
 import { OrganizationFacade } from "../../application/facades/organization.facade";
 import { AuthFacade } from "src/modules/auth/application/facades/auth.facade";
 
@@ -229,5 +231,145 @@ export class OrganizationController extends BaseController {
       message: "Invitation accepted successfully",
       accessToken,
     });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get("/:organizationId/members")
+  @ApiOperation({
+    summary: "Get organization members",
+    description: "Get all active members of an organization with their user details.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "Organization ID",
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Members retrieved successfully",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden - User is not admin" })
+  async getOrganizationMembers(
+    @CurrentUser() authenticatedUser: JWTPayload,
+    @Param("organizationId") organizationId: string
+  ) {
+    const response = await this.organizationFacade.getOrganizationMembers({
+      organizationId,
+      requesterId: authenticatedUser.userId,
+    });
+    return this.success(response);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get("/:organizationId/stats")
+  @ApiOperation({
+    summary: "Get organization statistics",
+    description: "Get statistics for an organization including user count, class count, quiz count, and feedback count.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "Organization ID",
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Statistics retrieved successfully",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden - User is not admin" })
+  async getOrganizationStats(
+    @CurrentUser() authenticatedUser: JWTPayload,
+    @Param("organizationId") organizationId: string
+  ) {
+    const response = await this.organizationFacade.getOrganizationStats({
+      organizationId,
+      requesterId: authenticatedUser.userId,
+    });
+    return this.success(response);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Patch("/:organizationId/members/:membershipId/role")
+  @ApiOperation({
+    summary: "Update member role",
+    description: "Update the role of a member in the organization. Only admin can perform this action.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "Organization ID",
+    type: String,
+  })
+  @ApiParam({
+    name: "membershipId",
+    description: "Membership ID",
+    type: String,
+  })
+  @ApiBody({ type: UpdateMemberRoleDto })
+  @ApiResponse({
+    status: 200,
+    description: "Member role updated successfully",
+  })
+  @ApiResponse({ status: 400, description: "Invalid input data" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden - User is not admin or trying to change own role" })
+  @ApiResponse({ status: 404, description: "Membership not found" })
+  async updateMemberRole(
+    @CurrentUser() authenticatedUser: JWTPayload,
+    @Param("organizationId") organizationId: string,
+    @Param("membershipId") membershipId: string,
+    @Body() dto: UpdateMemberRoleDto
+  ) {
+    await this.organizationFacade.updateMemberRole({
+      membershipId,
+      organizationId,
+      newRole: dto.role,
+      requesterId: authenticatedUser.userId,
+    });
+    return this.success({ message: "Member role updated successfully" });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Delete("/:organizationId/members/:membershipId")
+  @ApiOperation({
+    summary: "Remove member from organization",
+    description: "Remove a member from the organization. Only admin can perform this action.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "Organization ID",
+    type: String,
+  })
+  @ApiParam({
+    name: "membershipId",
+    description: "Membership ID",
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Member removed successfully",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden - User is not admin or trying to remove self" })
+  @ApiResponse({ status: 404, description: "Membership not found" })
+  async removeMember(
+    @CurrentUser() authenticatedUser: JWTPayload,
+    @Param("organizationId") organizationId: string,
+    @Param("membershipId") membershipId: string
+  ) {
+    await this.organizationFacade.removeMember({
+      membershipId,
+      organizationId,
+      requesterId: authenticatedUser.userId,
+    });
+    return this.success({ message: "Member removed successfully" });
   }
 }

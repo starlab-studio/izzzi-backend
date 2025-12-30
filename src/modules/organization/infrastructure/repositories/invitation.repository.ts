@@ -1,10 +1,11 @@
-import { Repository } from "typeorm";
+import { MoreThan, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { InvitationEntity } from "../../domain/entities/invitation.entity";
 import { InvitationModel } from "../models/invitation.model";
 import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { IInvitationRepository } from "../../domain/repositories/invitation.repository";
+import { InvitationStatus } from "../../domain/types";
 
 export class InvitationRepository
   extends BaseTransactionalRepository<InvitationEntity>
@@ -36,7 +37,8 @@ export class InvitationRepository
   }
 
   async findByEmail(email: string): Promise<InvitationEntity[]> {
-    const ormEntities = await this.directRepository.findBy({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const ormEntities = await this.directRepository.findBy({ email: normalizedEmail });
     return this.toEntities(ormEntities);
   }
 
@@ -63,9 +65,14 @@ export class InvitationRepository
     email: string,
     organizationId: string
   ): Promise<InvitationEntity | null> {
-    const ormEntity = await this.directRepository.findOneBy({
-      email,
+    const normalizedEmail = email.trim().toLowerCase();
+    const ormEntity = await this.directRepository.findOne({
+      where: {
+        email: normalizedEmail,
       organizationId,
+        status: InvitationStatus.PENDING,
+        expiresAt: MoreThan(new Date()),
+      },
     });
     return this.toEntity(ormEntity);
   }
@@ -88,8 +95,9 @@ export class InvitationRepository
   }
 
   async save(entity: InvitationEntity): Promise<InvitationEntity> {
+    const repository = this.getTypeOrmRepository();
     const data = entity.toPersistance();
-    const ormEntity = await this.directRepository.save(data);
+    const ormEntity = await repository.save(data);
     return InvitationEntity.reconstitute(ormEntity);
   }
 

@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
@@ -27,13 +27,12 @@ import { SubscriptionUpgradedEventHandler } from "./application/handlers/subscri
 import { TrialEndingSoonEventHandler } from "./application/handlers/trial-ending-soon.handler";
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 import { IUserRepository } from "../organization/domain/repositories/user.repository";
-import { forwardRef } from "@nestjs/common";
 
 @Module({
   imports: [
     ConfigModule,
     TypeOrmModule.forFeature([NotificationModel]),
-    CoreModule,
+    forwardRef(() => CoreModule),
     forwardRef(() => SubscriptionModule),
     forwardRef(() => OrganizationModule),
   ],

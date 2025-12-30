@@ -23,8 +23,13 @@ export class UserRepository
   }
 
   private getTypeOrmRepository(): Repository<UserModel> {
-    const typeOrmUow = this.unitOfWork as any;
-    return typeOrmUow.getEntityManager().getRepository(UserModel);
+    try {
+      const typeOrmUow = this.unitOfWork as any;
+      const entityManager = typeOrmUow.getEntityManager();
+      return entityManager.getRepository(UserModel);
+    } catch {
+      return this.directRepository;
+    }
   }
 
   async create(entity: UserEntity): Promise<UserEntity> {
@@ -62,11 +67,12 @@ export class UserRepository
   }
 
   async findByEmailWithMemberships(email: string): Promise<UserEntity | null> {
+    const normalizedEmail = email.trim().toLowerCase();
     const ormEntity = await this.directRepository
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.memberships", "membership")
       .leftJoinAndSelect("membership.organization", "organization")
-      .where("user.email = :email", { email })
+      .where("user.email = :email", { email: normalizedEmail })
       .getOne();
 
     if (!ormEntity) return null;
@@ -78,6 +84,7 @@ export class UserRepository
   async findByEmailWithActiveMemberships(
     email: string
   ): Promise<UserEntity | null> {
+    const normalizedEmail = email.trim().toLowerCase();
     const ormEntity = await this.directRepository
       .createQueryBuilder("user")
       .leftJoinAndSelect(
@@ -87,7 +94,7 @@ export class UserRepository
         { status: MembershipStatus.ACTIVE }
       )
       .leftJoinAndSelect("membership.organization", "organization")
-      .where("user.email = :email", { email })
+      .where("user.email = :email", { email: normalizedEmail })
       .getOne();
 
     if (!ormEntity) return null;
@@ -97,7 +104,8 @@ export class UserRepository
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    const ormEntity = await this.directRepository.findOne({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const ormEntity = await this.directRepository.findOne({ where: { email: normalizedEmail } });
     return this.toEntity(ormEntity, []);
   }
 

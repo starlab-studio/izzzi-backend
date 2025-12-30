@@ -14,7 +14,7 @@ import { SyncSubscriptionFromStripeUseCase } from "../subscription/application/u
 import { LoggerService, ILoggerService } from "src/core";
 
 @Module({
-  imports: [ConfigModule, CoreModule, forwardRef(() => SubscriptionModule)],
+  imports: [ConfigModule, forwardRef(() => CoreModule), forwardRef(() => SubscriptionModule)],
   controllers: [StripeWebhookController],
   providers: [
     LoggerService,

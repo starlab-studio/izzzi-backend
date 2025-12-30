@@ -55,7 +55,7 @@ export class UpdateProfileUseCase extends BaseUseCase implements IUseCase {
           await this.userRepository.save(user);
         }
 
-        if (data.email !== undefined && data.email.trim() !== user.email) {
+        if (data.email !== undefined && data.email.trim().toLowerCase() !== user.email.toLowerCase()) {
           const newEmail = Email.create(data.email.trim());
           const oldEmail = user.email;
 

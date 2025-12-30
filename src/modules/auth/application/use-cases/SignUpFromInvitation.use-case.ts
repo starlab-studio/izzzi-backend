@@ -109,12 +109,12 @@ export class SignUpFromInvitationUseCase
             };
           }
 
-          throw new DomainError(
-            ErrorCode.USER_ALREADY_EXISTS,
-            "User with this email already exists. Please sign in and accept the invitation.",
-            undefined,
-            HTTP_STATUS.CONFLICT
-          );
+        throw new DomainError(
+          ErrorCode.USER_ALREADY_EXISTS,
+          "User with this email already exists. Please sign in and accept the invitation.",
+          undefined,
+          HTTP_STATUS.CONFLICT
+        );
         }
 
         this.logger.info(`Found orphan auth identity for ${normalizedEmail}, creating user and linking`);

@@ -69,7 +69,7 @@ export class InvitationRepository
     const ormEntity = await this.directRepository.findOne({
       where: {
         email: normalizedEmail,
-        organizationId,
+      organizationId,
         status: InvitationStatus.PENDING,
         expiresAt: MoreThan(new Date()),
       },

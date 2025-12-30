@@ -59,7 +59,6 @@ export class ClassLimitService {
       return { canCreate: true };
     }
 
-    // ✅ Utiliser la quantité actuelle (pas pendingQuantity) car les downgrades prennent effet à la fin de période
     const currentQuantity = subscription.quantity;
 
     if (currentQuantity <= 0) {

@@ -98,9 +98,6 @@ export class MembershipEntity {
   get leftAt(): Date | null {
     return this.props.leftAt;
   }
-  get status(): MembershipStatus {
-    return this.props.status;
-  }
   get createdAt(): Date {
     return this.props.createdAt;
   }

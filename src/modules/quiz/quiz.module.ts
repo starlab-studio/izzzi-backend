@@ -12,6 +12,7 @@ import { CoreModule } from "src/core/core.module";
 import { OrganizationModule } from "src/modules/organization/organization.module";
 import { SubjectModule } from "../subject/subject.module";
 import { ClassModule } from "../class/class.module";
+import { SubscriptionModule } from "../subscription/subscription.module";
 
 import { QuizTemplateModel } from "./infrastructure/models/quiz-template.model";
 import { QuizTemplateQuestionModel } from "./infrastructure/models/quiz-template-question.model";
@@ -101,14 +102,10 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
     ]),
     forwardRef(() => CoreModule),
     forwardRef(() => OrganizationModule),
-    SubjectModule,
-    OrganizationModule,
     forwardRef(() => SubjectModule),
-    ClassModule,
-    NotificationModule,
-    forwardRef(
-      () => require("../subscription/subscription.module").SubscriptionModule
-    ),
+    forwardRef(() => ClassModule),
+    forwardRef(() => NotificationModule),
+    forwardRef(() => SubscriptionModule),
   ],
   providers: [
     LoggerService,

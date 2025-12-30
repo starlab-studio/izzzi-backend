@@ -9,6 +9,7 @@ export interface GetFeedbackSubjectsInput {
 
 export interface FeedbackSubjectResponse {
   id: string;
+  subjectId: string;
   name: string;
   code: string;
   teacher: string;

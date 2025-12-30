@@ -104,17 +104,54 @@ export class GetFeedbackSubjectsUseCase
             subjectData.id
           );
 
-          let totalFeedbackCount = 0;
-          let totalScore = 0;
-          let scoreCount = 0;
-          let hasVisibleRetours = false;
+          let matchesSearch = true;
+          if (data.search) {
+            const searchLower = data.search.toLowerCase();
+            matchesSearch =
+              subjectData.name.toLowerCase().includes(searchLower) ||
+              subjectData.instructorName?.toLowerCase().includes(searchLower) ||
+              classEntity.code.toLowerCase().includes(searchLower);
+          }
 
-          for (const quiz of quizzes) {
+          const quizTypes = [
+            {
+              type: "during_course",
+              formType: { id: "during", name: "Pendant le cours" },
+            },
+            {
+              type: "after_course",
+              formType: { id: "end", name: "Fin du cours" },
+            },
+          ];
+
+          for (const quizType of quizTypes) {
+            const quiz = quizzes.find(
+              (q) => q.toPersistence().type === quizType.type
+            );
+
+            if (
+              data.filter === "pendant_cours" &&
+              quizType.type !== "during_course"
+            ) {
+              continue;
+            }
+            if (
+              data.filter === "fin_cours" &&
+              quizType.type !== "after_course"
+            ) {
+              continue;
+            }
+
+            if (!quiz) {
+              continue;
+            }
+            if (!matchesSearch) {
+              continue;
+            }
+
             const allResponses = await this.responseRepository.findByQuiz(
               quiz.id
             );
-            totalFeedbackCount += allResponses.length;
-
             const responseEntities = allResponses.map((r) =>
               ResponseEntity.reconstitute(r)
             );
@@ -125,9 +162,10 @@ export class GetFeedbackSubjectsUseCase
                 plan
               );
 
-            if (visibilityStats.visible > 0) {
-              hasVisibleRetours = true;
-            }
+            const hasVisibleRetours = visibilityStats.visible > 0;
+
+            let totalScore = 0;
+            let scoreCount = 0;
 
             const template = await this.quizTemplateRepository.findById(
               quiz.toPersistence().templateId
@@ -158,59 +196,27 @@ export class GetFeedbackSubjectsUseCase
                 }
               }
             }
+
+            const averageScore = scoreCount > 0 ? totalScore / scoreCount : 0;
+
+            allSubjects.push({
+              id: `${subjectData.id}_${quizType.type}`,
+              subjectId: subjectData.id,
+              name: subjectData.name,
+              code: classEntity.name,
+              teacher: subjectData.instructorName || "N/A",
+              formType: {
+                id: quizType.formType.id,
+                name: quizType.formType.name,
+              },
+              feedbackCount: allResponses.length,
+              score: averageScore,
+              alerts: [], // TODO: Implement alert calculation
+              alertsCount: 0, // TODO: Implement alert calculation
+              summary: "", // TODO: Get from AI analysis if available
+              hasVisibleRetours,
+            });
           }
-
-          const duringQuiz = quizzes.find(
-            (q) => q.toPersistence().type === "during_course"
-          );
-          const endQuiz = quizzes.find(
-            (q) => q.toPersistence().type === "after_course"
-          );
-          const formType = duringQuiz
-            ? { id: "during", name: "Pendant le cours" }
-            : endQuiz
-              ? { id: "end", name: "Fin du cours" }
-              : null;
-
-          if (data.search) {
-            const searchLower = data.search.toLowerCase();
-            const matchesSearch =
-              subjectData.name.toLowerCase().includes(searchLower) ||
-              subjectData.instructorName?.toLowerCase().includes(searchLower) ||
-              classEntity.code.toLowerCase().includes(searchLower);
-
-            if (!matchesSearch) {
-              continue;
-            }
-          }
-
-          if (data.filter === "pendant_cours" && !duringQuiz) {
-            continue;
-          }
-          if (data.filter === "fin_cours" && !endQuiz) {
-            continue;
-          }
-
-          const averageScore = scoreCount > 0 ? totalScore / scoreCount : 0;
-
-          allSubjects.push({
-            id: subjectData.id,
-            name: subjectData.name,
-            code: classEntity.code,
-            teacher: subjectData.instructorName || "N/A",
-            formType: formType
-              ? {
-                  id: formType.id,
-                  name: formType.name,
-                }
-              : null,
-            feedbackCount: totalFeedbackCount,
-            score: averageScore,
-            alerts: [], // TODO: Implement alert calculation
-            alertsCount: 0, // TODO: Implement alert calculation
-            summary: "", // TODO: Get from AI analysis if available
-            hasVisibleRetours,
-          });
         }
       }
 

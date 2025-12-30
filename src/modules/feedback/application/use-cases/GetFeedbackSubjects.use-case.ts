@@ -177,6 +177,7 @@ export class GetFeedbackSubjectsUseCase
             const matchesSearch =
               subjectData.name.toLowerCase().includes(searchLower) ||
               subjectData.instructorName?.toLowerCase().includes(searchLower) ||
+              classEntity.name.toLowerCase().includes(searchLower) ||
               classEntity.code.toLowerCase().includes(searchLower);
 
             if (!matchesSearch) {
@@ -196,7 +197,7 @@ export class GetFeedbackSubjectsUseCase
           allSubjects.push({
             id: subjectData.id,
             name: subjectData.name,
-            code: classEntity.code,
+            code: classEntity.name,
             teacher: subjectData.instructorName || "N/A",
             formType: formType
               ? {

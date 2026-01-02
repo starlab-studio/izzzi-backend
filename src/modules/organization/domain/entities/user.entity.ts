@@ -98,6 +98,21 @@ export class UserEntity {
     };
   }
 
+  markAsDeleted(): void {
+    if (this.props.status === UserStatus.DELETED) {
+      throw new DomainError("ALREADY_DELETED", "User is already deleted");
+    }
+    this.props = {
+      ...this.props,
+      status: UserStatus.DELETED,
+      updatedAt: new Date(),
+    };
+  }
+
+  isDeleted(): boolean {
+    return this.props.status === UserStatus.DELETED;
+  }
+
   recordLogin(): void {
     this.props = {
       ...this.props,

@@ -24,6 +24,32 @@ import { CreateUserUseCase } from "../use-cases/CreateUser.use-case";
 import { AddUserToOrganizationUseCase } from "../use-cases/AddUserToOrganization.use-case";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { IInvitationRepository } from "../../domain/repositories/invitation.repository";
+import {
+  UpdateMemberRoleUseCase,
+  UpdateMemberRoleData,
+} from "../use-cases/UpdateMemberRole.use-case";
+import {
+  RemoveMemberUseCase,
+  RemoveMemberData,
+} from "../use-cases/RemoveMember.use-case";
+import {
+  GetOrganizationMembersUseCase,
+  GetOrganizationMembersData,
+  OrganizationMember,
+} from "../use-cases/GetOrganizationMembers.use-case";
+import {
+  GetOrganizationStatsUseCase,
+  GetOrganizationStatsData,
+  OrganizationStats,
+} from "../use-cases/GetOrganizationStats.use-case";
+import { IMembershipRepository } from "../../domain/repositories/membership.repository";
+import { MembershipEntity } from "../../domain/entities/membership.entity";
+import { UserEntity } from "../../domain/entities/user.entity";
+
+export type ReactivationResult = {
+  success: boolean;
+  error?: string;
+};
 
 export class OrganizationFacade {
   constructor(
@@ -38,7 +64,12 @@ export class OrganizationFacade {
     private readonly invitationRepository: IInvitationRepository,
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly addUserToOrganizationUseCase: AddUserToOrganizationUseCase,
-    private readonly unitOfWork: IUnitOfWork
+    private readonly unitOfWork: IUnitOfWork,
+    private readonly membershipRepository: IMembershipRepository,
+    private readonly updateMemberRoleUseCase?: UpdateMemberRoleUseCase,
+    private readonly removeMemberUseCase?: RemoveMemberUseCase,
+    private readonly getOrganizationMembersUseCase?: GetOrganizationMembersUseCase,
+    private readonly getOrganizationStatsUseCase?: GetOrganizationStatsUseCase
   ) {}
 
   async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
@@ -69,6 +100,18 @@ export class OrganizationFacade {
       return await this.getUserMembershipsUseCase.execute(userId);
     } catch (error) {
       throw error;
+    }
+  }
+
+  async activateUser(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
+    }
+    
+    if (!user.isActive()) {
+      user.activate();
+      await this.userRepository.save(user);
     }
   }
 
@@ -142,9 +185,7 @@ export class OrganizationFacade {
 
   async acceptInvitation(data: AcceptInvitationData): Promise<void> {
     try {
-      return await this.unitOfWork.withTransaction(async () => {
-        return await this.acceptInvitationUseCase.execute(data);
-      });
+      return await this.acceptInvitationUseCase.execute(data);
     } catch (error) {
       throw error;
     }
@@ -171,7 +212,47 @@ export class OrganizationFacade {
   async checkUserExistsByEmail(email: string): Promise<boolean> {
     try {
       const user = await this.userRepository.findByEmail(email);
-      return !!user;
+      return !!user && !user.isDeleted();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async findDeletedUserById(userId: string): Promise<IUser | null> {
+    try {
+      const user = await this.userRepository.findById(userId);
+      if (user && user.isDeleted()) {
+        return {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          avatarUrl: user.avatarUrl,
+          lastLogin: user.lastLogin,
+          status: user.status,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        };
+      }
+      return null;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async acceptInvitationByToken(token: string): Promise<void> {
+    try {
+      const invitation = await this.invitationRepository.findByToken(token);
+      if (!invitation) {
+        throw new DomainError(
+          ErrorCode.INVALID_OR_EXPIRED_INVITATION,
+          "Invitation not found"
+        );
+      }
+      invitation.markAsAccepted();
+      await this.invitationRepository.save(invitation);
     } catch (error) {
       throw error;
     }
@@ -218,6 +299,14 @@ export class OrganizationFacade {
           addedBy: data.invitedBy,
         });
 
+        // Activate user directly instead of calling activateUser(user.id)
+        // to avoid re-fetching the user within the same transaction
+        const userEntity = user as unknown as UserEntity;
+        if (!userEntity.isActive()) {
+          userEntity.activate();
+          await this.userRepository.save(userEntity);
+        }
+
         return user;
       });
     } catch (error) {
@@ -256,6 +345,121 @@ export class OrganizationFacade {
       });
     } catch (error) {
       throw error;
+    }
+  }
+
+  async updateMemberRole(data: UpdateMemberRoleData): Promise<void> {
+    if (!this.updateMemberRoleUseCase) {
+      throw new DomainError(
+        ErrorCode.UNEXPECTED_ERROR,
+        "UpdateMemberRoleUseCase not initialized"
+      );
+    }
+    try {
+      // Don't wrap in transaction - the use case has its own transaction
+      return await this.updateMemberRoleUseCase!.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeMember(data: RemoveMemberData): Promise<void> {
+    if (!this.removeMemberUseCase) {
+      throw new DomainError(
+        ErrorCode.UNEXPECTED_ERROR,
+        "RemoveMemberUseCase not initialized"
+      );
+    }
+    return await this.removeMemberUseCase.execute(data);
+  }
+
+  async getOrganizationMembers(
+    data: GetOrganizationMembersData
+  ): Promise<OrganizationMember[]> {
+    if (!this.getOrganizationMembersUseCase) {
+      throw new DomainError(
+        ErrorCode.UNEXPECTED_ERROR,
+        "GetOrganizationMembersUseCase not initialized"
+      );
+    }
+    try {
+      return await this.getOrganizationMembersUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getOrganizationStats(
+    data: GetOrganizationStatsData
+  ): Promise<OrganizationStats> {
+    if (!this.getOrganizationStatsUseCase) {
+      throw new DomainError(
+        ErrorCode.UNEXPECTED_ERROR,
+        "GetOrganizationStatsUseCase not initialized"
+      );
+    }
+    try {
+      return await this.getOrganizationStatsUseCase.execute(data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async reactivateUserFromInvitation(
+    userId: string,
+    organizationId: string,
+    role: UserRole,
+    invitedBy: string | null,
+    invitationToken?: string
+  ): Promise<ReactivationResult> {
+    try {
+      return await this.unitOfWork.withTransaction(async () => {
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+          return { success: false, error: "User not found" };
+        }
+
+        if (user.isDeleted()) {
+          user.activate();
+          await this.userRepository.save(user);
+        }
+
+        const existingMembership =
+          await this.membershipRepository.findByUserAndOrganization(
+            userId,
+            organizationId
+          );
+
+        if (existingMembership) {
+          if (!existingMembership.isActive()) {
+            existingMembership.reactivate(role);
+            await this.membershipRepository.save(existingMembership);
+          }
+        } else {
+          const membership = MembershipEntity.create({
+            userId,
+            organizationId,
+            role,
+            addedBy: invitedBy,
+          });
+          await this.membershipRepository.create(membership);
+        }
+
+        if (invitationToken) {
+          const invitation = await this.invitationRepository.findByToken(invitationToken);
+          if (invitation) {
+            invitation.markAsAccepted();
+            await this.invitationRepository.save(invitation);
+          }
+        }
+
+        return { success: true };
+      });
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   }
 }

@@ -21,3 +21,14 @@ export class InvitationDto {
   @IsEnum(UserRole, { message: "Role must be a valid UserRole" })
   role: UserRole;
 }
+
+export class UpdateMemberRoleDto {
+  @ApiProperty({
+    description: "New role to assign to the member",
+    enum: UserRole,
+    example: UserRole.LEARNING_MANAGER,
+  })
+  @IsNotEmpty({ message: "Role is required" })
+  @IsEnum(UserRole, { message: "Role must be a valid UserRole" })
+  role: UserRole;
+}

@@ -33,9 +33,10 @@ export class PasswordResetTokenRepository
   async findByEmailAndNotUsed(
     email: string
   ): Promise<PasswordResetToken | null> {
+    const normalizedEmail = email.trim().toLowerCase();
     const ormEntity = await this.ormRepository.findOne({
       where: {
-        email,
+        email: normalizedEmail,
         isUsed: false,
       },
       order: {

@@ -1,4 +1,5 @@
 import { Module, forwardRef } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -39,6 +40,26 @@ import { OrganizationController } from "./interface/controllers/organization.con
 import { GetUserMembershipsUseCase } from "./application/use-cases/get-user-membership.use-case";
 import { GetOrganizationUseCase } from "./application/use-cases/GetOrganization.use-case";
 import { OrganizationAuthorizationService } from "./domain/services/organization-authorization.service";
+import { UpdateMemberRoleUseCase } from "./application/use-cases/UpdateMemberRole.use-case";
+import { RemoveMemberUseCase } from "./application/use-cases/RemoveMember.use-case";
+import { GetOrganizationMembersUseCase } from "./application/use-cases/GetOrganizationMembers.use-case";
+import { GetOrganizationStatsUseCase } from "./application/use-cases/GetOrganizationStats.use-case";
+import { ClassModule } from "../class/class.module";
+import { SubjectModule } from "../subject/subject.module";
+import { QuizModule } from "../quiz/quiz.module";
+import { IClassRepository } from "../class/domain/repositories/class.repository";
+import { ISubjectRepository } from "../subject/domain/repositories/subject.repository";
+import { IQuizRepository } from "../quiz/domain/repositories/quiz.repository";
+import { IResponseRepository } from "../quiz/domain/repositories/response.repository";
+import { ClassRepository } from "../class/infrastructure/repositories/class.repository";
+import { SubjectRepository } from "../subject/infrastructure/repositories/subject.repository";
+import { AuthIdentityModel } from "../auth/infrastructure/models/authIdentity.model";
+import { AuthIdentityRepository } from "../auth/infrastructure/repositories/authIdentity.repository";
+import { IAuthIdentityRepository } from "../auth/domain/repositories/authIdentity.repository";
+import { IRefreshTokenRepository } from "../auth/domain/repositories/refreshToken.repository";
+import { RefreshTokenRepository } from "../auth/infrastructure/repositories/refreshToken.repository";
+// @ts-ignore - Circular dependency resolved with forwardRef
+import { AuthModule } from "../auth/auth.module";
 import {
   ISubscriptionRepository,
   SUBSCRIPTION_REPOSITORY,
@@ -51,9 +72,13 @@ import {
       OrganizationModel,
       MembershipModel,
       InvitationModel,
+      AuthIdentityModel,
     ]),
     forwardRef(() => CoreModule),
-    forwardRef(() => require("../auth/auth.module").AuthModule),
+    forwardRef(() => AuthModule),
+    forwardRef(() => ClassModule),
+    forwardRef(() => SubjectModule),
+    forwardRef(() => QuizModule),
     forwardRef(
       () => require("../subscription/subscription.module").SubscriptionModule
     ),
@@ -108,6 +133,12 @@ import {
         unitOfWork: IUnitOfWork
       ) => new InvitationRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(InvitationModel), TypeOrmUnitOfWork],
+    },
+    {
+      provide: "AUTH_IDENTITY_REPOSITORY",
+      useFactory: (ormRepository: Repository<AuthIdentityModel>) =>
+        new AuthIdentityRepository(ormRepository),
+      inject: [getRepositoryToken(AuthIdentityModel)],
     },
     {
       provide: CreateUserUseCase,
@@ -216,14 +247,16 @@ import {
         eventStore: IEventStore,
         invitationRepository: IInvitationRepository,
         userRepository: IUserRepository,
-        membershipRepository: IMembershipRepository
+        membershipRepository: IMembershipRepository,
+        unitOfWork: IUnitOfWork
       ) =>
         new AcceptInvitationUseCase(
           logger,
           eventStore,
           invitationRepository,
           userRepository,
-          membershipRepository
+          membershipRepository,
+          unitOfWork
         ),
       inject: [
         LoggerService,
@@ -231,6 +264,7 @@ import {
         InvitationRepository,
         UserRepository,
         MembershipRepository,
+        TypeOrmUnitOfWork,
       ],
     },
     {
@@ -238,14 +272,91 @@ import {
       useFactory: (
         logger: ILoggerService,
         invitationRepository: IInvitationRepository,
-        userRepository: IUserRepository
+        userRepository: IUserRepository,
+        membershipRepository: IMembershipRepository,
+        unitOfWork: IUnitOfWork
       ) =>
         new ValidateInvitationUseCase(
           logger,
           invitationRepository,
-          userRepository
+          userRepository,
+          membershipRepository,
+          unitOfWork
         ),
-      inject: [LoggerService, InvitationRepository, UserRepository],
+      inject: [
+        LoggerService,
+        InvitationRepository,
+        UserRepository,
+        MembershipRepository,
+        TypeOrmUnitOfWork,
+      ],
+    },
+    {
+      provide: UpdateMemberRoleUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository,
+        unitOfWork: IUnitOfWork
+      ) => new UpdateMemberRoleUseCase(logger, membershipRepository, unitOfWork),
+      inject: [LoggerService, MembershipRepository, TypeOrmUnitOfWork],
+    },
+    {
+      provide: RemoveMemberUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository,
+        userRepository: IUserRepository,
+        refreshTokenRepository: IRefreshTokenRepository,
+        unitOfWork: IUnitOfWork
+      ) =>
+        new RemoveMemberUseCase(
+          logger,
+          membershipRepository,
+          userRepository,
+          refreshTokenRepository,
+          unitOfWork
+        ),
+      inject: [
+        LoggerService,
+        MembershipRepository,
+        UserRepository,
+        RefreshTokenRepository,
+        TypeOrmUnitOfWork,
+      ],
+    },
+    {
+      provide: GetOrganizationMembersUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository
+      ) => new GetOrganizationMembersUseCase(logger, membershipRepository),
+      inject: [LoggerService, MembershipRepository],
+    },
+    {
+      provide: GetOrganizationStatsUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        membershipRepository: IMembershipRepository,
+        classRepository: IClassRepository,
+        subjectRepository: ISubjectRepository,
+        quizRepository: IQuizRepository,
+        responseRepository: IResponseRepository
+      ) => new GetOrganizationStatsUseCase(
+        logger,
+        membershipRepository,
+        classRepository,
+        subjectRepository,
+        quizRepository,
+        responseRepository
+      ),
+      inject: [
+        LoggerService,
+        MembershipRepository,
+        "CLASS_REPOSITORY",
+        "SUBJECT_REPOSITORY",
+        "QUIZ_REPOSITORY",
+        "RESPONSE_REPOSITORY",
+      ],
     },
     {
       provide: OrganizationService,
@@ -288,7 +399,12 @@ import {
         invitationRepository: IInvitationRepository,
         createUserUseCase: CreateUserUseCase,
         addUserToOrganizationUseCase: AddUserToOrganizationUseCase,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
+        membershipRepository: IMembershipRepository,
+        updateMemberRoleUseCase: UpdateMemberRoleUseCase,
+        removeMemberUseCase: RemoveMemberUseCase,
+        getOrganizationMembersUseCase: GetOrganizationMembersUseCase,
+        getOrganizationStatsUseCase: GetOrganizationStatsUseCase
       ) =>
         new OrganizationFacade(
           organizationService,
@@ -302,7 +418,12 @@ import {
           invitationRepository,
           createUserUseCase,
           addUserToOrganizationUseCase,
-          unitOfWork
+          unitOfWork,
+          membershipRepository,
+          updateMemberRoleUseCase,
+          removeMemberUseCase,
+          getOrganizationMembersUseCase,
+          getOrganizationStatsUseCase
         ),
       inject: [
         OrganizationService,
@@ -317,6 +438,11 @@ import {
         CreateUserUseCase,
         AddUserToOrganizationUseCase,
         TypeOrmUnitOfWork,
+        MembershipRepository,
+        UpdateMemberRoleUseCase,
+        RemoveMemberUseCase,
+        GetOrganizationMembersUseCase,
+        GetOrganizationStatsUseCase,
       ],
     },
     {

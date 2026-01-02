@@ -39,8 +39,8 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
 @Module({
   imports: [
     TypeOrmModule.forFeature([ClassModel, ClassStudentModel]),
-    CoreModule,
-    OrganizationModule,
+    forwardRef(() => CoreModule),
+    forwardRef(() => OrganizationModule),
     forwardRef(() => SubscriptionModule),
   ],
   controllers: [ClassController],

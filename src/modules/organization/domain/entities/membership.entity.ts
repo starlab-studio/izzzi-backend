@@ -6,16 +6,19 @@ import {
   IMembershipCreate,
   MembershipStatus,
   IMembershipReconstitute,
+  IUser,
 } from "../types";
 import { OrganizationEntity } from "./organization.entity";
 
 export class MembershipEntity {
   private props: IMembership;
   private _organization?: OrganizationEntity;
+  private _user?: IUser;
 
-  private constructor(props: IMembership, organization?: OrganizationEntity) {
+  private constructor(props: IMembership, organization?: OrganizationEntity, user?: IUser) {
     this.props = props;
     this._organization = organization;
+    this._user = user;
   }
 
   public static create(data: IMembershipCreate) {
@@ -47,6 +50,33 @@ export class MembershipEntity {
     return this.props.role !== UserRole.ADMIN;
   }
 
+  updateRole(newRole: UserRole): void {
+    this.props = {
+      ...this.props,
+      role: newRole,
+      updatedAt: new Date(),
+    };
+  }
+
+  markAsDeleted(): void {
+    this.props = {
+      ...this.props,
+      status: MembershipStatus.DELETED,
+      leftAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  reactivate(role?: UserRole): void {
+    this.props = {
+      ...this.props,
+      status: MembershipStatus.ACTIVE,
+      role: role ?? this.props.role,
+      leftAt: null,
+      updatedAt: new Date(),
+    };
+  }
+
   get id(): string {
     return this.props.id;
   }
@@ -59,14 +89,14 @@ export class MembershipEntity {
   get role(): UserRole {
     return this.props.role;
   }
+  get status(): MembershipStatus {
+    return this.props.status;
+  }
   get addedBy(): string | null {
     return this.props.addedBy;
   }
   get leftAt(): Date | null {
     return this.props.leftAt;
-  }
-  get status(): MembershipStatus {
-    return this.props.status;
   }
   get createdAt(): Date {
     return this.props.createdAt;
@@ -78,11 +108,15 @@ export class MembershipEntity {
     return this._organization;
   }
 
+  get user(): IUser | undefined {
+    return this._user;
+  }
+
   toPersistence(): IMembership {
     return { ...this.props };
   }
 
   static reconstitute(data: IMembershipReconstitute): MembershipEntity {
-    return new MembershipEntity(data, data.organization || undefined);
+    return new MembershipEntity(data, data.organization || undefined, data.user || undefined);
   }
 }

@@ -18,6 +18,7 @@ import { DateUtils } from "src/utils/date.utils";
 import { GeneralUtils } from "src/utils/general.utils";
 import { AuthIdentityName } from "../../domain/types";
 import { DomainError, ErrorCode, Email, JWTPayload } from "src/core";
+import { UserStatus } from "src/modules/organization/domain/types";
 import type { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.repository";
 import type { IVerificationTokenRepository } from "../../domain/repositories/verificationToken.repository";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
@@ -135,8 +136,29 @@ export class CustomAuthAdapter implements IAuthStrategy {
     await this.authIdentityRepository.save(authIdentityEntity);
 
     const userDetails = await this.organizationFacade.getUserProfile(
-      authIdentityEntity.userId! // TODO: Check pour être sûr que userId exists
+      authIdentityEntity.userId!
     );
+
+    if (userDetails.status === UserStatus.DELETED) {
+      throw new DomainError(
+        ErrorCode.USER_ACCOUNT_DELETED,
+        "This account has been deleted. Please contact support if you believe this is an error."
+      );
+    }
+
+    if (userDetails.status === UserStatus.SUSPENDED) {
+      throw new DomainError(
+        ErrorCode.USER_ACCOUNT_DISABLED,
+        "This account has been suspended. Please contact support for more information."
+      );
+    }
+
+    if (!userDetails.memberships || userDetails.memberships.length === 0) {
+      throw new DomainError(
+        ErrorCode.NO_MEMBERSHIPS_FOUND,
+        "This account has no active organization memberships. Please contact support."
+      );
+    }
 
     const payload: JWTPayload = {
       sub: authIdentityEntity.providerUserId,
@@ -203,7 +225,11 @@ export class CustomAuthAdapter implements IAuthStrategy {
     }
 
     authIdentityEntity.verifyEmail(email);
-    this.authIdentityRepository.save(authIdentityEntity);
+    await this.authIdentityRepository.save(authIdentityEntity);
+
+    if (authIdentityEntity.userId) {
+      await this.organizationFacade.activateUser(authIdentityEntity.userId);
+    }
 
     verificationToken.markAsUsed();
     await this.verificationTokenRepository.save(verificationToken);
@@ -435,8 +461,33 @@ export class CustomAuthAdapter implements IAuthStrategy {
       refreshTokenEntity.userId
     );
 
+    if (userDetails.status === UserStatus.DELETED) {
+      refreshTokenEntity.revoke();
+      await this.refreshTokenRepository.save(refreshTokenEntity);
+      throw new DomainError(
+        ErrorCode.USER_ACCOUNT_DELETED,
+        "This account has been deleted. Please contact support if you believe this is an error."
+      );
+    }
+
+    if (userDetails.status === UserStatus.SUSPENDED) {
+      throw new DomainError(
+        ErrorCode.USER_ACCOUNT_DISABLED,
+        "This account has been suspended. Please contact support for more information."
+      );
+    }
+
+    if (!userDetails.memberships || userDetails.memberships.length === 0) {
+      refreshTokenEntity.revoke();
+      await this.refreshTokenRepository.save(refreshTokenEntity);
+      throw new DomainError(
+        ErrorCode.NO_MEMBERSHIPS_FOUND,
+        "This account has no active organization memberships. Please contact support."
+      );
+    }
+
     const payload: JWTPayload = {
-      sub: userDetails.id, // TODO: ajuster la logique pour retourner le bpn sub ici ou supprimer
+      sub: userDetails.id,
       userId: refreshTokenEntity.userId,
       username: userDetails.email,
       roles: userDetails.memberships,

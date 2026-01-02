@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   Req,
+  Headers,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -163,7 +164,8 @@ export class FeedbackController extends BaseController {
   async getFeedbackSummary(
     @Param("subjectId") subjectId: string,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @Req() request: any,
+    @Headers("authorization") authHeader?: string
   ) {
     const organizationId = request.organizationId;
 
@@ -171,9 +173,20 @@ export class FeedbackController extends BaseController {
       throw new Error("Organization context required");
     }
 
-    // Extraire le JWT token depuis les headers
-    const authHeader = request.headers?.authorization || "";
-    const jwtToken = authHeader.replace("Bearer ", "");
+    let jwtToken: string | undefined;
+
+    if (authHeader) {
+      const [type, token] = authHeader.split(" ");
+      jwtToken = type === "Bearer" ? token : undefined;
+    }
+
+    if (!jwtToken && request.cookies?.["access_token"]) {
+      jwtToken = request.cookies["access_token"];
+    }
+
+    if (!jwtToken) {
+      throw new Error("JWT token is missing from request headers or cookies");
+    }
 
     const result = await this.feedbackFacade.getFeedbackSummary({
       organizationId,
@@ -201,7 +214,8 @@ export class FeedbackController extends BaseController {
   async getSubjectAlerts(
     @Param("subjectId") subjectId: string,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @Req() request: any,
+    @Headers("authorization") authHeader?: string
   ) {
     const organizationId = request.organizationId;
 
@@ -210,8 +224,22 @@ export class FeedbackController extends BaseController {
     }
 
     // Extraire le JWT token depuis les headers
-    const authHeader = request.headers?.authorization || "";
-    const jwtToken = authHeader.replace("Bearer ", "");
+    // Essayer d'abord depuis le header Authorization, puis depuis les cookies
+    let jwtToken: string | undefined;
+
+    if (authHeader) {
+      const [type, token] = authHeader.split(" ");
+      jwtToken = type === "Bearer" ? token : undefined;
+    }
+
+    // Si pas de token dans le header, essayer depuis les cookies
+    if (!jwtToken && request.cookies?.["access_token"]) {
+      jwtToken = request.cookies["access_token"];
+    }
+
+    if (!jwtToken) {
+      throw new Error("JWT token is missing from request headers or cookies");
+    }
 
     const result = await this.feedbackFacade.getSubjectAlerts({
       organizationId,

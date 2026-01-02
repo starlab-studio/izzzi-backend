@@ -1,4 +1,14 @@
-import { Controller, Get, Query, Param, UseGuards, Req } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Query,
+  Param,
+  Body,
+  UseGuards,
+  Req,
+} from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -15,13 +25,17 @@ import {
   type JWTPayload,
 } from "src/core";
 import { FeedbackFacade } from "../../application/facades/feedback.facade";
+import { QuizFacade } from "src/modules/quiz/application/facades/quiz.facade";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard)
 @ApiTags("Feedback")
 @Controller("v1/feedback")
 export class FeedbackController extends BaseController {
-  constructor(private readonly feedbackFacade: FeedbackFacade) {
+  constructor(
+    private readonly feedbackFacade: FeedbackFacade,
+    private readonly quizFacade: QuizFacade
+  ) {
     super();
   }
 
@@ -64,6 +78,39 @@ export class FeedbackController extends BaseController {
     return this.success(result);
   }
 
+  @Get("subjects/:subjectId")
+  @ApiOperation({
+    summary: "Récupérer un sujet de feedback par ID",
+    description:
+      "Récupère les détails d'un sujet de feedback spécifique. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Sujet récupéré avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  @ApiResponse({ status: 404, description: "Sujet non trouvé" })
+  async getFeedbackSubjectById(
+    @Param("subjectId") subjectId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.feedbackFacade.getFeedbackSubjectById({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+    });
+
+    return this.success(result);
+  }
+
   @Get("subjects/:subjectId/moments/:momentId")
   @ApiOperation({
     summary: "Récupérer les feedbacks d'une matière et d'un moment",
@@ -98,5 +145,319 @@ export class FeedbackController extends BaseController {
     });
 
     return this.success(result);
+  }
+
+  @Get("subjects/:subjectId/summary")
+  @ApiOperation({
+    summary: "Récupérer le résumé IA des feedbacks",
+    description:
+      "Récupère le résumé généré par IA des feedbacks pour une matière. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Résumé récupéré avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async getFeedbackSummary(
+    @Param("subjectId") subjectId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    // Extraire le JWT token depuis les headers
+    const authHeader = request.headers?.authorization || "";
+    const jwtToken = authHeader.replace("Bearer ", "");
+
+    const result = await this.feedbackFacade.getFeedbackSummary({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+      jwtToken,
+    });
+
+    return this.success(result);
+  }
+
+  @Get("subjects/:subjectId/alerts")
+  @ApiOperation({
+    summary: "Récupérer les alertes IA",
+    description:
+      "Récupère les alertes générées par IA pour une matière. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Alertes récupérées avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async getSubjectAlerts(
+    @Param("subjectId") subjectId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    // Extraire le JWT token depuis les headers
+    const authHeader = request.headers?.authorization || "";
+    const jwtToken = authHeader.replace("Bearer ", "");
+
+    const result = await this.feedbackFacade.getSubjectAlerts({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+      jwtToken,
+    });
+
+    return this.success(result);
+  }
+
+  @Post("subjects/:subjectId/alerts/:alertId/comment")
+  @ApiOperation({
+    summary: "Commenter une alerte",
+    description:
+      "Ajoute un commentaire à une alerte. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Commentaire ajouté avec succès",
+  })
+  async commentOnAlert(
+    @Param("subjectId") subjectId: string,
+    @Param("alertId") alertId: string,
+    @Body() body: { comment: string },
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.feedbackFacade.commentOnAlert({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+      alertId,
+      comment: body.comment,
+    });
+
+    return this.success(result);
+  }
+
+  @Post("subjects/:subjectId/alerts/:alertId/send-message")
+  @ApiOperation({
+    summary: "Envoyer un message pour une alerte",
+    description:
+      "Envoie un message aux étudiants concernés par une alerte. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Message envoyé avec succès",
+  })
+  async sendMessageForAlert(
+    @Param("subjectId") subjectId: string,
+    @Param("alertId") alertId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.feedbackFacade.sendMessageForAlert({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+      alertId,
+    });
+
+    return this.success(result);
+  }
+
+  @Patch("subjects/:subjectId/alerts/:alertId/mark-processed")
+  @ApiOperation({
+    summary: "Marquer une alerte comme traitée",
+    description:
+      "Marque une alerte comme traitée ou non traitée. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Statut de l'alerte mis à jour avec succès",
+  })
+  async markAlertAsProcessed(
+    @Param("subjectId") subjectId: string,
+    @Param("alertId") alertId: string,
+    @Body() body: { processed: boolean },
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.feedbackFacade.markAlertAsProcessed({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+      alertId,
+      processed: body.processed,
+    });
+
+    return this.success(result);
+  }
+
+  @Post("subjects/:subjectId/remind")
+  @ApiOperation({
+    summary: "Envoyer des rappels pour tous les quiz d'une matière",
+    description:
+      "Envoie des rappels pour tous les quiz actifs d'une matière. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Rappels envoyés avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async sendReminderBySubject(
+    @Param("subjectId") subjectId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.feedbackFacade.sendReminderBySubject({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+    });
+
+    return this.success(result);
+  }
+
+  @Post("subjects/:subjectId/moments/:momentId/remind")
+  @ApiOperation({
+    summary: "Envoyer un rappel pour un quiz spécifique",
+    description:
+      "Envoie un rappel pour un quiz (moment) spécifique. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Rappel envoyé avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async sendReminderForMoment(
+    @Param("subjectId") subjectId: string,
+    @Param("momentId") momentId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.quizFacade.remindQuizToStudents({
+      quizId: momentId,
+      organizationId,
+      userId: user.userId,
+    });
+
+    return this.success(result);
+  }
+
+  @Get("subjects/:subjectId/moments/:momentId/qr-code")
+  @ApiOperation({
+    summary: "Récupérer le QR code d'un quiz",
+    description:
+      "Récupère le QR code d'un quiz (moment) spécifique. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "QR code récupéré avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async getQRCodeForMoment(
+    @Param("subjectId") subjectId: string,
+    @Param("momentId") momentId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.quizFacade.getQuizLink({
+      quizId: momentId,
+      organizationId,
+      userId: user.userId,
+    });
+
+    return this.success({
+      qrCodeUrl: result.qrCodeUrl,
+    });
+  }
+
+  @Get("subjects/:subjectId/moments/:momentId/form-link")
+  @ApiOperation({
+    summary: "Récupérer le lien du formulaire d'un quiz",
+    description:
+      "Récupère le lien public du formulaire d'un quiz (moment) spécifique. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Lien du formulaire récupéré avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async getFormLinkForMoment(
+    @Param("subjectId") subjectId: string,
+    @Param("momentId") momentId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any
+  ) {
+    const organizationId = request.organizationId;
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const result = await this.quizFacade.getQuizLink({
+      quizId: momentId,
+      organizationId,
+      userId: user.userId,
+    });
+
+    return this.success({
+      link: result.publicUrl,
+    });
   }
 }

@@ -70,6 +70,7 @@ export interface GetFeedbackSummaryInput {
   organizationId: string;
   userId: string;
   subjectId: string;
+  jwtToken?: string;
 }
 
 export interface GetFeedbackSummaryOutput {
@@ -81,6 +82,7 @@ export interface GetFeedbackAlertsInput {
   organizationId: string;
   userId: string;
   subjectId: string;
+  jwtToken?: string; // Token JWT pour appeler le service AI
 }
 
 export interface FeedbackAlert {
@@ -94,4 +96,54 @@ export interface FeedbackAlert {
 
 export interface GetFeedbackAlertsOutput {
   alerts: FeedbackAlert[];
+}
+
+export interface GetFeedbackSubjectByIdInput {
+  organizationId: string;
+  userId: string;
+  subjectId: string;
+}
+
+export interface GetFeedbackSubjectByIdOutput {
+  subject: FeedbackSubjectResponse;
+}
+
+export interface SendReminderBySubjectInput {
+  organizationId: string;
+  userId: string;
+  subjectId: string;
+}
+
+export interface SendReminderBySubjectOutput {
+  success: boolean;
+  message: string;
+  totalQuizzes: number;
+  remindedCount: number;
+  newStudentsSentCount: number;
+  alreadyRespondedCount: number;
+  errors?: string[];
+}
+
+// Domain types for entities
+export interface IFeedbackAlert {
+  readonly id: string;
+  alertId: string; // ID de l'alerte du service AI
+  subjectId: string;
+  organizationId: string;
+  isProcessed: boolean;
+  processedByUserId: string | null;
+  processedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IAlertComment {
+  readonly id: string;
+  alertId: string; // ID de l'alerte du service AI
+  subjectId: string;
+  organizationId: string;
+  userId: string;
+  comment: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

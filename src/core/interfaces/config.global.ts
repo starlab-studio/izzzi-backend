@@ -40,4 +40,7 @@ export default () => ({
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   },
+  aiService: {
+    url: process.env.AI_SERVICE_URL || "http://localhost:8000",
+  },
 });

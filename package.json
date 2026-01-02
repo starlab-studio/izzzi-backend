@@ -41,6 +41,7 @@
     "@sendinblue/client": "^3.3.1",
     "@types/qrcode": "^1.5.6",
     "argon2": "^0.44.0",
+    "axios": "^1.13.2",
     "bullmq": "^5.61.0",
     "cache-manager": "^7.2.5",
     "cacheable": "^2.3.0",

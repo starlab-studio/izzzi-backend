@@ -29,6 +29,13 @@ export interface FeedbackSubjectResponse {
   }>;
   alertsCount: number;
   summary: string;
+  fullSummary?: string;
+  summaryMetadata?: {
+    hasSummary: boolean;
+    isStale: boolean;
+    generatedAt: string | null;
+    feedbackCountAtGeneration: number | null;
+  };
   hasVisibleRetours: boolean;
 }
 
@@ -146,4 +153,44 @@ export interface IAlertComment {
   comment: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ISubjectSummary {
+  readonly id: string;
+  subjectId: string;
+  organizationId: string;
+  summary: string;
+  fullSummary?: string;
+  sentimentScore?: number;
+  periodDays: number;
+  formType: "during_course" | "after_course";
+  feedbackCountAtGeneration: number;
+  generatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AlertItem {
+  id: string;
+  type: "negative" | "alert";
+  number: string;
+  content: string;
+  title: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  timestamp: string;
+  evidence?: string[];
+}
+
+export interface CreateAlertInput {
+  organizationId: string;
+  organizationName: string;
+  subjectId: string;
+  subjectName: string;
+  alerts: AlertItem[];
+}
+
+export interface CreateAlertOutput {
+  success: boolean;
+  message: string;
+  alertsCount: number;
 }

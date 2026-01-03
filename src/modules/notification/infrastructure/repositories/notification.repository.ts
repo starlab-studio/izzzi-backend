@@ -30,4 +30,15 @@ export class NotificationRepository implements INotificationRespository {
     await this.ormRepository.update(id, entity);
     return (await this.findById(id)) as INotification;
   }
+
+  async findByTarget(userId: string, mode?: string): Promise<INotification[]> {
+    const where: any = { target: userId };
+    if (mode) {
+      where.mode = mode;
+    }
+    return await this.ormRepository.find({
+      where,
+      order: { createdAt: "DESC" },
+    });
+  }
 }

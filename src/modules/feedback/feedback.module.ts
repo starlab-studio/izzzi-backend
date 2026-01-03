@@ -7,6 +7,8 @@ import {
   LoggerService,
   TypeOrmUnitOfWork,
   IUnitOfWork,
+  EventStore,
+  IEventStore,
 } from "src/core";
 import { CoreModule } from "src/core/core.module";
 import { OrganizationModule } from "../organization/organization.module";
@@ -25,6 +27,8 @@ import { SendMessageForAlertUseCase } from "./application/use-cases/SendMessageF
 import { MarkAlertAsProcessedUseCase } from "./application/use-cases/MarkAlertAsProcessed.use-case";
 import { GetFeedbackSubjectByIdUseCase } from "./application/use-cases/GetFeedbackSubjectById.use-case";
 import { SendReminderBySubjectUseCase } from "./application/use-cases/SendReminderBySubject.use-case";
+import { CreateAlertUseCase } from "./application/use-cases/CreateAlert.use-case";
+import { GenerateAndSaveSubjectSummaryUseCase } from "./application/use-cases/GenerateAndSaveSubjectSummary.use-case";
 import { FeedbackFacade } from "./application/facades/feedback.facade";
 import { FeedbackController } from "./interface/controllers/feedback.controller";
 import { AiClientService } from "../ai/application/services/ai-client.service";
@@ -49,10 +53,13 @@ import { SUBSCRIPTION_PLAN_REPOSITORY } from "../subscription/domain/repositorie
 import { QuizFacade } from "../quiz/application/facades/quiz.facade";
 import { FeedbackAlertModel } from "./infrastructure/models/feedback-alert.model";
 import { AlertCommentModel } from "./infrastructure/models/alert-comment.model";
+import { SubjectSummaryModel } from "./infrastructure/models/subject-summary.model";
 import { FeedbackAlertRepository } from "./infrastructure/repositories/feedback-alert.repository";
 import { AlertCommentRepository } from "./infrastructure/repositories/alert-comment.repository";
+import { SubjectSummaryRepository } from "./infrastructure/repositories/subject-summary.repository";
 import { IFeedbackAlertRepository } from "./domain/repositories/feedback-alert.repository";
 import { IAlertCommentRepository } from "./domain/repositories/alert-comment.repository";
+import { ISubjectSummaryRepository } from "./domain/repositories/subject-summary.repository";
 
 @Module({
   imports: [
@@ -63,7 +70,11 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
     forwardRef(() => SubscriptionModule),
     forwardRef(() => ClassModule),
     AiModule,
-    TypeOrmModule.forFeature([FeedbackAlertModel, AlertCommentModel]),
+    TypeOrmModule.forFeature([
+      FeedbackAlertModel,
+      AlertCommentModel,
+      SubjectSummaryModel,
+    ]),
   ],
   controllers: [FeedbackController],
   providers: [
@@ -97,6 +108,20 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
       useExisting: AlertCommentRepository,
     },
     {
+      provide: SubjectSummaryRepository,
+      useFactory: (
+        directRepository: Repository<SubjectSummaryModel>,
+        unitOfWork: IUnitOfWork
+      ) => {
+        return new SubjectSummaryRepository(directRepository, unitOfWork);
+      },
+      inject: [getRepositoryToken(SubjectSummaryModel), TypeOrmUnitOfWork],
+    },
+    {
+      provide: "SUBJECT_SUMMARY_REPOSITORY",
+      useExisting: SubjectSummaryRepository,
+    },
+    {
       provide: GetFeedbackSubjectsUseCase,
       useFactory: (
         logger: ILoggerService,
@@ -111,7 +136,8 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
         responseVisibilityService: ResponseVisibilityService,
         subscriptionFeatureService: SubscriptionFeatureService,
         subscriptionRepository: ISubscriptionRepository,
-        subscriptionPlanRepository: ISubscriptionPlanRepository
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
+        subjectSummaryRepository: ISubjectSummaryRepository
       ) =>
         new GetFeedbackSubjectsUseCase(
           logger,
@@ -126,7 +152,8 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
           responseVisibilityService,
           subscriptionFeatureService,
           subscriptionRepository,
-          subscriptionPlanRepository
+          subscriptionPlanRepository,
+          subjectSummaryRepository
         ),
       inject: [
         LoggerService,
@@ -142,6 +169,7 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
         SubscriptionFeatureService,
         SUBSCRIPTION_REPOSITORY,
         SUBSCRIPTION_PLAN_REPOSITORY,
+        "SUBJECT_SUMMARY_REPOSITORY",
       ],
     },
     {
@@ -261,6 +289,39 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
       inject: [LoggerService, QuizFacade],
     },
     {
+      provide: CreateAlertUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        eventStore: IEventStore,
+        feedbackAlertRepository: IFeedbackAlertRepository
+      ) => new CreateAlertUseCase(logger, eventStore, feedbackAlertRepository),
+      inject: [LoggerService, EventStore, "FEEDBACK_ALERT_REPOSITORY"],
+    },
+    {
+      provide: GenerateAndSaveSubjectSummaryUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        aiClientService: AiClientService,
+        subjectSummaryRepository: ISubjectSummaryRepository,
+        quizRepository: IQuizRepository,
+        responseRepository: IResponseRepository
+      ) =>
+        new GenerateAndSaveSubjectSummaryUseCase(
+          logger,
+          aiClientService,
+          subjectSummaryRepository,
+          quizRepository,
+          responseRepository
+        ),
+      inject: [
+        LoggerService,
+        AiClientService,
+        "SUBJECT_SUMMARY_REPOSITORY",
+        "QUIZ_REPOSITORY",
+        "RESPONSE_REPOSITORY",
+      ],
+    },
+    {
       provide: FeedbackFacade,
       useFactory: (
         getFeedbackSubjectsUseCase: GetFeedbackSubjectsUseCase,
@@ -271,7 +332,9 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
         sendMessageForAlertUseCase: SendMessageForAlertUseCase,
         markAlertAsProcessedUseCase: MarkAlertAsProcessedUseCase,
         getFeedbackSubjectByIdUseCase: GetFeedbackSubjectByIdUseCase,
-        sendReminderBySubjectUseCase: SendReminderBySubjectUseCase
+        sendReminderBySubjectUseCase: SendReminderBySubjectUseCase,
+        createAlertUseCase: CreateAlertUseCase,
+        generateAndSaveSubjectSummaryUseCase: GenerateAndSaveSubjectSummaryUseCase
       ) =>
         new FeedbackFacade(
           getFeedbackSubjectsUseCase,
@@ -282,7 +345,9 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
           sendMessageForAlertUseCase,
           markAlertAsProcessedUseCase,
           getFeedbackSubjectByIdUseCase,
-          sendReminderBySubjectUseCase
+          sendReminderBySubjectUseCase,
+          createAlertUseCase,
+          generateAndSaveSubjectSummaryUseCase
         ),
       inject: [
         GetFeedbackSubjectsUseCase,
@@ -294,6 +359,8 @@ import { IAlertCommentRepository } from "./domain/repositories/alert-comment.rep
         MarkAlertAsProcessedUseCase,
         GetFeedbackSubjectByIdUseCase,
         SendReminderBySubjectUseCase,
+        CreateAlertUseCase,
+        GenerateAndSaveSubjectSummaryUseCase,
       ],
     },
   ],

@@ -27,6 +27,7 @@ import {
 } from "src/core";
 import { FeedbackFacade } from "../../application/facades/feedback.facade";
 import { QuizFacade } from "src/modules/quiz/application/facades/quiz.facade";
+import { CreateAlertDto } from "../dto/alert.dto";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard)
@@ -38,6 +39,30 @@ export class FeedbackController extends BaseController {
     private readonly quizFacade: QuizFacade
   ) {
     super();
+  }
+
+  @Post("alerts")
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: "Recevoir des alertes depuis Langchain",
+    description:
+      "Endpoint appelé par le service Langchain pour envoyer les alertes générées. Déclenche l'envoi d'email et de notifications push.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Alertes reçues et notifications envoyées avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  async createAlert(@Body() body: CreateAlertDto) {
+    const result = await this.feedbackFacade.createAlert({
+      organizationId: body.organizationId,
+      organizationName: body.organizationName,
+      subjectId: body.subjectId,
+      subjectName: body.subjectName,
+      alerts: body.alerts,
+    });
+
+    return this.success(result);
   }
 
   @Get("subjects")
@@ -198,6 +223,71 @@ export class FeedbackController extends BaseController {
     return this.success(result);
   }
 
+  @Post("subjects/:subjectId/summary/generate")
+  @ApiOperation({
+    summary: "Générer et sauvegarder le résumé IA des feedbacks",
+    description:
+      "Génère un nouveau résumé IA des feedbacks pour une matière et le sauvegarde en base de données. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Résumé généré et sauvegardé avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async generateSubjectSummary(
+    @Param("subjectId") subjectId: string,
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any,
+    @Query("periodDays") periodDays?: number,
+    @Query("formType") formTypeParam?: string,
+    @Headers("authorization") authHeader?: string
+  ) {
+    const organizationId = request.organizationId;
+
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    let formType: "during_course" | "after_course";
+    if (formTypeParam === "during") {
+      formType = "during_course";
+    } else if (formTypeParam === "end") {
+      formType = "after_course";
+    } else {
+      throw new Error(
+        `Invalid formType: ${formTypeParam}. Must be "during" or "end"`
+      );
+    }
+
+    let jwtToken: string | undefined;
+
+    if (authHeader) {
+      const [type, token] = authHeader.split(" ");
+      jwtToken = type === "Bearer" ? token : undefined;
+    }
+
+    if (!jwtToken && request.cookies?.["access_token"]) {
+      jwtToken = request.cookies["access_token"];
+    }
+
+    if (!jwtToken) {
+      throw new Error("JWT token is missing from request headers or cookies");
+    }
+
+    const result = await this.feedbackFacade.generateAndSaveSubjectSummary({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+      formType,
+      periodDays: periodDays ? Number(periodDays) : 30,
+      jwtToken,
+    });
+
+    return this.success(result);
+  }
+
   @Get("subjects/:subjectId/alerts")
   @ApiOperation({
     summary: "Récupérer les alertes IA",
@@ -223,8 +313,6 @@ export class FeedbackController extends BaseController {
       throw new Error("Organization context required");
     }
 
-    // Extraire le JWT token depuis les headers
-    // Essayer d'abord depuis le header Authorization, puis depuis les cookies
     let jwtToken: string | undefined;
 
     if (authHeader) {
@@ -232,7 +320,6 @@ export class FeedbackController extends BaseController {
       jwtToken = type === "Bearer" ? token : undefined;
     }
 
-    // Si pas de token dans le header, essayer depuis les cookies
     if (!jwtToken && request.cookies?.["access_token"]) {
       jwtToken = request.cookies["access_token"];
     }

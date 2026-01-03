@@ -8,6 +8,8 @@ import { SendMessageForAlertUseCase } from "../use-cases/SendMessageForAlert.use
 import { MarkAlertAsProcessedUseCase } from "../use-cases/MarkAlertAsProcessed.use-case";
 import { GetFeedbackSubjectByIdUseCase } from "../use-cases/GetFeedbackSubjectById.use-case";
 import { SendReminderBySubjectUseCase } from "../use-cases/SendReminderBySubject.use-case";
+import { CreateAlertUseCase } from "../use-cases/CreateAlert.use-case";
+import { GenerateAndSaveSubjectSummaryUseCase } from "../use-cases/GenerateAndSaveSubjectSummary.use-case";
 import {
   GetFeedbackSubjectsInput,
   GetFeedbackSubjectsOutput,
@@ -21,6 +23,8 @@ import {
   GetFeedbackSubjectByIdOutput,
   SendReminderBySubjectInput,
   SendReminderBySubjectOutput,
+  CreateAlertInput,
+  CreateAlertOutput,
 } from "../../domain/types";
 import {
   CommentOnAlertInput,
@@ -34,6 +38,10 @@ import {
   MarkAlertAsProcessedInput,
   MarkAlertAsProcessedOutput,
 } from "../use-cases/MarkAlertAsProcessed.use-case";
+import {
+  GenerateAndSaveSubjectSummaryInput,
+  GenerateAndSaveSubjectSummaryOutput,
+} from "../use-cases/GenerateAndSaveSubjectSummary.use-case";
 
 @Injectable()
 export class FeedbackFacade {
@@ -46,7 +54,9 @@ export class FeedbackFacade {
     private readonly sendMessageForAlertUseCase: SendMessageForAlertUseCase,
     private readonly markAlertAsProcessedUseCase: MarkAlertAsProcessedUseCase,
     private readonly getFeedbackSubjectByIdUseCase: GetFeedbackSubjectByIdUseCase,
-    private readonly sendReminderBySubjectUseCase: SendReminderBySubjectUseCase
+    private readonly sendReminderBySubjectUseCase: SendReminderBySubjectUseCase,
+    private readonly createAlertUseCase: CreateAlertUseCase,
+    private readonly generateAndSaveSubjectSummaryUseCase: GenerateAndSaveSubjectSummaryUseCase
   ) {}
 
   async getFeedbackSubjects(
@@ -101,5 +111,15 @@ export class FeedbackFacade {
     data: SendReminderBySubjectInput
   ): Promise<SendReminderBySubjectOutput> {
     return this.sendReminderBySubjectUseCase.execute(data);
+  }
+
+  async createAlert(data: CreateAlertInput): Promise<CreateAlertOutput> {
+    return this.createAlertUseCase.execute(data);
+  }
+
+  async generateAndSaveSubjectSummary(
+    data: GenerateAndSaveSubjectSummaryInput
+  ): Promise<GenerateAndSaveSubjectSummaryOutput> {
+    return this.generateAndSaveSubjectSummaryUseCase.execute(data);
   }
 }

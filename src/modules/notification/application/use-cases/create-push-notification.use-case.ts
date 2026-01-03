@@ -36,6 +36,7 @@ export class CreatePushNotificationUseCase {
         mode,
         status: NotificationStatus.DELIVERED,
         retryCount: 0,
+        isRead: false,
       });
 
       const ormNotification =

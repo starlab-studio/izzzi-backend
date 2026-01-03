@@ -1,10 +1,4 @@
-import {
-  IUseCase,
-  BaseUseCase,
-  ILoggerService,
-  DomainError,
-  ErrorCode,
-} from "src/core";
+import { IUseCase, BaseUseCase, ILoggerService } from "src/core";
 import {
   GetFeedbackSubjectsInput,
   GetFeedbackSubjectsOutput,
@@ -23,6 +17,7 @@ import { SubscriptionFeatureService } from "src/modules/subscription/domain/serv
 import { ISubscriptionRepository } from "src/modules/subscription/domain/repositories/subscription.repository";
 import { ISubscriptionPlanRepository } from "src/modules/subscription/domain/repositories/subscription-plan.repository";
 import { ResponseEntity } from "src/modules/quiz/domain/entities/response.entity";
+import { ISubjectSummaryRepository } from "../../domain/repositories/subject-summary.repository";
 
 export class GetFeedbackSubjectsUseCase
   extends BaseUseCase
@@ -41,7 +36,8 @@ export class GetFeedbackSubjectsUseCase
     private readonly responseVisibilityService: ResponseVisibilityService,
     private readonly subscriptionFeatureService: SubscriptionFeatureService,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
+    private readonly subjectSummaryRepository: ISubjectSummaryRepository
   ) {
     super(logger);
   }
@@ -213,18 +209,89 @@ export class GetFeedbackSubjectsUseCase
               score: averageScore,
               alerts: [], // TODO: Implement alert calculation
               alertsCount: 0, // TODO: Implement alert calculation
-              summary: "", // TODO: Get from AI analysis if available
+              summary: "",
               hasVisibleRetours,
             });
           }
         }
       }
 
+      const mapFormTypeToDb = (
+        formTypeId: string | undefined
+      ): "during_course" | "after_course" | null => {
+        if (formTypeId === "during") return "during_course";
+        if (formTypeId === "end") return "after_course";
+        return null;
+      };
+
+      const uniqueSubjectIds = [
+        ...new Set(allSubjects.map((s) => s.subjectId)),
+      ];
+      const periodDays = 30;
+
+      const summariesDuring =
+        await this.subjectSummaryRepository.findBySubjectIdsAndFormType(
+          uniqueSubjectIds,
+          periodDays,
+          "during_course"
+        );
+      const summariesAfter =
+        await this.subjectSummaryRepository.findBySubjectIdsAndFormType(
+          uniqueSubjectIds,
+          periodDays,
+          "after_course"
+        );
+
+      const summaryMap = new Map<string, (typeof summariesDuring)[0]>();
+      summariesDuring.forEach((summary) => {
+        summaryMap.set(`${summary.subjectId}_during_course`, summary);
+      });
+      summariesAfter.forEach((summary) => {
+        summaryMap.set(`${summary.subjectId}_after_course`, summary);
+      });
+
+      const enrichedSubjects = allSubjects.map((subject) => {
+        const dbFormType = mapFormTypeToDb(subject.formType?.id);
+        const summaryKey = dbFormType
+          ? `${subject.subjectId}_${dbFormType}`
+          : null;
+        const summary = summaryKey ? summaryMap.get(summaryKey) : undefined;
+
+        if (summary) {
+          const isStale =
+            subject.feedbackCount - summary.feedbackCountAtGeneration >= 3;
+
+          return {
+            ...subject,
+            summary: summary.summary,
+            fullSummary: summary.fullSummary,
+            summaryMetadata: {
+              hasSummary: true,
+              isStale,
+              generatedAt: summary.generatedAt.toISOString(),
+              feedbackCountAtGeneration: summary.feedbackCountAtGeneration,
+            },
+          };
+        }
+
+        return {
+          ...subject,
+          summary: "",
+          fullSummary: undefined,
+          summaryMetadata: {
+            hasSummary: false,
+            isStale: false,
+            generatedAt: null,
+            feedbackCountAtGeneration: null,
+          },
+        };
+      });
+
       if (data.sort === "plus_recent") {
-        allSubjects.reverse();
+        enrichedSubjects.reverse();
       }
 
-      return { subjects: allSubjects };
+      return { subjects: enrichedSubjects };
     } catch (error) {
       this.handleError(error);
     }

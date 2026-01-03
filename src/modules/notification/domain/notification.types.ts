@@ -24,14 +24,18 @@ export interface INotification {
   status: NotificationStatus;
   retryCount: number;
   deliveredAt?: Date;
+  isRead: boolean;
+  metadata?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type ICreateNotification = Omit<
   INotification,
-  "id" | "status" | "retryCount" | "createdAt" | "updatedAt"
->;
+  "id" | "status" | "retryCount" | "createdAt" | "updatedAt" | "isRead"
+> & {
+  isRead?: boolean;
+};
 
 export interface INotificationAttempt {
   id: string;
@@ -60,7 +64,7 @@ export interface INotificationQueue {
 
 export interface IEmailLog {
   readonly id: string;
-  type: 
+  type:
     | "registration_confirmation"
     | "password_reset"
     | "class_created"

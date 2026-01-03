@@ -325,7 +325,7 @@ export class UpdateSubscriptionQuantityUseCase
       const planName = plan.name === "super-izzzi" ? "Super Izzzi" : "Izzzi";
 
       // Emit upgrade event if upgrade occurred and no payment is required
-      if (isUpgrade && !requiresPayment) {
+      if (isUpgrade) {
         const user = await this.userRepository.findById(subscription.userId);
         if (user) {
           this.eventStore.publish(

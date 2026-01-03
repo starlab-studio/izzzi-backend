@@ -5,6 +5,10 @@ import { IFeedbackAlert } from "../../domain/types";
 @Index(["alertId", "subjectId"], { unique: true })
 @Index(["subjectId"])
 @Index(["organizationId"])
+@Index(["type"])
+@Index(["priority"])
+@Index(["timestamp"])
+@Index(["subjectId", "type"])
 export class FeedbackAlertModel implements IFeedbackAlert {
   @PrimaryColumn("uuid")
   id: string;
@@ -26,6 +30,37 @@ export class FeedbackAlertModel implements IFeedbackAlert {
 
   @Column({ name: "processed_at", type: "timestamp", nullable: true })
   processedAt: Date | null;
+
+  @Column({
+    name: "type",
+    type: "enum",
+    enum: ["negative", "alert", "positive"],
+    nullable: false,
+  })
+  type: "negative" | "alert" | "positive";
+
+  @Column({ name: "title", type: "varchar", length: 255, nullable: false })
+  title: string;
+
+  @Column({ name: "content", type: "text", nullable: false })
+  content: string;
+
+  @Column({
+    name: "priority",
+    type: "enum",
+    enum: ["low", "medium", "high", "urgent"],
+    nullable: false,
+  })
+  priority: "low" | "medium" | "high" | "urgent";
+
+  @Column({ name: "number", type: "varchar", length: 50, nullable: false })
+  number: string;
+
+  @Column({ name: "timestamp", type: "timestamp", nullable: false })
+  timestamp: Date;
+
+  @Column({ name: "evidence", type: "jsonb", nullable: true })
+  evidence?: string[];
 
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;

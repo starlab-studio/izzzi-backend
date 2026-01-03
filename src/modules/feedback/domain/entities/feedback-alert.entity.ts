@@ -15,6 +15,13 @@ export class FeedbackAlertEntity extends BaseEntity {
     alertId: string;
     subjectId: string;
     organizationId: string;
+    type: "negative" | "alert" | "positive";
+    title: string;
+    content: string;
+    priority: "low" | "medium" | "high" | "urgent";
+    number: string;
+    timestamp: Date;
+    evidence?: string[];
     processedByUserId?: string | null;
   }): FeedbackAlertEntity {
     const alertId = (data.alertId ?? "").trim();
@@ -38,6 +45,27 @@ export class FeedbackAlertEntity extends BaseEntity {
       ErrorCode.UNEXPECTED_ERROR
     );
 
+    const title = (data.title ?? "").trim();
+    BaseEntity.validateRequiredString(
+      title,
+      "Title",
+      ErrorCode.UNEXPECTED_ERROR
+    );
+
+    const content = (data.content ?? "").trim();
+    BaseEntity.validateRequiredString(
+      content,
+      "Content",
+      ErrorCode.UNEXPECTED_ERROR
+    );
+
+    const number = (data.number ?? "").trim();
+    BaseEntity.validateRequiredString(
+      number,
+      "Number",
+      ErrorCode.UNEXPECTED_ERROR
+    );
+
     return new FeedbackAlertEntity({
       id: randomUUID(),
       alertId,
@@ -46,6 +74,13 @@ export class FeedbackAlertEntity extends BaseEntity {
       isProcessed: false,
       processedByUserId: data.processedByUserId || null,
       processedAt: null,
+      type: data.type,
+      title,
+      content,
+      priority: data.priority,
+      number,
+      timestamp: data.timestamp,
+      evidence: data.evidence || undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -110,6 +145,34 @@ export class FeedbackAlertEntity extends BaseEntity {
 
   get updatedAt(): Date {
     return this.props.updatedAt;
+  }
+
+  get type(): "negative" | "alert" | "positive" {
+    return this.props.type;
+  }
+
+  get title(): string {
+    return this.props.title;
+  }
+
+  get content(): string {
+    return this.props.content;
+  }
+
+  get priority(): "low" | "medium" | "high" | "urgent" {
+    return this.props.priority;
+  }
+
+  get number(): string {
+    return this.props.number;
+  }
+
+  get timestamp(): Date {
+    return this.props.timestamp;
+  }
+
+  get evidence(): string[] | undefined {
+    return this.props.evidence;
   }
 
   toPersistence(): IFeedbackAlert {

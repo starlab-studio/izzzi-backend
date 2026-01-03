@@ -91,7 +91,7 @@ export interface GetFeedbackAlertsInput {
   organizationId: string;
   userId: string;
   subjectId: string;
-  jwtToken?: string; // Token JWT pour appeler le service AI
+  jwtToken?: string;
 }
 
 export interface FeedbackAlert {
@@ -133,15 +133,21 @@ export interface SendReminderBySubjectOutput {
   errors?: string[];
 }
 
-// Domain types for entities
 export interface IFeedbackAlert {
   readonly id: string;
-  alertId: string; // ID de l'alerte du service AI
+  alertId: string;
   subjectId: string;
   organizationId: string;
   isProcessed: boolean;
   processedByUserId: string | null;
   processedAt: Date | null;
+  type: "negative" | "alert" | "positive";
+  title: string;
+  content: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  number: string;
+  timestamp: Date;
+  evidence?: string[];
   createdAt: Date;
   updatedAt: Date;
 }

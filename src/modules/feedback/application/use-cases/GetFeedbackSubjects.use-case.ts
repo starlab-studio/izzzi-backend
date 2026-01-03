@@ -18,6 +18,7 @@ import { ISubscriptionRepository } from "src/modules/subscription/domain/reposit
 import { ISubscriptionPlanRepository } from "src/modules/subscription/domain/repositories/subscription-plan.repository";
 import { ResponseEntity } from "src/modules/quiz/domain/entities/response.entity";
 import { ISubjectSummaryRepository } from "../../domain/repositories/subject-summary.repository";
+import { IFeedbackAlertRepository } from "../../domain/repositories/feedback-alert.repository";
 
 export class GetFeedbackSubjectsUseCase
   extends BaseUseCase
@@ -37,7 +38,8 @@ export class GetFeedbackSubjectsUseCase
     private readonly subscriptionFeatureService: SubscriptionFeatureService,
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
-    private readonly subjectSummaryRepository: ISubjectSummaryRepository
+    private readonly subjectSummaryRepository: ISubjectSummaryRepository,
+    private readonly feedbackAlertRepository: IFeedbackAlertRepository
   ) {
     super(logger);
   }
@@ -207,9 +209,10 @@ export class GetFeedbackSubjectsUseCase
               },
               feedbackCount: allResponses.length,
               score: averageScore,
-              alerts: [], // TODO: Implement alert calculation
-              alertsCount: 0, // TODO: Implement alert calculation
-              summary: "",
+              alerts: [], // Will be populated later from DB
+              alertsCount: 0, // Will be populated later from DB
+              summary: "", // Will be populated later from DB
+              fullSummary: "", // Will be populated later from DB
               hasVisibleRetours,
             });
           }
@@ -228,6 +231,15 @@ export class GetFeedbackSubjectsUseCase
         ...new Set(allSubjects.map((s) => s.subjectId)),
       ];
       const periodDays = 30;
+
+      const allAlerts =
+        await this.feedbackAlertRepository.findBySubjectIds(uniqueSubjectIds);
+      const alertsBySubjectId = new Map<string, typeof allAlerts>();
+      allAlerts.forEach((alert) => {
+        const existing = alertsBySubjectId.get(alert.subjectId) || [];
+        existing.push(alert);
+        alertsBySubjectId.set(alert.subjectId, existing);
+      });
 
       const summariesDuring =
         await this.subjectSummaryRepository.findBySubjectIdsAndFormType(
@@ -257,12 +269,31 @@ export class GetFeedbackSubjectsUseCase
           : null;
         const summary = summaryKey ? summaryMap.get(summaryKey) : undefined;
 
+        const subjectAlerts = alertsBySubjectId.get(subject.subjectId) || [];
+        const mappedAlerts: Array<{
+          id: string;
+          type: "negative" | "positive";
+          number: string;
+          content: string;
+          timestamp: string;
+        }> = subjectAlerts.map((alert) => ({
+          id: alert.alertId,
+          type: (alert.type === "negative" ? "negative" : "positive") as
+            | "negative"
+            | "positive",
+          number: alert.number,
+          content: alert.content,
+          timestamp: alert.timestamp.toISOString(),
+        }));
+
         if (summary) {
           const isStale =
             subject.feedbackCount - summary.feedbackCountAtGeneration >= 3;
 
           return {
             ...subject,
+            alerts: mappedAlerts,
+            alertsCount: mappedAlerts.length,
             summary: summary.summary,
             fullSummary: summary.fullSummary,
             summaryMetadata: {
@@ -276,6 +307,8 @@ export class GetFeedbackSubjectsUseCase
 
         return {
           ...subject,
+          alerts: mappedAlerts,
+          alertsCount: mappedAlerts.length,
           summary: "",
           fullSummary: undefined,
           summaryMetadata: {

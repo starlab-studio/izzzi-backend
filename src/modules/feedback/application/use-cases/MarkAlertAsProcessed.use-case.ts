@@ -6,7 +6,6 @@ import {
   ErrorCode,
 } from "src/core";
 import { IFeedbackAlertRepository } from "../../domain/repositories/feedback-alert.repository";
-import { FeedbackAlertEntity } from "../../domain/entities/feedback-alert.entity";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 
 export interface MarkAlertAsProcessedInput {
@@ -46,26 +45,23 @@ export class MarkAlertAsProcessedUseCase
         `Marking alert ${data.alertId} as ${data.processed ? "processed" : "unprocessed"} for subject ${data.subjectId}`
       );
 
-      let alertEntity = await this.feedbackAlertRepository.findByAlertId(
+      const alertEntity = await this.feedbackAlertRepository.findByAlertId(
         data.alertId,
         data.subjectId
       );
 
       if (!alertEntity) {
-        // Créer l'entité si elle n'existe pas
-        alertEntity = FeedbackAlertEntity.create({
-          alertId: data.alertId,
-          subjectId: data.subjectId,
-          organizationId: data.organizationId,
-        });
-        alertEntity = await this.feedbackAlertRepository.create(alertEntity);
-      } else {
-        if (alertEntity.organizationId !== data.organizationId) {
-          throw new DomainError(
-            ErrorCode.UNAUTHORIZED_ACCESS,
-            "Unauthorized access to alert"
-          );
-        }
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          `Alert ${data.alertId} not found for subject ${data.subjectId}`
+        );
+      }
+
+      if (alertEntity.organizationId !== data.organizationId) {
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to alert"
+        );
       }
 
       if (data.processed) {

@@ -27,13 +27,24 @@ export class CreateAlertUseCase
         `Creating ${data.alerts.length} alert(s) for subject ${data.subjectId} in organization ${data.organizationId}`
       );
 
-      // Stocker chaque alerte dans la base de données
       const storedAlerts: FeedbackAlertEntity[] = [];
       for (const alert of data.alerts) {
         const alertEntity = FeedbackAlertEntity.create({
           alertId: alert.id,
           subjectId: data.subjectId,
           organizationId: data.organizationId,
+          type:
+            alert.type === "negative"
+              ? "negative"
+              : alert.type === "alert"
+                ? "alert"
+                : "positive",
+          title: alert.title,
+          content: alert.content,
+          priority: alert.priority,
+          number: alert.number,
+          timestamp: new Date(alert.timestamp),
+          evidence: alert.evidence,
         });
 
         const savedAlert =

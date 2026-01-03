@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { Repository, In } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { FeedbackAlertModel } from "../models/feedback-alert.model";
@@ -37,6 +37,18 @@ export class FeedbackAlertRepository
   async findBySubjectId(subjectId: string): Promise<FeedbackAlertEntity[]> {
     const ormEntityList = await this.directRepository.find({
       where: { subjectId },
+    });
+    return ormEntityList.map((ormEntity) =>
+      FeedbackAlertEntity.reconstitute(ormEntity)
+    );
+  }
+
+  async findBySubjectIds(subjectIds: string[]): Promise<FeedbackAlertEntity[]> {
+    if (subjectIds.length === 0) {
+      return [];
+    }
+    const ormEntityList = await this.directRepository.find({
+      where: { subjectId: In(subjectIds) },
     });
     return ormEntityList.map((ormEntity) =>
       FeedbackAlertEntity.reconstitute(ormEntity)

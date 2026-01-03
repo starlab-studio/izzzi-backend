@@ -24,6 +24,7 @@ import {
   RolesGuard,
   CurrentUser,
   type JWTPayload,
+  Public,
 } from "src/core";
 import { FeedbackFacade } from "../../application/facades/feedback.facade";
 import { QuizFacade } from "src/modules/quiz/application/facades/quiz.facade";
@@ -42,7 +43,7 @@ export class FeedbackController extends BaseController {
   }
 
   @Post("alerts")
-  @UseGuards(AuthGuard)
+  @Public()
   @ApiOperation({
     summary: "Recevoir des alertes depuis Langchain",
     description:

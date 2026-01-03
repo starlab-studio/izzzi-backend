@@ -10,4 +10,5 @@ export interface IFeedbackAlertRepository
     subjectId: string
   ): Promise<FeedbackAlertEntity | null>;
   findBySubjectId(subjectId: string): Promise<FeedbackAlertEntity[]>;
+  findBySubjectIds(subjectIds: string[]): Promise<FeedbackAlertEntity[]>;
 }

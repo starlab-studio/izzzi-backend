@@ -1,8 +1,8 @@
 import { BaseUseCase, IUseCase, type ILoggerService } from "src/core";
-import { AiClientService } from "../../../ai/application/services/ai-client.service";
 import {
   GetFeedbackAlertsInput,
   GetFeedbackAlertsOutput,
+  FeedbackAlert,
 } from "../../domain/types";
 import { IFeedbackAlertRepository } from "../../domain/repositories/feedback-alert.repository";
 
@@ -12,7 +12,6 @@ export class GetSubjectAlertsUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly aiClientService: AiClientService,
     private readonly feedbackAlertRepository: IFeedbackAlertRepository
   ) {
     super(logger);
@@ -24,30 +23,21 @@ export class GetSubjectAlertsUseCase
     try {
       this.logger.info(`Getting alerts for subject ${data.subjectId}`);
 
-      const jwtToken = data.jwtToken || "";
-
-      const result = await this.aiClientService.getFeedbackAlerts(
-        data.subjectId,
-        30,
-        jwtToken
-      );
-
-      const alertStatuses = await this.feedbackAlertRepository.findBySubjectId(
+      const alertEntities = await this.feedbackAlertRepository.findBySubjectId(
         data.subjectId
       );
 
-      const statusMap = new Map<string, boolean>();
-      alertStatuses.forEach((status) => {
-        statusMap.set(status.alertId, status.isProcessed);
-      });
-
-      const alertsWithStatus = result.alerts.map((alert) => ({
-        ...alert,
-        isProcessed: statusMap.get(alert.id) || false,
+      const alerts: FeedbackAlert[] = alertEntities.map((alert) => ({
+        id: alert.alertId,
+        type: alert.type === "negative" ? "negative" : "positive",
+        number: alert.number,
+        content: alert.content,
+        timestamp: alert.timestamp.toISOString(),
+        isProcessed: alert.isProcessed,
       }));
 
       return {
-        alerts: alertsWithStatus,
+        alerts,
       };
     } catch (error: any) {
       this.handleError(error);

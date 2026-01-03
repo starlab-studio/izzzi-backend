@@ -177,7 +177,7 @@ export class FeedbackController extends BaseController {
   @ApiOperation({
     summary: "Récupérer le résumé IA des feedbacks",
     description:
-      "Récupère le résumé généré par IA des feedbacks pour une matière. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+      "Récupère le résumé généré par IA des feedbacks pour une matière depuis la base de données. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
   @ApiResponse({
@@ -190,12 +190,21 @@ export class FeedbackController extends BaseController {
     @Param("subjectId") subjectId: string,
     @CurrentUser() user: JWTPayload,
     @Req() request: any,
+    @Query("periodDays") periodDays?: number,
+    @Query("formType") formTypeParam?: string,
     @Headers("authorization") authHeader?: string
   ) {
     const organizationId = request.organizationId;
 
     if (!organizationId) {
       throw new Error("Organization context required");
+    }
+
+    let formType: "during_course" | "after_course" | undefined;
+    if (formTypeParam === "during") {
+      formType = "during_course";
+    } else if (formTypeParam === "end") {
+      formType = "after_course";
     }
 
     let jwtToken: string | undefined;
@@ -217,6 +226,8 @@ export class FeedbackController extends BaseController {
       organizationId,
       userId: user.userId,
       subjectId,
+      formType,
+      periodDays,
       jwtToken,
     });
 

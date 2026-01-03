@@ -77,6 +77,8 @@ export interface GetFeedbackSummaryInput {
   organizationId: string;
   userId: string;
   subjectId: string;
+  formType?: "during_course" | "after_course";
+  periodDays?: number;
   jwtToken?: string;
 }
 

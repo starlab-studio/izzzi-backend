@@ -219,8 +219,7 @@ import { ISubjectSummaryRepository } from "./domain/repositories/subject-summary
       useFactory: (
         logger: ILoggerService,
         subjectSummaryRepository: ISubjectSummaryRepository
-      ) =>
-        new GetFeedbackSummaryUseCase(logger, subjectSummaryRepository),
+      ) => new GetFeedbackSummaryUseCase(logger, subjectSummaryRepository),
       inject: [LoggerService, "SUBJECT_SUMMARY_REPOSITORY"],
     },
     {

@@ -38,11 +38,12 @@ export class GetFeedbackSummaryUseCase
       }
 
       // Retrieve summary from database
-      const summaryEntity = await this.subjectSummaryRepository.findBySubjectIdAndFormType(
-        data.subjectId,
-        periodDays,
-        data.formType
-      );
+      const summaryEntity =
+        await this.subjectSummaryRepository.findBySubjectIdAndFormType(
+          data.subjectId,
+          periodDays,
+          data.formType
+        );
 
       if (!summaryEntity) {
         this.logger.info(

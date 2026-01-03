@@ -15,6 +15,7 @@ import { FeedbackModule } from "./modules/feedback/feedback.module";
 
 import AppConfig from "./core/interfaces/config.global";
 import { FaqModule } from "./modules/faq/faq.module";
+import { StorageModule } from "./modules/storage/core.module";
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { FaqModule } from "./modules/faq/faq.module";
     UserModule,
     FaqModule,
     FeedbackModule,
+    StorageModule,
   ],
 })
 export class AppModule {}

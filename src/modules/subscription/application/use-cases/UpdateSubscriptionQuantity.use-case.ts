@@ -203,19 +203,27 @@ export class UpdateSubscriptionQuantityUseCase
         effectiveDate = new Date();
         prorationApplied = true;
 
-        const periodStart = subscription.currentPeriodStart!;
-        const periodEnd = subscription.currentPeriodEnd!;
-        const totalDaysInPeriod =
-          (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24);
-        const daysRemaining =
-          (periodEnd.getTime() - effectiveDate.getTime()) /
-          (1000 * 60 * 60 * 24);
+        const periodStart = subscription.currentPeriodStart;
+        const periodEnd = subscription.currentPeriodEnd;
+        
+        // Vérifier que les dates de période sont définies pour calculer la proration
+        if (periodStart && periodEnd) {
+          const totalDaysInPeriod =
+            (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24);
+          const daysRemaining =
+            (periodEnd.getTime() - effectiveDate.getTime()) /
+            (1000 * 60 * 60 * 24);
 
-        if (totalDaysInPeriod > 0 && daysRemaining > 0) {
-          const prorationRatio = daysRemaining / totalDaysInPeriod;
-          amountDueCents = Math.round(priceDifferenceCents * prorationRatio);
-          requiresPayment = amountDueCents > 0;
+          if (totalDaysInPeriod > 0 && daysRemaining > 0) {
+            const prorationRatio = daysRemaining / totalDaysInPeriod;
+            amountDueCents = Math.round(priceDifferenceCents * prorationRatio);
+            requiresPayment = amountDueCents > 0;
+          } else {
+            amountDueCents = priceDifferenceCents;
+            requiresPayment = amountDueCents > 0;
+          }
         } else {
+          // Si pas de période définie, appliquer le prix complet
           amountDueCents = priceDifferenceCents;
           requiresPayment = amountDueCents > 0;
         }

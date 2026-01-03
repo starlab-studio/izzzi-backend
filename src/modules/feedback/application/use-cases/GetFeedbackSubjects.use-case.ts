@@ -234,11 +234,17 @@ export class GetFeedbackSubjectsUseCase
 
       const allAlerts =
         await this.feedbackAlertRepository.findBySubjectIds(uniqueSubjectIds);
+      this.logger.info(
+        `Found ${allAlerts.length} total alerts for ${uniqueSubjectIds.length} subjects`
+      );
       const alertsBySubjectId = new Map<string, typeof allAlerts>();
       allAlerts.forEach((alert) => {
         const existing = alertsBySubjectId.get(alert.subjectId) || [];
         existing.push(alert);
         alertsBySubjectId.set(alert.subjectId, existing);
+        this.logger.info(
+          `Alert ${alert.alertId} for subject ${alert.subjectId} has formType: ${alert.formType}`
+        );
       });
 
       const summariesDuring =
@@ -269,21 +275,43 @@ export class GetFeedbackSubjectsUseCase
           : null;
         const summary = summaryKey ? summaryMap.get(summaryKey) : undefined;
 
-        const subjectAlerts = alertsBySubjectId.get(subject.subjectId) || [];
+        const allSubjectAlerts = alertsBySubjectId.get(subject.subjectId) || [];
+        // Filtrer les alertes par formType
+        if (allSubjectAlerts.length > 0) {
+          this.logger.info(
+            `Subject ${subject.subjectId} (formType: ${subject.formType?.id} -> ${dbFormType}) has ${allSubjectAlerts.length} alerts before filtering`
+          );
+          allSubjectAlerts.forEach((alert) => {
+            this.logger.info(
+              `  Alert ${alert.alertId}: formType=${alert.formType}, matches=${alert.formType === dbFormType}`
+            );
+          });
+        }
+        // Filtrer les alertes par formType
+        // Si dbFormType est défini, prendre les alertes avec ce formType OU sans formType (compatibilité avec anciennes alertes)
+        // Si dbFormType n'est pas défini, prendre seulement les alertes sans formType
+        const subjectAlerts = dbFormType
+          ? allSubjectAlerts.filter(
+              (alert) => alert.formType === dbFormType || !alert.formType // Inclure les alertes sans formType pour compatibilité
+            )
+          : allSubjectAlerts.filter((alert) => !alert.formType); // Si pas de formType spécifié, prendre celles sans formType
+
         const mappedAlerts: Array<{
           id: string;
           type: "negative" | "positive";
           number: string;
           content: string;
           timestamp: string;
-        }> = subjectAlerts.map((alert) => ({
+          isProcessed: boolean;
+        }> = subjectAlerts.map((alert, index) => ({
           id: alert.alertId,
           type: (alert.type === "negative" ? "negative" : "positive") as
             | "negative"
             | "positive",
-          number: alert.number,
+          number: `Alerte ${index + 1}/${subjectAlerts.length}`,
           content: alert.content,
           timestamp: alert.timestamp.toISOString(),
+          isProcessed: alert.isProcessed,
         }));
 
         if (summary) {

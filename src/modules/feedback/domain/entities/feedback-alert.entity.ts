@@ -22,6 +22,7 @@ export class FeedbackAlertEntity extends BaseEntity {
     number: string;
     timestamp: Date;
     evidence?: string[];
+    formType?: "during_course" | "after_course";
     processedByUserId?: string | null;
   }): FeedbackAlertEntity {
     const alertId = (data.alertId ?? "").trim();
@@ -81,6 +82,7 @@ export class FeedbackAlertEntity extends BaseEntity {
       number,
       timestamp: data.timestamp,
       evidence: data.evidence || undefined,
+      formType: data.formType || undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -173,6 +175,10 @@ export class FeedbackAlertEntity extends BaseEntity {
 
   get evidence(): string[] | undefined {
     return this.props.evidence;
+  }
+
+  get formType(): "during_course" | "after_course" | undefined {
+    return this.props.formType;
   }
 
   toPersistence(): IFeedbackAlert {

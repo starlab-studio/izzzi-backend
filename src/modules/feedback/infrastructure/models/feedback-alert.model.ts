@@ -62,6 +62,14 @@ export class FeedbackAlertModel implements IFeedbackAlert {
   @Column({ name: "evidence", type: "jsonb", nullable: true })
   evidence?: string[];
 
+  @Column({
+    name: "form_type",
+    type: "enum",
+    enum: ["during_course", "after_course"],
+    nullable: true,
+  })
+  formType?: "during_course" | "after_course";
+
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 

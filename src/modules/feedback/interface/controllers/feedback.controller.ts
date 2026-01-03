@@ -23,12 +23,14 @@ import {
   AuthGuard,
   RolesGuard,
   CurrentUser,
-  type JWTPayload,
   Public,
+  type JWTPayload,
 } from "src/core";
 import { FeedbackFacade } from "../../application/facades/feedback.facade";
 import { QuizFacade } from "src/modules/quiz/application/facades/quiz.facade";
 import { CreateAlertDto } from "../dto/alert.dto";
+import type { IFeedbackAlertRepository } from "../../domain/repositories/feedback-alert.repository";
+import { Inject } from "@nestjs/common";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard)
@@ -37,7 +39,9 @@ import { CreateAlertDto } from "../dto/alert.dto";
 export class FeedbackController extends BaseController {
   constructor(
     private readonly feedbackFacade: FeedbackFacade,
-    private readonly quizFacade: QuizFacade
+    private readonly quizFacade: QuizFacade,
+    @Inject("FEEDBACK_ALERT_REPOSITORY")
+    private readonly feedbackAlertRepository: IFeedbackAlertRepository
   ) {
     super();
   }
@@ -368,10 +372,35 @@ export class FeedbackController extends BaseController {
     @CurrentUser() user: JWTPayload,
     @Req() request: any
   ) {
-    const organizationId = request.organizationId;
+    let organizationId = request.organizationId;
 
+    // Fallback: récupérer l'organizationId depuis l'alerte si non défini
     if (!organizationId) {
-      throw new Error("Organization context required");
+      // Essayer avec l'alertId original
+      let alert = await this.feedbackAlertRepository.findByAlertId(
+        alertId,
+        subjectId
+      );
+      // Si pas trouvé, essayer avec les formTypes
+      if (!alert) {
+        const formTypes: ("during_course" | "after_course")[] = [
+          "during_course",
+          "after_course",
+        ];
+        for (const formType of formTypes) {
+          const modifiedAlertId = `${alertId}_${formType}`;
+          alert = await this.feedbackAlertRepository.findByAlertId(
+            modifiedAlertId,
+            subjectId
+          );
+          if (alert) break;
+        }
+      }
+      if (alert) {
+        organizationId = alert.organizationId;
+      } else {
+        throw new Error("Organization context required");
+      }
     }
 
     const result = await this.feedbackFacade.commentOnAlert({
@@ -402,10 +431,35 @@ export class FeedbackController extends BaseController {
     @CurrentUser() user: JWTPayload,
     @Req() request: any
   ) {
-    const organizationId = request.organizationId;
+    let organizationId = request.organizationId;
 
+    // Fallback: récupérer l'organizationId depuis l'alerte si non défini
     if (!organizationId) {
-      throw new Error("Organization context required");
+      // Essayer avec l'alertId original
+      let alert = await this.feedbackAlertRepository.findByAlertId(
+        alertId,
+        subjectId
+      );
+      // Si pas trouvé, essayer avec les formTypes
+      if (!alert) {
+        const formTypes: ("during_course" | "after_course")[] = [
+          "during_course",
+          "after_course",
+        ];
+        for (const formType of formTypes) {
+          const modifiedAlertId = `${alertId}_${formType}`;
+          alert = await this.feedbackAlertRepository.findByAlertId(
+            modifiedAlertId,
+            subjectId
+          );
+          if (alert) break;
+        }
+      }
+      if (alert) {
+        organizationId = alert.organizationId;
+      } else {
+        throw new Error("Organization context required");
+      }
     }
 
     const result = await this.feedbackFacade.sendMessageForAlert({
@@ -436,10 +490,35 @@ export class FeedbackController extends BaseController {
     @CurrentUser() user: JWTPayload,
     @Req() request: any
   ) {
-    const organizationId = request.organizationId;
+    let organizationId = request.organizationId;
 
+    // Fallback: récupérer l'organizationId depuis l'alerte si non défini
     if (!organizationId) {
-      throw new Error("Organization context required");
+      // Essayer avec l'alertId original
+      let alert = await this.feedbackAlertRepository.findByAlertId(
+        alertId,
+        subjectId
+      );
+      // Si pas trouvé, essayer avec les formTypes
+      if (!alert) {
+        const formTypes: ("during_course" | "after_course")[] = [
+          "during_course",
+          "after_course",
+        ];
+        for (const formType of formTypes) {
+          const modifiedAlertId = `${alertId}_${formType}`;
+          alert = await this.feedbackAlertRepository.findByAlertId(
+            modifiedAlertId,
+            subjectId
+          );
+          if (alert) break;
+        }
+      }
+      if (alert) {
+        organizationId = alert.organizationId;
+      } else {
+        throw new Error("Organization context required");
+      }
     }
 
     const result = await this.feedbackFacade.markAlertAsProcessed({

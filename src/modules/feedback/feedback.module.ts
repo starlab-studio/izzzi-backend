@@ -292,9 +292,21 @@ import { ISubjectSummaryRepository } from "./domain/repositories/subject-summary
       useFactory: (
         logger: ILoggerService,
         eventStore: IEventStore,
-        feedbackAlertRepository: IFeedbackAlertRepository
-      ) => new CreateAlertUseCase(logger, eventStore, feedbackAlertRepository),
-      inject: [LoggerService, EventStore, "FEEDBACK_ALERT_REPOSITORY"],
+        feedbackAlertRepository: IFeedbackAlertRepository,
+        quizRepository: IQuizRepository
+      ) =>
+        new CreateAlertUseCase(
+          logger,
+          eventStore,
+          feedbackAlertRepository,
+          quizRepository
+        ),
+      inject: [
+        LoggerService,
+        EventStore,
+        "FEEDBACK_ALERT_REPOSITORY",
+        "QUIZ_REPOSITORY",
+      ],
     },
     {
       provide: GenerateAndSaveSubjectSummaryUseCase,

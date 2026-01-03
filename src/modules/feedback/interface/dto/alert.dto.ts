@@ -84,6 +84,18 @@ class AlertItemDto {
   @IsArray({ message: "Alert evidence must be an array" })
   @IsString({ each: true, message: "Each evidence item must be a string" })
   evidence?: string[];
+
+  @ApiProperty({
+    description: "Type de formulaire concerné par l'alerte",
+    example: "during_course",
+    enum: ["during_course", "after_course"],
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(["during_course", "after_course"], {
+    message: "Form type must be 'during_course' or 'after_course'",
+  })
+  formType?: "during_course" | "after_course";
 }
 
 export class CreateAlertDto {

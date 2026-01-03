@@ -26,6 +26,7 @@ export interface FeedbackSubjectResponse {
     number: string;
     content: string;
     timestamp: string;
+    isProcessed: boolean;
   }>;
   alertsCount: number;
   summary: string;
@@ -148,6 +149,7 @@ export interface IFeedbackAlert {
   number: string;
   timestamp: Date;
   evidence?: string[];
+  formType?: "during_course" | "after_course";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -187,6 +189,7 @@ export interface AlertItem {
   priority: "low" | "medium" | "high" | "urgent";
   timestamp: string;
   evidence?: string[];
+  formType?: "during_course" | "after_course";
 }
 
 export interface CreateAlertInput {

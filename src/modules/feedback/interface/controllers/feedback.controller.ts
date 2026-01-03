@@ -29,8 +29,6 @@ import {
 import { FeedbackFacade } from "../../application/facades/feedback.facade";
 import { QuizFacade } from "src/modules/quiz/application/facades/quiz.facade";
 import { CreateAlertDto } from "../dto/alert.dto";
-import type { IFeedbackAlertRepository } from "../../domain/repositories/feedback-alert.repository";
-import { Inject } from "@nestjs/common";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard)
@@ -39,9 +37,7 @@ import { Inject } from "@nestjs/common";
 export class FeedbackController extends BaseController {
   constructor(
     private readonly feedbackFacade: FeedbackFacade,
-    private readonly quizFacade: QuizFacade,
-    @Inject("FEEDBACK_ALERT_REPOSITORY")
-    private readonly feedbackAlertRepository: IFeedbackAlertRepository
+    private readonly quizFacade: QuizFacade
   ) {
     super();
   }
@@ -354,7 +350,9 @@ export class FeedbackController extends BaseController {
     return this.success(result);
   }
 
-  @Post("subjects/:subjectId/alerts/:alertId/comment")
+  @Post(
+    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/comment"
+  )
   @ApiOperation({
     summary: "Commenter une alerte",
     description:
@@ -366,43 +364,12 @@ export class FeedbackController extends BaseController {
     description: "Commentaire ajouté avec succès",
   })
   async commentOnAlert(
+    @Param("organizationId") organizationId: string,
     @Param("subjectId") subjectId: string,
     @Param("alertId") alertId: string,
     @Body() body: { comment: string },
-    @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @CurrentUser() user: JWTPayload
   ) {
-    let organizationId = request.organizationId;
-
-    // Fallback: récupérer l'organizationId depuis l'alerte si non défini
-    if (!organizationId) {
-      // Essayer avec l'alertId original
-      let alert = await this.feedbackAlertRepository.findByAlertId(
-        alertId,
-        subjectId
-      );
-      // Si pas trouvé, essayer avec les formTypes
-      if (!alert) {
-        const formTypes: ("during_course" | "after_course")[] = [
-          "during_course",
-          "after_course",
-        ];
-        for (const formType of formTypes) {
-          const modifiedAlertId = `${alertId}_${formType}`;
-          alert = await this.feedbackAlertRepository.findByAlertId(
-            modifiedAlertId,
-            subjectId
-          );
-          if (alert) break;
-        }
-      }
-      if (alert) {
-        organizationId = alert.organizationId;
-      } else {
-        throw new Error("Organization context required");
-      }
-    }
-
     const result = await this.feedbackFacade.commentOnAlert({
       organizationId,
       userId: user.userId,
@@ -414,7 +381,9 @@ export class FeedbackController extends BaseController {
     return this.success(result);
   }
 
-  @Post("subjects/:subjectId/alerts/:alertId/send-message")
+  @Post(
+    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/send-message"
+  )
   @ApiOperation({
     summary: "Envoyer un message pour une alerte",
     description:
@@ -426,42 +395,11 @@ export class FeedbackController extends BaseController {
     description: "Message envoyé avec succès",
   })
   async sendMessageForAlert(
+    @Param("organizationId") organizationId: string,
     @Param("subjectId") subjectId: string,
     @Param("alertId") alertId: string,
-    @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @CurrentUser() user: JWTPayload
   ) {
-    let organizationId = request.organizationId;
-
-    // Fallback: récupérer l'organizationId depuis l'alerte si non défini
-    if (!organizationId) {
-      // Essayer avec l'alertId original
-      let alert = await this.feedbackAlertRepository.findByAlertId(
-        alertId,
-        subjectId
-      );
-      // Si pas trouvé, essayer avec les formTypes
-      if (!alert) {
-        const formTypes: ("during_course" | "after_course")[] = [
-          "during_course",
-          "after_course",
-        ];
-        for (const formType of formTypes) {
-          const modifiedAlertId = `${alertId}_${formType}`;
-          alert = await this.feedbackAlertRepository.findByAlertId(
-            modifiedAlertId,
-            subjectId
-          );
-          if (alert) break;
-        }
-      }
-      if (alert) {
-        organizationId = alert.organizationId;
-      } else {
-        throw new Error("Organization context required");
-      }
-    }
-
     const result = await this.feedbackFacade.sendMessageForAlert({
       organizationId,
       userId: user.userId,
@@ -472,7 +410,9 @@ export class FeedbackController extends BaseController {
     return this.success(result);
   }
 
-  @Patch("subjects/:subjectId/alerts/:alertId/mark-processed")
+  @Patch(
+    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/mark-processed"
+  )
   @ApiOperation({
     summary: "Marquer une alerte comme traitée",
     description:
@@ -484,43 +424,12 @@ export class FeedbackController extends BaseController {
     description: "Statut de l'alerte mis à jour avec succès",
   })
   async markAlertAsProcessed(
+    @Param("organizationId") organizationId: string,
     @Param("subjectId") subjectId: string,
     @Param("alertId") alertId: string,
     @Body() body: { processed: boolean },
-    @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @CurrentUser() user: JWTPayload
   ) {
-    let organizationId = request.organizationId;
-
-    // Fallback: récupérer l'organizationId depuis l'alerte si non défini
-    if (!organizationId) {
-      // Essayer avec l'alertId original
-      let alert = await this.feedbackAlertRepository.findByAlertId(
-        alertId,
-        subjectId
-      );
-      // Si pas trouvé, essayer avec les formTypes
-      if (!alert) {
-        const formTypes: ("during_course" | "after_course")[] = [
-          "during_course",
-          "after_course",
-        ];
-        for (const formType of formTypes) {
-          const modifiedAlertId = `${alertId}_${formType}`;
-          alert = await this.feedbackAlertRepository.findByAlertId(
-            modifiedAlertId,
-            subjectId
-          );
-          if (alert) break;
-        }
-      }
-      if (alert) {
-        organizationId = alert.organizationId;
-      } else {
-        throw new Error("Organization context required");
-      }
-    }
-
     const result = await this.feedbackFacade.markAlertAsProcessed({
       organizationId,
       userId: user.userId,

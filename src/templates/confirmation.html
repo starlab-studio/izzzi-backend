@@ -9,7 +9,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bienvenue</title>
+    <title>Confirmez votre adresse e-mail</title>
     <style type="text/css" emogrify="no">
       #outlook a {
         padding: 0;
@@ -74,13 +74,6 @@
         .gmx-killpill {
           content: " \03D1";
         }
-      }
-    </style>
-    <style type="text/css" emogrify="no">
-      @media (max-width: 600px) {
-        .gmx-killpill {
-          content: " \03D1";
-        }
         .r0-o {
           border-style: solid !important;
           margin: 0 auto 0 0 !important;
@@ -126,6 +119,13 @@
           background-color: #f4f4f4 !important;
           padding-bottom: 7px !important;
           padding-top: 20px !important;
+        }
+        .r9-i {
+          padding-bottom: 0px !important;
+          padding-left: 10px !important;
+          padding-right: 10px !important;
+          padding-top: 0px !important;
+          text-align: center !important;
         }
         .r9-o {
           background-size: auto !important;
@@ -191,40 +191,47 @@
         }
         .r19-o {
           border-style: solid !important;
-          margin: 0 auto 0 0 !important;
-          margin-top: 17px !important;
+          margin: 0 auto 0 auto !important;
+          margin-top: 20px !important;
           width: 100% !important;
         }
         .r20-i {
-          padding-bottom: 0px !important;
           padding-left: 0px !important;
           padding-right: 0px !important;
           padding-top: 0px !important;
-          text-align: center !important;
+          text-align: right !important;
         }
         .r21-o {
           border-style: solid !important;
           margin: 0 auto 0 auto !important;
-          margin-bottom: 15px !important;
           margin-top: 0px !important;
           width: 100% !important;
         }
         .r22-i {
-          text-align: center !important;
+          padding-bottom: 0px !important;
+          padding-top: 0px !important;
         }
         .r23-r {
+          border-style: solid !important;
+          word-wrap: break-word !important;
+          display: block !important;
+          -webkit-text-size-adjust: none !important;
           background-color: #f26103 !important;
           border-color: #ffffff !important;
           border-radius: 200px !important;
           border-width: 2px !important;
-          box-sizing: border-box;
-          height: initial !important;
+          color: #ffffff !important;
+          font-family: arial, helvetica, sans-serif !important;
+          font-size: 16px !important;
+          height: auto !important;
+          mso-hide: all !important;
           padding-bottom: 12px !important;
           padding-top: 12px !important;
-          text-align: center !important;
           width: 100% !important;
         }
         .r24-i {
+          padding-left: 0px !important;
+          padding-right: 0px !important;
           padding-top: 15px !important;
           text-align: center !important;
         }
@@ -254,6 +261,9 @@
     <!--[if !mso]><!-->
     <style type="text/css" emogrify="no">
       @import url("https://fonts.googleapis.com/css2?family=Trebuchet ms");
+    </style>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap");
     </style>
     <!--<![endif]-->
     <style type="text/css">
@@ -359,7 +369,7 @@
     text="#3b3f44"
     link="#696969"
     yahoo="fix"
-    style="background-color: #ffffff; padding-bottom: 0px; padding-top: 0px"
+    style="background-color: #ffffff"
   >
     <table
       cellspacing="0"
@@ -460,7 +470,7 @@
                                               style="
                                                 font-size: 0px;
                                                 line-height: 0px;
-                                                padding-top: 16px;
+                                                padding-top: 8px;
                                               "
                                             >
                                               <img
@@ -526,15 +536,12 @@
                                                       color: rgb(0, 0, 0);
                                                     "
                                                     ><strong
-                                                      >Bonjour,<br /></strong
-                                                    ><strong
-                                                      >Bienvenue sur Izzzi
-                                                      !</strong
+                                                      >Bonjour {{firstName}},<br />Bienvenue
+                                                      sur Izzzi !</strong
                                                     ></span
                                                   >
                                                 </p>
                                                 <p
-                                                  id="isPasted"
                                                   style="
                                                     margin: 0 0 12px 0;
                                                     text-align: left;
@@ -547,7 +554,12 @@
                                                         Arial, helvetica,
                                                         sans-serif;
                                                     "
-                                                    >Vous pouvez dès maintenant créer vos classes, recueillir les retours de vos étudiants, et suivre la qualité pédagogique de vos cours en un clin d'œil.</span
+                                                    >Vous pouvez dès maintenant
+                                                    créer vos classes,
+                                                    recueillir les retours de vos
+                                                    étudiants, et suivre la
+                                                    qualité pédagogique de vos
+                                                    cours en un clin d'œil.</span
                                                   >
                                                 </p>
                                                 <p
@@ -563,16 +575,37 @@
                                                         Arial, helvetica,
                                                         sans-serif;
                                                     "
-                                                    >Pour commencer, il vous suffit de vous connecter ici : <a
-                                                      href="http://localhost:3001"
+                                                    >Pour commencer, il vous
+                                                    suffit de valider votre
+                                                    inscription ici :</span
+                                                  >
+                                                </p>
+                                                <p
+                                                  style="
+                                                    margin: 0 0 12px 0;
+                                                    text-align: left;
+                                                  "
+                                                >
+                                                  <span
+                                                    style="
+                                                      color: rgb(0, 0, 0);
+                                                      font-family:
+                                                        Arial, helvetica,
+                                                        sans-serif;
+                                                    "
+                                                    ><a
+                                                      href="{{verificationLink}}"
                                                       target="_blank"
                                                       rel="noopener noreferrer"
                                                       style="
                                                         text-decoration: underline;
                                                         color: rgb(0, 0, 0);
                                                       "
-                                                      >Se connecter à Izzzi</a
-                                                      ></span
+                                                      ><strong
+                                                        >Valider mon
+                                                        inscription</strong
+                                                      ></a
+                                                    ></span
                                                   >
                                                 </p>
                                                 <p
@@ -588,7 +621,9 @@
                                                         Arial, helvetica,
                                                         sans-serif;
                                                     "
-                                                    >Besoin d'un coup de pouce ? Notre petite FAQ est là pour vous aider.</span
+                                                    >Besoin d'un coup de pouce
+                                                    ? Notre petite FAQ est là
+                                                    pour vous aider.</span
                                                   >
                                                 </p>
                                                 <p
@@ -604,7 +639,9 @@
                                                         Arial, helvetica,
                                                         sans-serif;
                                                     "
-                                                    >Et si vous avez une question, écrivez-nous, on vous répond vite !</span
+                                                    >Et si vous avez une
+                                                    question, écrivez-nous, on
+                                                    vous répond vite !</span
                                                   >
                                                 </p>
                                                 <p
@@ -652,8 +689,8 @@
                                         style="
                                           font-size: 0px;
                                           line-height: 0px;
-                                          padding-bottom: 15px;
-                                          padding-top: 15px;
+                                          padding-bottom: 8px;
+                                          padding-top: 8px;
                                           valign: top;
                                         "
                                       >
@@ -690,8 +727,8 @@
                       class="r14-i"
                       style="
                         background-color: #f26103;
-                        padding-bottom: 20px;
-                        padding-top: 20px;
+                        padding-bottom: 15px;
+                        padding-top: 15px;
                       "
                     >
                       <table
@@ -953,9 +990,8 @@
                                               <![endif]-->
                                               <!--[if !mso]><!-- -->
                                               <a
-                                                href="#top"
+                                                href="mailto:hello@izzzi.io"
                                                 class="r23-r default-button"
-                                                target="_blank"
                                                 data-btn="1"
                                                 style="
                                                   font-style: normal;
@@ -1036,8 +1072,8 @@
                       class="r14-i"
                       style="
                         background-color: #f26103;
-                        padding-bottom: 20px;
-                        padding-top: 20px;
+                        padding-bottom: 15px;
+                        padding-top: 15px;
                       "
                     >
                       <table

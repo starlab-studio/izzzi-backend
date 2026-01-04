@@ -10,5 +10,10 @@ export interface IAuthIdentityRepository
     provider: AuthIdentityName,
     username: string
   ): Promise<AuthIdentityEntity | null>;
+  findByProviderAndProviderUserId(
+    provider: AuthIdentityName,
+    providerUserId: string
+  ): Promise<AuthIdentityEntity | null>;
+  findAllByUserId(userId: string): Promise<AuthIdentityEntity[]>;
   deleteByUsername(username: string): Promise<void>;
 }

@@ -3,6 +3,7 @@ import { ApiTags, ApiResponse, ApiOperation, ApiBody } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
 import {
   Controller,
+  Get,
   Post,
   Body,
   Res,
@@ -276,5 +277,34 @@ export class AuthController extends BaseController {
     return this.success({
       message: "Logged out successfully",
     });
+  }
+
+  @Get("providers")
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: "Get user providers",
+    description:
+      "Returns the authentication providers linked to the current user's account",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Providers retrieved successfully",
+    schema: {
+      type: "object",
+      properties: {
+        providers: {
+          type: "array",
+          items: { type: "string" },
+          example: ["CUSTOM", "GOOGLE"],
+        },
+        canChangePassword: { type: "boolean", example: true },
+        canLinkGoogle: { type: "boolean", example: false },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  async getProviders(@CurrentUser() user: JWTPayload) {
+    const providers = await this.authFacade.getUserProviders(user.userId);
+    return this.success(providers);
   }
 }

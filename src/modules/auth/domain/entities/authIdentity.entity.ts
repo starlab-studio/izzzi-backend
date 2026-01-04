@@ -41,6 +41,10 @@ export class AuthIdentityEntity {
     return provider === AuthIdentityName.CUSTOM;
   }
 
+  isGoogleProvider(): boolean {
+    return this.props.provider === AuthIdentityName.GOOGLE;
+  }
+
   changePassword(newHashedPassword: string): void {
     this.props = {
       ...this.props,
@@ -100,7 +104,9 @@ export class AuthIdentityEntity {
   }
 
   verifyEmail(email: string): void {
-    if (email.toLowerCase().trim() !== this.props.username?.toLowerCase().trim()) {
+    if (
+      email.toLowerCase().trim() !== this.props.username?.toLowerCase().trim()
+    ) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
         "Invalid email for email verification"

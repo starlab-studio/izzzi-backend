@@ -1,6 +1,7 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
 
 import { CoreModule } from "src/core/core.module";
 import { EventHandlerRegistry, ILoggerService, LoggerService } from "src/core";
@@ -36,6 +37,10 @@ import { NotificationController } from "./interface/controllers/notification.con
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 import { IUserRepository } from "../organization/domain/repositories/user.repository";
 import { SubjectModule } from "../subject/subject.module";
+import { ISubjectRepository } from "../subject/domain/repositories/subject.repository";
+import { NotificationGateway } from "./infrastructure/gateways/notification.gateway";
+import { PushProvider } from "./infrastructure/providers/push.provider";
+import { INotificationGateway } from "./application/gateways/notification-gateway.interface";
 
 @Module({
   imports: [
@@ -55,6 +60,25 @@ import { SubjectModule } from "../subject/subject.module";
       useFactory: (configService: ConfigService) =>
         EmailProvider.getInstance(configService),
       inject: [ConfigService],
+    },
+    {
+      provide: NotificationGateway,
+      useFactory: (
+        jwtService: JwtService,
+        configService: ConfigService,
+        subjectRepository: ISubjectRepository
+      ) =>
+        new NotificationGateway(jwtService, configService, subjectRepository),
+      inject: [JwtService, ConfigService, "SUBJECT_REPOSITORY"],
+    },
+    {
+      provide: "NOTIFICATION_GATEWAY",
+      useExisting: NotificationGateway,
+    },
+    {
+      provide: PushProvider,
+      useFactory: (gateway: INotificationGateway) => new PushProvider(gateway),
+      inject: ["NOTIFICATION_GATEWAY"],
     },
     {
       provide: CreateEmailNotificationUseCase,
@@ -283,6 +307,7 @@ export class NotificationModule {
     private readonly userCreatedEventHandler: UserCreatedEventHandler,
     private readonly invitationSentEventHandler: InvitationSentEventHandler,
     private readonly emailNotificationProvider: EmailProvider,
+    private readonly pushProvider: PushProvider,
     private readonly classCreatedEventHandler: ClassCreatedEventHandler,
     private readonly invitationAcceptedEventHandler: InvitationAcceptedEventHandler,
     private readonly classArchivedEventHandler: ClassArchivedEventHandler,
@@ -299,6 +324,10 @@ export class NotificationModule {
     NotificationProviderFactory.register(
       NotificationMode.EMAIL,
       this.emailNotificationProvider
+    );
+    NotificationProviderFactory.register(
+      NotificationMode.PUSH,
+      this.pushProvider
     );
 
     this.eventHandlerRegistry.registerHandler(

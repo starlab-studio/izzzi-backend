@@ -47,6 +47,7 @@ import { GetOrganizationStatsUseCase } from "./application/use-cases/GetOrganiza
 import { ClassModule } from "../class/class.module";
 import { SubjectModule } from "../subject/subject.module";
 import { QuizModule } from "../quiz/quiz.module";
+import { SubscriptionModule } from "../subscription/subscription.module";
 import { IClassRepository } from "../class/domain/repositories/class.repository";
 import { ISubjectRepository } from "../subject/domain/repositories/subject.repository";
 import { IQuizRepository } from "../quiz/domain/repositories/quiz.repository";
@@ -79,9 +80,7 @@ import {
     forwardRef(() => ClassModule),
     forwardRef(() => SubjectModule),
     forwardRef(() => QuizModule),
-    forwardRef(
-      () => require("../subscription/subscription.module").SubscriptionModule
-    ),
+    forwardRef(() => SubscriptionModule),
   ],
   controllers: [OrganizationController, UserController],
   providers: [

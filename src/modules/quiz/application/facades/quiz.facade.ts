@@ -42,6 +42,11 @@ import { GetQuizByAccessTokenUseCase } from "../use-cases/GetQuizByAccessToken.u
 import { SubmitQuizResponseUseCase } from "../use-cases/SubmitQuizResponse.use-case";
 import { CheckQuizResponseStatusUseCase } from "../use-cases/CheckQuizResponseStatus.use-case";
 import { GetQuizStatisticsUseCase } from "../use-cases/GetQuizStatistics.use-case";
+import {
+  ExportQuizStatisticsUseCase,
+  ExportQuizStatisticsInput,
+  ExportQuizStatisticsOutput,
+} from "../use-cases/ExportQuizStatistics.use-case";
 
 export class QuizFacade {
   constructor(
@@ -59,6 +64,7 @@ export class QuizFacade {
     private readonly submitQuizResponseUseCase: SubmitQuizResponseUseCase,
     private readonly checkQuizResponseStatusUseCase: CheckQuizResponseStatusUseCase,
     private readonly getQuizStatisticsUseCase: GetQuizStatisticsUseCase,
+    private readonly exportQuizStatisticsUseCase: ExportQuizStatisticsUseCase,
   ) {}
 
   async getQuizTemplatePairs(
@@ -143,6 +149,12 @@ export class QuizFacade {
     data: GetQuizStatisticsInput,
   ): Promise<GetQuizStatisticsOutput> {
     return await this.getQuizStatisticsUseCase.execute(data);
+  }
+
+  async exportQuizStatistics(
+    data: ExportQuizStatisticsInput,
+  ): Promise<ExportQuizStatisticsOutput> {
+    return await this.exportQuizStatisticsUseCase.execute(data);
   }
 }
 

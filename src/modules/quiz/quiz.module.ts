@@ -50,6 +50,7 @@ import { GetQuizByAccessTokenUseCase } from "./application/use-cases/GetQuizByAc
 import { SubmitQuizResponseUseCase } from "./application/use-cases/SubmitQuizResponse.use-case";
 import { CheckQuizResponseStatusUseCase } from "./application/use-cases/CheckQuizResponseStatus.use-case";
 import { GetQuizStatisticsUseCase } from "./application/use-cases/GetQuizStatistics.use-case";
+import { ExportQuizStatisticsUseCase } from "./application/use-cases/ExportQuizStatistics.use-case";
 
 import { QuizFacade } from "./application/facades/quiz.facade";
 
@@ -590,6 +591,42 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       ],
     },
     {
+      provide: ExportQuizStatisticsUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        quizRepository: IQuizRepository,
+        quizTemplateRepository: IQuizTemplateRepository,
+        responseRepository: IResponseRepository,
+        answerRepository: IAnswerRepository,
+        organizationFacade: OrganizationFacade,
+        responseVisibilityService: ResponseVisibilityService,
+        subscriptionRepository: ISubscriptionRepository,
+        subscriptionPlanRepository: ISubscriptionPlanRepository
+      ) =>
+        new ExportQuizStatisticsUseCase(
+          logger,
+          quizRepository,
+          quizTemplateRepository,
+          responseRepository,
+          answerRepository,
+          organizationFacade,
+          responseVisibilityService,
+          subscriptionRepository,
+          subscriptionPlanRepository
+        ),
+      inject: [
+        LoggerService,
+        "QUIZ_REPOSITORY",
+        "QUIZ_TEMPLATE_REPOSITORY",
+        "RESPONSE_REPOSITORY",
+        "ANSWER_REPOSITORY",
+        OrganizationFacade,
+        ResponseVisibilityService,
+        SUBSCRIPTION_REPOSITORY,
+        SUBSCRIPTION_PLAN_REPOSITORY,
+      ],
+    },
+    {
       provide: QuizFacade,
       useFactory: (
         getQuizTemplatePairsUseCase: GetQuizTemplatePairsUseCase,
@@ -605,7 +642,8 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         getQuizByAccessTokenUseCase: GetQuizByAccessTokenUseCase,
         submitQuizResponseUseCase: SubmitQuizResponseUseCase,
         checkQuizResponseStatusUseCase: CheckQuizResponseStatusUseCase,
-        getQuizStatisticsUseCase: GetQuizStatisticsUseCase
+        getQuizStatisticsUseCase: GetQuizStatisticsUseCase,
+        exportQuizStatisticsUseCase: ExportQuizStatisticsUseCase
       ) =>
         new QuizFacade(
           getQuizTemplatePairsUseCase,
@@ -621,7 +659,8 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           getQuizByAccessTokenUseCase,
           submitQuizResponseUseCase,
           checkQuizResponseStatusUseCase,
-          getQuizStatisticsUseCase
+          getQuizStatisticsUseCase,
+          exportQuizStatisticsUseCase
         ),
       inject: [
         GetQuizTemplatePairsUseCase,
@@ -638,6 +677,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         SubmitQuizResponseUseCase,
         CheckQuizResponseStatusUseCase,
         GetQuizStatisticsUseCase,
+        ExportQuizStatisticsUseCase,
       ],
     },
     ResponseVisibilityService,

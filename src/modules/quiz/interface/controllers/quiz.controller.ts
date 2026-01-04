@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Body, UseGuards, Req, Res } from "@nestjs/common";
+import { Controller, Get, Post, Put, Param, Body, Query, UseGuards, Req, Res } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -408,6 +408,61 @@ export class QuizDetailController extends BaseController {
     });
 
     return this.success(result);
+  }
+
+  @Get(":id/export")
+  @ApiOperation({
+    summary: "Exporter les retours d'un quiz",
+    description: "Exporte toutes les réponses d'un quiz au format CSV ou XLSX. \
+    Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @ApiParam({
+    name: "id",
+    description: "ID du quiz",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Fichier généré avec succès",
+    content: {
+      "text/csv": {},
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+    },
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  @ApiResponse({ status: 404, description: "Quiz non trouvé" })
+  async exportQuizStatistics(
+    @Param("id") quizId: string,
+    @Query("format") format: string = "csv",
+    @CurrentUser() user: JWTPayload,
+    @Req() request: any,
+    @Res() res: Response,
+  ) {
+    const organizationId = request.organizationId;
+
+    if (!organizationId) {
+      throw new Error("Organization context required");
+    }
+
+    const exportFormat = (format === "xlsx" ? "xlsx" : "csv") as "csv" | "xlsx";
+
+    const result = await this.quizFacade.exportQuizStatistics({
+      quizId,
+      organizationId,
+      userId: user.userId,
+      format: exportFormat,
+    });
+
+    res.setHeader("Content-Type", result.contentType);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(result.filename)}"`
+    );
+    res.setHeader("Content-Transfer-Encoding", "binary");
+
+    return res.send(result.data);
   }
 }
 

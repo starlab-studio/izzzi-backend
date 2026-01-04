@@ -22,6 +22,7 @@ import {
   CreateContactRequestDto,
   UpdateContactRequestDto,
   ContactRequestQueryDto,
+  SendContactReplyDto,
 } from "../dto/contact-request.dto";
 import { SuperAdminGuard } from "../../guards/super-admin.guard";
 
@@ -124,6 +125,32 @@ export class ContactController extends BaseController {
   async deleteContactRequest(@Param("id") id: string) {
     await this.contactFacade.deleteContactRequest(id);
     return this.success({ deleted: true });
+  }
+
+  @Post(":id/reply")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, SuperAdminGuard)
+  @ApiOperation({
+    summary: "Envoyer une réponse par email (Super Admin)",
+    description: "Envoie un email de réponse à la personne qui a soumis la demande de contact.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Email de réponse envoyé avec succès",
+  })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès refusé - Super Admin requis" })
+  @ApiResponse({ status: 404, description: "Demande de contact non trouvée" })
+  async sendReply(
+    @Param("id") id: string,
+    @Body() dto: SendContactReplyDto
+  ) {
+    const result = await this.contactFacade.sendReply(
+      id,
+      dto.subject,
+      dto.message
+    );
+    return this.success(result);
   }
 }
 

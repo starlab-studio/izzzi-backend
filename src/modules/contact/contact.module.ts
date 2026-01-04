@@ -8,16 +8,19 @@ import { CreateContactRequestUseCase } from "./application/use-cases/CreateConta
 import { GetContactRequestsUseCase } from "./application/use-cases/GetContactRequests.use-case";
 import { UpdateContactRequestUseCase } from "./application/use-cases/UpdateContactRequest.use-case";
 import { DeleteContactRequestUseCase } from "./application/use-cases/DeleteContactRequest.use-case";
+import { SendContactReplyEmailUseCase } from "./application/use-cases/SendContactReplyEmail.use-case";
 
 import { ContactFacade } from "./application/facades/contact.facade";
 import { ContactController } from "./interface/controllers/contact.controller";
 import { SuperAdminGuard } from "./guards/super-admin.guard";
 import { OrganizationModule } from "../organization/organization.module";
+import { NotificationModule } from "../notification/notification.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ContactRequestModel]),
     forwardRef(() => OrganizationModule),
+    forwardRef(() => NotificationModule),
   ],
   controllers: [ContactController],
   providers: [
@@ -29,6 +32,7 @@ import { OrganizationModule } from "../organization/organization.module";
     GetContactRequestsUseCase,
     UpdateContactRequestUseCase,
     DeleteContactRequestUseCase,
+    SendContactReplyEmailUseCase,
     ContactFacade,
     SuperAdminGuard,
   ],

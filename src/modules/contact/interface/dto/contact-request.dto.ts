@@ -122,3 +122,23 @@ export class ContactRequestQueryDto {
   offset?: number;
 }
 
+export class SendContactReplyDto {
+  @ApiProperty({
+    description: "Objet de l'email de réponse",
+    example: "Réponse à votre demande de contact",
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  subject: string;
+
+  @ApiProperty({
+    description: "Message de réponse",
+    example: "Merci pour votre demande. Nous vous recontactons sous peu.",
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5000)
+  message: string;
+}
+

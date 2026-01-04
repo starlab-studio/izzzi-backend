@@ -7,6 +7,7 @@ import {
 } from "../use-cases/GetContactRequests.use-case";
 import { UpdateContactRequestUseCase } from "../use-cases/UpdateContactRequest.use-case";
 import { DeleteContactRequestUseCase } from "../use-cases/DeleteContactRequest.use-case";
+import { SendContactReplyEmailUseCase } from "../use-cases/SendContactReplyEmail.use-case";
 import { IContactRequest, IContactRequestCreate, IContactRequestUpdate } from "../../domain/types";
 
 @Injectable()
@@ -15,7 +16,8 @@ export class ContactFacade {
     private readonly createContactRequestUseCase: CreateContactRequestUseCase,
     private readonly getContactRequestsUseCase: GetContactRequestsUseCase,
     private readonly updateContactRequestUseCase: UpdateContactRequestUseCase,
-    private readonly deleteContactRequestUseCase: DeleteContactRequestUseCase
+    private readonly deleteContactRequestUseCase: DeleteContactRequestUseCase,
+    private readonly sendContactReplyEmailUseCase: SendContactReplyEmailUseCase
   ) {}
 
   async createContactRequest(data: IContactRequestCreate): Promise<{ id: string }> {
@@ -35,6 +37,18 @@ export class ContactFacade {
 
   async deleteContactRequest(id: string): Promise<void> {
     return this.deleteContactRequestUseCase.execute(id);
+  }
+
+  async sendReply(
+    contactRequestId: string,
+    subject: string,
+    message: string
+  ): Promise<{ success: boolean }> {
+    return this.sendContactReplyEmailUseCase.execute({
+      contactRequestId,
+      subject,
+      message,
+    });
   }
 }
 

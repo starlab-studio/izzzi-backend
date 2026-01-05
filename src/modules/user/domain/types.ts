@@ -19,5 +19,12 @@ export interface DeleteAccountInput {
   userId: string;
 }
 
+export interface UpdateAvatarInput {
+  userId: string;
+  avatarUrl: string;
+}
+
+export interface UpdateAvatarOutput extends IUser {}
+
 export interface UpdateProfileOutput extends IUser {}
 

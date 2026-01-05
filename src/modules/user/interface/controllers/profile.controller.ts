@@ -4,7 +4,7 @@ import { Controller, Get, Put, Delete, Body, UseGuards } from "@nestjs/common";
 import { BaseController, AuthGuard, RolesGuard, Roles, CurrentUser, UserRole } from "src/core";
 import type { JWTPayload } from "src/core";
 import { UserFacade } from "../../application/facades/user.facade";
-import { UpdateProfileDto } from "../dto/profile.dto";
+import { UpdateProfileDto, UpdateAvatarDto } from "../dto/profile.dto";
 import { AuthFacade } from "../../../auth/application/facades/auth.facade";
 import { ChangePasswordDto } from "../../../auth/interface/dto/auth.dto";
 
@@ -64,6 +64,31 @@ export class ProfileController extends BaseController {
       email: dto.email,
       organizationId: dto.organizationId,
       organizationName: dto.organizationName,
+    });
+    return this.success(updatedProfile);
+  }
+
+  @Put("avatar")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: "Mettre à jour l'avatar de l'utilisateur",
+    description: "Met à jour l'URL de l'avatar de l'utilisateur authentifié après upload sur S3.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Avatar mis à jour avec succès",
+  })
+  @ApiResponse({ status: 400, description: "URL invalide" })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 404, description: "Utilisateur non trouvé" })
+  async updateAvatar(
+    @CurrentUser() user: JWTPayload,
+    @Body() dto: UpdateAvatarDto
+  ) {
+    const updatedProfile = await this.userFacade.updateAvatar({
+      userId: user.userId,
+      avatarUrl: dto.avatarUrl,
     });
     return this.success(updatedProfile);
   }

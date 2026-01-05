@@ -26,6 +26,7 @@ import { MembershipModel } from "../organization/infrastructure/models/membershi
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 import { UpdateProfileUseCase } from "./application/use-cases/UpdateProfile.use-case";
 import { DeleteAccountUseCase } from "./application/use-cases/DeleteAccount.use-case";
+import { UpdateAvatarUseCase } from "./application/use-cases/UpdateAvatar.use-case";
 import { UserFacade } from "./application/facades/user.facade";
 import { ProfileController } from "./interface/controllers/profile.controller";
 
@@ -145,18 +146,28 @@ import { ProfileController } from "./interface/controllers/profile.controller";
         ],
     },
     {
+      provide: UpdateAvatarUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        userRepository: IUserRepository
+      ) => new UpdateAvatarUseCase(logger, userRepository),
+      inject: [LoggerService, "USER_REPOSITORY"],
+    },
+    {
       provide: UserFacade,
       useFactory: (
         getProfileUseCase: GetProfileUseCase,
         updateProfileUseCase: UpdateProfileUseCase,
-        deleteAccountUseCase: DeleteAccountUseCase
+        deleteAccountUseCase: DeleteAccountUseCase,
+        updateAvatarUseCase: UpdateAvatarUseCase
       ) =>
         new UserFacade(
           getProfileUseCase,
           updateProfileUseCase,
-          deleteAccountUseCase
+          deleteAccountUseCase,
+          updateAvatarUseCase
         ),
-      inject: [GetProfileUseCase, UpdateProfileUseCase, DeleteAccountUseCase],
+      inject: [GetProfileUseCase, UpdateProfileUseCase, DeleteAccountUseCase, UpdateAvatarUseCase],
     },
   ],
   exports: [UserFacade],

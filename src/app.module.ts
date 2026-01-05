@@ -16,6 +16,9 @@ import { ReportModule } from "./modules/report/report.module";
 
 import AppConfig from "./core/interfaces/config.global";
 import { FaqModule } from "./modules/faq/faq.module";
+import { StorageModule } from "./modules/storage/core.module";
+import { ContactModule } from "./modules/contact/contact.module";
+import { SuperAdminModule } from "./modules/super-admin/super-admin.module";
 
 @Module({
   imports: [
@@ -52,6 +55,9 @@ import { FaqModule } from "./modules/faq/faq.module";
     FaqModule,
     FeedbackModule,
     ReportModule,
+    StorageModule,
+    ContactModule,
+    SuperAdminModule,
   ],
 })
 export class AppModule {}

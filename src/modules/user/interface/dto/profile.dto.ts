@@ -7,6 +7,8 @@ import {
   Matches,
   IsEmail,
   IsUUID,
+  IsUrl,
+  IsNotEmpty,
 } from "class-validator";
 
 export class UpdateProfileDto {
@@ -70,5 +72,19 @@ export class UpdateProfileDto {
     message: "Le nom de l'établissement doit contenir au plus 255 caractères",
   })
   organizationName?: string;
+}
+
+export class UpdateAvatarDto {
+  @ApiProperty({
+    description: "URL de l'avatar (après upload sur S3)",
+    example: "https://bucket.s3.region.amazonaws.com/avatars/user-123.jpg",
+  })
+  @IsString()
+  @IsNotEmpty({ message: "L'URL de l'avatar est requise" })
+  @IsUrl({}, { message: "L'URL de l'avatar n'est pas valide" })
+  @MaxLength(500, {
+    message: "L'URL de l'avatar doit contenir au plus 500 caractères",
+  })
+  avatarUrl: string;
 }
 

@@ -5,7 +5,7 @@ import {
   TableColumn,
 } from "typeorm";
 
-export class AddFormTypeToSubjectSummaries1736020000000
+export class AddFormTypeToSubjectSummaries1766027436199
   implements MigrationInterface
 {
   public async up(queryRunner: QueryRunner): Promise<void> {

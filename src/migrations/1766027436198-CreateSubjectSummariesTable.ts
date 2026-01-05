@@ -5,7 +5,7 @@ import {
   TableForeignKey,
 } from "typeorm";
 
-export class CreateSubjectSummariesTable1736019600000
+export class CreateSubjectSummariesTable1766027436198
   implements MigrationInterface
 {
   public async up(queryRunner: QueryRunner): Promise<void> {

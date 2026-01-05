@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class CreateSubscriptionTables1766015563000 implements MigrationInterface {
+export class CreateSubscriptionTables1766015563000
+  implements MigrationInterface
+{
   name = "CreateSubscriptionTables1766015563000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -53,9 +55,9 @@ export class CreateSubscriptionTables1766015563000 implements MigrationInterface
       )
     `);
 
-    // Create user_subscriptions table
+    // Create subscriptions table
     await queryRunner.query(`
-      CREATE TABLE IF NOT EXISTS "user_subscriptions" (
+      CREATE TABLE IF NOT EXISTS "subscriptions" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "user_id" uuid NOT NULL,
         "organization_id" uuid NOT NULL,
@@ -71,8 +73,8 @@ export class CreateSubscriptionTables1766015563000 implements MigrationInterface
         "stripe_customer_id" character varying(255),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_user_subscriptions" PRIMARY KEY ("id"),
-        CONSTRAINT "FK_user_subscriptions_plan_id" FOREIGN KEY ("plan_id") REFERENCES "subscription_plans"("id")
+        CONSTRAINT "PK_subscriptions" PRIMARY KEY ("id"),
+        CONSTRAINT "FK_subscriptions_plan_id" FOREIGN KEY ("plan_id") REFERENCES "subscription_plans"("id")
       )
     `);
 
@@ -97,17 +99,16 @@ export class CreateSubscriptionTables1766015563000 implements MigrationInterface
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_invoices" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_invoices_stripe_invoice_id" UNIQUE ("stripe_invoice_id"),
-        CONSTRAINT "FK_invoices_subscription_id" FOREIGN KEY ("subscription_id") REFERENCES "user_subscriptions"("id") ON DELETE SET NULL
+        CONSTRAINT "FK_invoices_subscription_id" FOREIGN KEY ("subscription_id") REFERENCES "subscriptions"("id") ON DELETE SET NULL
       )
     `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE IF EXISTS "invoices"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "user_subscriptions"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "subscriptions"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "pricing_tiers"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "plan_features"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "subscription_plans"`);
   }
 }
-

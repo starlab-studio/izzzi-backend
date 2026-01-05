@@ -7,7 +7,7 @@ export class AddStripeIdToSubscriptionsEntities1766524652688
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" DROP CONSTRAINT "FK_user_subscriptions_plan_id"`
+      `ALTER TABLE "subscriptions" DROP CONSTRAINT "FK_subscriptions_plan_id"`
     );
     await queryRunner.query(
       `ALTER TABLE "plan_features" DROP CONSTRAINT "FK_plan_features_plan_id"`
@@ -75,31 +75,29 @@ export class AddStripeIdToSubscriptionsEntities1766524652688
       `ALTER TABLE "class_students" DROP CONSTRAINT "UQ_class_students_class_email"`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ALTER COLUMN "id" DROP DEFAULT`
+      `ALTER TABLE "subscriptions" ALTER COLUMN "id" DROP DEFAULT`
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."user_subscriptions_billing_period_enum" AS ENUM('monthly', 'annual')`
+      `CREATE TYPE "public"."subscriptions_billing_period_enum" AS ENUM('monthly', 'annual')`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ALTER COLUMN "billing_period" TYPE "public"."user_subscriptions_billing_period_enum" USING "billing_period"::"public"."user_subscriptions_billing_period_enum"`
+      `ALTER TABLE "subscriptions" ALTER COLUMN "billing_period" TYPE "public"."subscriptions_billing_period_enum" USING "billing_period"::"public"."subscriptions_billing_period_enum"`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ALTER COLUMN "billing_period" SET NOT NULL`
+      `ALTER TABLE "subscriptions" ALTER COLUMN "billing_period" SET NOT NULL`
+    );
+    await queryRunner.query(`ALTER TABLE "subscriptions" DROP COLUMN "status"`);
+    await queryRunner.query(
+      `CREATE TYPE "public"."subscriptions_status_enum" AS ENUM('trial', 'active', 'past_due', 'cancelled', 'expired')`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" DROP COLUMN "status"`
+      `ALTER TABLE "subscriptions" ADD "status" "public"."subscriptions_status_enum" NOT NULL DEFAULT 'trial'`
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."user_subscriptions_status_enum" AS ENUM('trial', 'active', 'past_due', 'cancelled', 'expired')`
+      `ALTER TABLE "subscriptions" ALTER COLUMN "created_at" DROP DEFAULT`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ADD "status" "public"."user_subscriptions_status_enum" NOT NULL DEFAULT 'trial'`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ALTER COLUMN "created_at" DROP DEFAULT`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ALTER COLUMN "updated_at" DROP DEFAULT`
+      `ALTER TABLE "subscriptions" ALTER COLUMN "updated_at" DROP DEFAULT`
     );
     await queryRunner.query(
       `ALTER TABLE "plan_features" ALTER COLUMN "id" DROP DEFAULT`
@@ -396,7 +394,7 @@ export class AddStripeIdToSubscriptionsEntities1766524652688
       `ALTER TABLE "plan_features" ADD COLUMN IF NOT EXISTS "is_coming_soon" boolean NOT NULL DEFAULT false`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ADD COLUMN IF NOT EXISTS "quantity" integer NOT NULL DEFAULT 0`
+      `ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "quantity" integer NOT NULL DEFAULT 0`
     );
     await queryRunner.query(
       `CREATE UNIQUE INDEX "IDX_0ddf8494c8665a57c670287ccd" ON "invoices" ("stripe_invoice_id") `
@@ -713,34 +711,30 @@ export class AddStripeIdToSubscriptionsEntities1766524652688
       `ALTER TABLE "plan_features" ALTER COLUMN "id" SET DEFAULT uuid_generate_v4()`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ALTER COLUMN "updated_at" SET DEFAULT now()`
+      `ALTER TABLE "subscriptions" ALTER COLUMN "updated_at" SET DEFAULT now()`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ALTER COLUMN "created_at" SET DEFAULT now()`
+      `ALTER TABLE "subscriptions" ALTER COLUMN "created_at" SET DEFAULT now()`
+    );
+    await queryRunner.query(`ALTER TABLE "subscriptions" DROP COLUMN "status"`);
+    await queryRunner.query(`DROP TYPE "public"."subscriptions_status_enum"`);
+    await queryRunner.query(
+      `ALTER TABLE "subscriptions" ADD "status" character varying NOT NULL DEFAULT 'trial'`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" DROP COLUMN "status"`
+      `ALTER TABLE "subscriptions" DROP COLUMN "billing_period"`
     );
     await queryRunner.query(
-      `DROP TYPE "public"."user_subscriptions_status_enum"`
+      `DROP TYPE "public"."subscriptions_billing_period_enum"`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ADD "status" character varying NOT NULL DEFAULT 'trial'`
+      `ALTER TABLE "subscriptions" ADD "billing_period" character varying NOT NULL`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" DROP COLUMN "billing_period"`
+      `ALTER TABLE "subscriptions" DROP COLUMN IF EXISTS "quantity"`
     );
     await queryRunner.query(
-      `DROP TYPE "public"."user_subscriptions_billing_period_enum"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ADD "billing_period" character varying NOT NULL`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" DROP COLUMN IF EXISTS "quantity"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ALTER COLUMN "id" SET DEFAULT uuid_generate_v4()`
+      `ALTER TABLE "subscriptions" ALTER COLUMN "id" SET DEFAULT uuid_generate_v4()`
     );
     await queryRunner.query(
       `ALTER TABLE "class_students" ADD CONSTRAINT "UQ_class_students_class_email" UNIQUE ("class_id", "email")`
@@ -803,7 +797,7 @@ export class AddStripeIdToSubscriptionsEntities1766524652688
       `ALTER TABLE "student_quiz_tokens" ADD CONSTRAINT "FK_student_quiz_tokens_quiz_id" FOREIGN KEY ("quiz_id") REFERENCES "quizzes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
     );
     await queryRunner.query(
-      `ALTER TABLE "invoices" ADD CONSTRAINT "FK_invoices_subscription_id" FOREIGN KEY ("subscription_id") REFERENCES "user_subscriptions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+      `ALTER TABLE "invoices" ADD CONSTRAINT "FK_invoices_subscription_id" FOREIGN KEY ("subscription_id") REFERENCES "subscriptions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
     );
     await queryRunner.query(
       `ALTER TABLE "pricing_tiers" ADD CONSTRAINT "FK_pricing_tiers_plan_id" FOREIGN KEY ("plan_id") REFERENCES "subscription_plans"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
@@ -812,7 +806,7 @@ export class AddStripeIdToSubscriptionsEntities1766524652688
       `ALTER TABLE "plan_features" ADD CONSTRAINT "FK_plan_features_plan_id" FOREIGN KEY ("plan_id") REFERENCES "subscription_plans"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" ADD CONSTRAINT "FK_user_subscriptions_plan_id" FOREIGN KEY ("plan_id") REFERENCES "subscription_plans"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
+      `ALTER TABLE "subscriptions" ADD CONSTRAINT "FK_subscriptions_plan_id" FOREIGN KEY ("plan_id") REFERENCES "subscription_plans"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
   }
 }

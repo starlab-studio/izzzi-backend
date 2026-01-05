@@ -39,6 +39,7 @@ export class CreateEmailNotificationUseCase {
         mode,
         status: NotificationStatus.PENDING,
         retryCount: 0,
+        isRead: data.isRead ?? false,
       });
       const ormNotification =
         await this.notificationRepository.create(notification);

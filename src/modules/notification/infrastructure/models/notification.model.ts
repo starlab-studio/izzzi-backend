@@ -38,4 +38,10 @@ export class NotificationModel extends BaseModel implements INotification {
 
   @Column({ name: "delivered_at", type: "timestamp", nullable: true })
   deliveredAt?: Date;
+
+  @Column({ name: "is_read", type: "boolean", default: false })
+  isRead!: boolean;
+
+  @Column({ type: "jsonb", nullable: true })
+  metadata?: Record<string, any>;
 }

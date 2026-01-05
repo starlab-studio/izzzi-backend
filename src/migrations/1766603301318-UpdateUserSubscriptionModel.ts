@@ -9,13 +9,13 @@ export class UpdateUserSubscriptionModel1766603301318
     const hasPendingQuantity = await queryRunner.query(`
             SELECT column_name 
             FROM information_schema.columns 
-            WHERE table_name = 'user_subscriptions' 
+            WHERE table_name = 'subscriptions' 
             AND column_name = 'pending_quantity'
         `);
 
     if (hasPendingQuantity.length === 0) {
       await queryRunner.query(
-        `ALTER TABLE "user_subscriptions" ADD "pending_quantity" integer`
+        `ALTER TABLE "subscriptions" ADD "pending_quantity" integer`
       );
     }
 
@@ -61,7 +61,7 @@ export class UpdateUserSubscriptionModel1766603301318
       `ALTER TABLE "classes" ALTER COLUMN "student_emails" SET DEFAULT '[]'`
     );
     await queryRunner.query(
-      `ALTER TABLE "user_subscriptions" DROP COLUMN "pending_quantity"`
+      `ALTER TABLE "subscriptions" DROP COLUMN "pending_quantity"`
     );
   }
 }

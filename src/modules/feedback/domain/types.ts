@@ -9,6 +9,7 @@ export interface GetFeedbackSubjectsInput {
 
 export interface FeedbackSubjectResponse {
   id: string;
+  subjectId: string;
   name: string;
   code: string;
   teacher: string;
@@ -25,9 +26,17 @@ export interface FeedbackSubjectResponse {
     number: string;
     content: string;
     timestamp: string;
+    isProcessed: boolean;
   }>;
   alertsCount: number;
   summary: string;
+  fullSummary?: string;
+  summaryMetadata?: {
+    hasSummary: boolean;
+    isStale: boolean;
+    generatedAt: string | null;
+    feedbackCountAtGeneration: number | null;
+  };
   hasVisibleRetours: boolean;
 }
 
@@ -69,6 +78,9 @@ export interface GetFeedbackSummaryInput {
   organizationId: string;
   userId: string;
   subjectId: string;
+  formType?: "during_course" | "after_course";
+  periodDays?: number;
+  jwtToken?: string;
 }
 
 export interface GetFeedbackSummaryOutput {
@@ -80,6 +92,7 @@ export interface GetFeedbackAlertsInput {
   organizationId: string;
   userId: string;
   subjectId: string;
+  jwtToken?: string;
 }
 
 export interface FeedbackAlert {
@@ -93,4 +106,102 @@ export interface FeedbackAlert {
 
 export interface GetFeedbackAlertsOutput {
   alerts: FeedbackAlert[];
+}
+
+export interface GetFeedbackSubjectByIdInput {
+  organizationId: string;
+  userId: string;
+  subjectId: string;
+}
+
+export interface GetFeedbackSubjectByIdOutput {
+  subject: FeedbackSubjectResponse;
+}
+
+export interface SendReminderBySubjectInput {
+  organizationId: string;
+  userId: string;
+  subjectId: string;
+}
+
+export interface SendReminderBySubjectOutput {
+  success: boolean;
+  message: string;
+  totalQuizzes: number;
+  remindedCount: number;
+  newStudentsSentCount: number;
+  alreadyRespondedCount: number;
+  errors?: string[];
+}
+
+export interface IFeedbackAlert {
+  readonly id: string;
+  alertId: string;
+  subjectId: string;
+  organizationId: string;
+  isProcessed: boolean;
+  processedByUserId: string | null;
+  processedAt: Date | null;
+  type: "negative" | "alert" | "positive";
+  title: string;
+  content: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  number: string;
+  timestamp: Date;
+  evidence?: string[];
+  formType?: "during_course" | "after_course";
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IAlertComment {
+  readonly id: string;
+  alertId: string; // ID de l'alerte du service AI
+  subjectId: string;
+  organizationId: string;
+  userId: string;
+  comment: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ISubjectSummary {
+  readonly id: string;
+  subjectId: string;
+  organizationId: string;
+  summary: string;
+  fullSummary?: string;
+  sentimentScore?: number;
+  periodDays: number;
+  formType: "during_course" | "after_course";
+  feedbackCountAtGeneration: number;
+  generatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AlertItem {
+  id: string;
+  type: "negative" | "alert";
+  number: string;
+  content: string;
+  title: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  timestamp: string;
+  evidence?: string[];
+  formType?: "during_course" | "after_course";
+}
+
+export interface CreateAlertInput {
+  organizationId: string;
+  organizationName: string;
+  subjectId: string;
+  subjectName: string;
+  alerts: AlertItem[];
+}
+
+export interface CreateAlertOutput {
+  success: boolean;
+  message: string;
+  alertsCount: number;
 }

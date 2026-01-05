@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn } from "typeorm";
 import { IUserSubscription } from "../../domain/types";
 
-@Entity({ name: "user_subscriptions" })
+@Entity({ name: "subscriptions" })
 export class UserSubscriptionModel implements IUserSubscription {
   @PrimaryColumn("uuid")
   id: string;

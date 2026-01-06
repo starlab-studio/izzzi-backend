@@ -31,6 +31,11 @@ import {
 import { GetQuizTemplatePairsUseCase } from "../use-cases/GetQuizTemplatePairs.use-case";
 import { GetQuizTemplateByIdUseCase } from "../use-cases/GetQuizTemplateById.use-case";
 import { CreateQuizTemplateUseCase } from "../use-cases/CreateQuizTemplate.use-case";
+import { 
+  CreateQuizTemplatePairUseCase,
+  CreateQuizTemplatePairInput,
+  CreateQuizTemplatePairOutput,
+} from "../use-cases/CreateQuizTemplatePair.use-case";
 import { AssignQuizPairToSubjectUseCase } from "../use-cases/AssignQuizPairToSubject.use-case";
 import { ReassignQuizPairToSubjectUseCase } from "../use-cases/ReassignQuizPairToSubject.use-case";
 import { GetQuizzesBySubjectUseCase } from "../use-cases/GetQuizzesBySubject.use-case";
@@ -53,6 +58,7 @@ export class QuizFacade {
     private readonly getQuizTemplatePairsUseCase: GetQuizTemplatePairsUseCase,
     private readonly getQuizTemplateByIdUseCase: GetQuizTemplateByIdUseCase,
     private readonly createQuizTemplateUseCase: CreateQuizTemplateUseCase,
+    private readonly createQuizTemplatePairUseCase: CreateQuizTemplatePairUseCase,
     private readonly assignQuizPairToSubjectUseCase: AssignQuizPairToSubjectUseCase,
     private readonly reassignQuizPairToSubjectUseCase: ReassignQuizPairToSubjectUseCase,
     private readonly getQuizzesBySubjectUseCase: GetQuizzesBySubjectUseCase,
@@ -83,6 +89,12 @@ export class QuizFacade {
     data: CreateQuizTemplateInput,
   ): Promise<CreateQuizTemplateOutput> {
     return await this.createQuizTemplateUseCase.execute(data);
+  }
+
+  async createQuizTemplatePair(
+    data: CreateQuizTemplatePairInput,
+  ): Promise<CreateQuizTemplatePairOutput> {
+    return await this.createQuizTemplatePairUseCase.execute(data);
   }
 
   async assignQuizPairToSubject(

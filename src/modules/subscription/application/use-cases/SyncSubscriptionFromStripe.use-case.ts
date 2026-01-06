@@ -74,8 +74,29 @@ export class SyncSubscriptionFromStripeUseCase
           newStatus = "past_due";
           break;
         case "canceled":
+          if (
+            stripeSubscription.canceled_at &&
+            stripeSubscription.current_period_end
+          ) {
+            const canceledAt = new Date(stripeSubscription.canceled_at * 1000);
+            const periodEnd = new Date(
+              stripeSubscription.current_period_end * 1000
+            );
+            const timeDiff = Math.abs(
+              canceledAt.getTime() - periodEnd.getTime()
+            );
+            const hoursDiff = timeDiff / (1000 * 60 * 60);
+            if (hoursDiff <= 24) {
+              newStatus = "expired";
+            } else {
+              newStatus = "cancelled";
+            }
+          } else {
+            newStatus = "cancelled";
+          }
+          break;
         case "unpaid":
-          newStatus = "cancelled";
+          newStatus = "expired";
           break;
         case "incomplete":
         case "incomplete_expired":
@@ -88,6 +109,8 @@ export class SyncSubscriptionFromStripeUseCase
       if (subscription.status !== newStatus) {
         if (newStatus === "active" && subscription.status === "pending") {
           subscription.activate();
+        } else if (newStatus === "expired") {
+          subscription.expire();
         } else {
           (subscription as any).props.status = newStatus;
           (subscription as any).props.updatedAt = new Date();
@@ -104,6 +127,21 @@ export class SyncSubscriptionFromStripeUseCase
         (subscription as any).props.currentPeriodEnd = new Date(
           stripeSubscription.current_period_end * 1000
         );
+      }
+
+      if (!subscription.currentPeriodStart || !subscription.currentPeriodEnd) {
+        this.logger.warn(
+          `Subscription ${subscription.id} has missing period dates after Stripe sync; applying domain defaults`
+        );
+        try {
+          subscription.activate();
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          this.logger.error(
+            `Failed to activate subscription ${subscription.id} while fixing missing period dates: ${msg}`,
+            e instanceof Error ? e.stack || "" : ""
+          );
+        }
       }
 
       if (stripeSubscription.items?.data?.[0]?.quantity) {

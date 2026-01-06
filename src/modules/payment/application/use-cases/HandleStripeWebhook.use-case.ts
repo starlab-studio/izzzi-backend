@@ -9,6 +9,9 @@ import type {
   IWebhookPaymentIntent,
   IWebhookSubscription,
 } from "../../domain/types/webhook-event.types";
+import type { ISubscriptionRepository } from "../../../subscription/domain/repositories/subscription.repository";
+import type { IPricingTierRepository } from "../../../subscription/domain/repositories/pricing-tier.repository";
+import type { IInvoiceRepository } from "../../../subscription/domain/repositories/invoice.repository";
 
 export interface HandleStripeWebhookInput {
   event: IWebhookEvent;
@@ -27,7 +30,10 @@ export class HandleStripeWebhookUseCase
     logger: ILoggerService,
     private readonly syncInvoiceFromStripeUseCase: SyncInvoiceFromStripeUseCase,
     private readonly syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase,
-    private readonly stripeSyncService: IStripeSyncService
+    private readonly stripeSyncService: IStripeSyncService,
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly pricingTierRepository: IPricingTierRepository,
+    private readonly invoiceRepository: IInvoiceRepository
   ) {
     super(logger);
   }
@@ -97,7 +103,6 @@ export class HandleStripeWebhookUseCase
       `Processing invoice.paid event for invoice ${webhookInvoice.id}`
     );
 
-    // Retrieve the full Stripe invoice via the domain service
     const stripeInvoice = await this.stripeSyncService.getInvoice(
       webhookInvoice.id
     );
@@ -129,6 +134,23 @@ export class HandleStripeWebhookUseCase
           ? webhookPaymentIntent.invoice
           : webhookPaymentIntent.invoice.id;
 
+      const existingInvoice =
+        await this.invoiceRepository.findByStripeInvoiceId(invoiceId);
+
+      if (existingInvoice && existingInvoice.status === "paid") {
+        this.logger.warn(
+          `Payment intent ${webhookPaymentIntent.id} already processed (invoice ${invoiceId} is already paid), skipping`
+        );
+        return;
+      }
+    }
+
+    if (webhookPaymentIntent.invoice) {
+      const invoiceId =
+        typeof webhookPaymentIntent.invoice === "string"
+          ? webhookPaymentIntent.invoice
+          : webhookPaymentIntent.invoice.id;
+
       try {
         const stripeInvoice =
           await this.stripeSyncService.getInvoice(invoiceId);
@@ -152,8 +174,10 @@ export class HandleStripeWebhookUseCase
       }
     }
 
-    if (webhookPaymentIntent.metadata?.subscriptionId) {
-      const subscriptionId = webhookPaymentIntent.metadata.subscriptionId;
+    const metadata = webhookPaymentIntent.metadata || {};
+
+    if (metadata.subscriptionId) {
+      const subscriptionId = metadata.subscriptionId;
       try {
         const stripeSubscription =
           await this.stripeSyncService.getSubscription(subscriptionId);
@@ -180,9 +204,95 @@ export class HandleStripeWebhookUseCase
       }
     }
 
+    if (metadata.type === "quantity_update" && metadata.subscriptionId) {
+      await this.handleQuantityUpdateAfterPayment(webhookPaymentIntent);
+    }
+
     this.logger.info(
       `Successfully processed payment_intent.succeeded event for payment intent ${webhookPaymentIntent.id}`
     );
+  }
+
+  private async handleQuantityUpdateAfterPayment(
+    webhookPaymentIntent: IWebhookPaymentIntent
+  ): Promise<void> {
+    const metadata = webhookPaymentIntent.metadata || {};
+    const subscriptionId = metadata.subscriptionId;
+    const newQuantityStr = metadata.newQuantity;
+
+    if (!subscriptionId || !newQuantityStr) {
+      this.logger.warn(
+        `Quantity update payment_intent.succeeded ${webhookPaymentIntent.id} missing subscriptionId or newQuantity in metadata`
+      );
+      return;
+    }
+
+    const newQuantity = Number(newQuantityStr);
+    if (!Number.isInteger(newQuantity) || newQuantity < 1 || newQuantity > 20) {
+      this.logger.warn(
+        `Invalid newQuantity "${newQuantityStr}" in quantity_update metadata for payment intent ${webhookPaymentIntent.id}`
+      );
+      return;
+    }
+
+    const subscription =
+      await this.subscriptionRepository.findById(subscriptionId);
+    if (!subscription) {
+      this.logger.error(
+        `Subscription ${subscriptionId} not found while handling quantity_update for payment intent ${webhookPaymentIntent.id}`,
+        ""
+      );
+      return;
+    }
+
+    if (!subscription.stripeSubscriptionId) {
+      this.logger.error(
+        `Subscription ${subscription.id} has no stripeSubscriptionId while handling quantity_update for payment intent ${webhookPaymentIntent.id}`,
+        ""
+      );
+      return;
+    }
+
+    const tiers = await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
+      subscription.planId,
+      subscription.billingPeriod
+    );
+    const newTier = tiers.find(
+      (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+    );
+
+    if (!newTier || !newTier.stripePriceId) {
+      this.logger.error(
+        `No pricing tier with stripePriceId found for plan ${subscription.planId}, billingPeriod ${subscription.billingPeriod}, quantity ${newQuantity} while handling quantity_update for payment intent ${webhookPaymentIntent.id}`,
+        ""
+      );
+      return;
+    }
+
+    await this.stripeSyncService.updateSubscriptionQuantity(
+      subscription.stripeSubscriptionId,
+      newQuantity,
+      newTier.stripePriceId,
+      {
+        prorationBehavior: "none",
+        billingCycleAnchor: "unchanged",
+      }
+    );
+
+    try {
+      subscription.updateQuantity(newQuantity, true);
+      await this.subscriptionRepository.save(subscription);
+      this.logger.info(
+        `Applied quantity_update to subscription ${subscription.id} (new quantity: ${newQuantity}) after payment intent ${webhookPaymentIntent.id}`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to update local subscription ${subscription.id} quantity after payment intent ${webhookPaymentIntent.id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack || "" : ""
+      );
+    }
   }
 
   private async handleSubscriptionUpdated(
@@ -192,7 +302,6 @@ export class HandleStripeWebhookUseCase
       `Processing customer.subscription.updated event for subscription ${webhookSubscription.id}`
     );
 
-    // Retrieve the full Stripe subscription via the domain service
     const stripeSubscription = await this.stripeSyncService.getSubscription(
       webhookSubscription.id
     );
@@ -221,7 +330,6 @@ export class HandleStripeWebhookUseCase
       `Processing customer.subscription.deleted event for subscription ${webhookSubscription.id}`
     );
 
-    // Retrieve the full Stripe subscription via the domain service
     const stripeSubscription = await this.stripeSyncService.getSubscription(
       webhookSubscription.id
     );

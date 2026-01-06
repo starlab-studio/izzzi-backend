@@ -9,6 +9,7 @@ import { PricingTierEntity } from "../../domain/entities/pricing-tier.entity";
 import { UserRole } from "src/core/domain/types";
 import type { IPaymentService } from "../../domain/services/payment.service";
 import type { IStripeSyncService } from "src/modules/payment/domain/services/stripe-sync.service";
+import type { StripeSubscription } from "src/modules/payment/domain/types/stripe.types";
 
 export interface CreateSubscriptionInput {
   userId: string;
@@ -122,7 +123,18 @@ export class CreateSubscriptionUseCase
         billingPeriod
       );
 
-      // For free plans, create missing pricing tiers if they don't exist
+      if (tiers.length > 0 && tiers[0].billingPeriod !== billingPeriod) {
+        throw new DomainError(
+          "BILLING_PERIOD_MISMATCH",
+          `BillingPeriod mismatch: requested ${billingPeriod} but tier is ${tiers[0].billingPeriod}`,
+          {
+            requestedBillingPeriod: billingPeriod,
+            tierBillingPeriod: tiers[0].billingPeriod,
+            planId,
+          }
+        );
+      }
+
       if (plan.isFree && tiers.length === 0) {
         this.logger.info(
           `Creating missing pricing tiers for free plan ${plan.name} (${planId}) with billing period ${billingPeriod}`
@@ -139,7 +151,6 @@ export class CreateSubscriptionUseCase
 
         const savedTier = await this.pricingTierRepository.save(freeTier);
 
-        // Sync with Stripe to get stripePriceId
         if (plan.stripeProductId) {
           const tierToPriceIdMap =
             await this.stripeSyncService.syncPricingTiersToStripe(
@@ -198,7 +209,6 @@ export class CreateSubscriptionUseCase
 
         pricePerClassCents = selectedTier.pricePerClassCents;
 
-        // For free plans, sync tier with Stripe if stripePriceId is missing
         if (plan.isFree && selectedTier && !selectedTier.stripePriceId) {
           this.logger.info(
             `Syncing pricing tier ${selectedTier.id} with Stripe for free plan`
@@ -238,7 +248,6 @@ export class CreateSubscriptionUseCase
       let stripeSubscriptionId: string | null = null;
       let stripeCustomerId: string | null = null;
 
-      // For free plans, we still create a Stripe subscription to track invoices
       if (requiresPayment || isFreePlan) {
         const pendingSubscription = isFreePlan
           ? SubscriptionEntity.create({
@@ -298,6 +307,53 @@ export class CreateSubscriptionUseCase
         savedSubscription.linkToStripe(stripeSubscriptionId, stripeCustomerId);
         savedSubscription =
           await this.subscriptionRepository.save(savedSubscription);
+
+        try {
+          const fullStripeSubscription: StripeSubscription | null =
+            await this.stripeSyncService.getSubscription(stripeSubscriptionId);
+
+          if (
+            fullStripeSubscription &&
+            fullStripeSubscription.current_period_start &&
+            fullStripeSubscription.current_period_end
+          ) {
+            (savedSubscription as any).props.currentPeriodStart = new Date(
+              fullStripeSubscription.current_period_start * 1000
+            );
+            (savedSubscription as any).props.currentPeriodEnd = new Date(
+              fullStripeSubscription.current_period_end * 1000
+            );
+            (savedSubscription as any).props.updatedAt = new Date();
+
+            // La synchronisation fine du statut et de la quantité sera gérée
+            // par les webhooks via SyncSubscriptionFromStripeUseCase.
+            /*
+            savedSubscription.syncFromStripe({
+              status: fullStripeSubscription.status as any,
+              currentPeriodStart: new Date(
+                fullStripeSubscription.current_period_start * 1000
+              ),
+              currentPeriodEnd: new Date(
+                fullStripeSubscription.current_period_end * 1000
+              ),
+              cancelAtPeriodEnd: fullStripeSubscription.cancel_at_period_end,
+              quantity:
+                fullStripeSubscription.items?.data?.[0]?.quantity ?? undefined,
+            });
+            */
+
+            savedSubscription =
+              await this.subscriptionRepository.save(savedSubscription);
+          }
+        } catch (stripeSyncError) {
+          this.logger.warn(
+            `Failed to pre-sync subscription ${savedSubscription.id} periods from Stripe after creation: ${
+              stripeSyncError instanceof Error
+                ? stripeSyncError.message
+                : String(stripeSyncError)
+            }`
+          );
+        }
       } else {
         const subscription = SubscriptionEntity.create({
           userId,

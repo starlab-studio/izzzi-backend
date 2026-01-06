@@ -1,4 +1,5 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module, forwardRef, OnModuleInit } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule, JwtService } from "@nestjs/jwt";
@@ -234,9 +235,17 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
     },
     {
       provide: RefreshAccessTokenUseCase,
-      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
-        new RefreshAccessTokenUseCase(logger, authProvider),
-      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+      useFactory: (
+        logger: ILoggerService,
+        authStrategies: IAuthStrategy[],
+        refreshTokenRepository: RefreshTokenRepository
+      ) =>
+        new RefreshAccessTokenUseCase(
+          logger,
+          authStrategies,
+          refreshTokenRepository
+        ),
+      inject: [LoggerService, AUTH_STRATEGY_TOKEN, RefreshTokenRepository],
     },
     {
       provide: ForgotPasswordUseCase,
@@ -377,21 +386,22 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
   ],
   exports: [AuthFacade, "AUTH_IDENTITY_PROVIDER", RefreshTokenRepository],
 })
-export class AuthModule {
+export class AuthModule implements OnModuleInit {
   constructor(
     private readonly eventHandlerRegistry: EventHandlerRegistry,
     private readonly authIdentityFailedHandler: AuthIdentityFailedHandler,
-    private readonly userFailedHandler: UserFailedHandler
+    private readonly moduleRef: ModuleRef
   ) {}
 
   async onModuleInit() {
+    const userFailedHandler = this.moduleRef.get(UserFailedHandler, {
+      strict: false,
+    });
+
     this.eventHandlerRegistry.registerHandler(
       "auth_identity.failed",
       this.authIdentityFailedHandler
     );
-    this.eventHandlerRegistry.registerHandler(
-      "user.failed",
-      this.userFailedHandler
-    );
+    this.eventHandlerRegistry.registerHandler("user.failed", userFailedHandler);
   }
 }

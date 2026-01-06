@@ -71,6 +71,7 @@ import { GetBillingPortalLinkUseCase } from "./application/use-cases/GetBillingP
 import { SendSubscriptionConfirmationEmailUseCase } from "./application/use-cases/SendSubscriptionConfirmationEmail.use-case";
 import { OrganizationAuthorizationService } from "../organization/domain/services/organization-authorization.service";
 import { TrialEndingCheckerService } from "./infrastructure/scheduled/trial-ending-checker.service";
+import { SubscriptionExpirationCheckerService } from "./infrastructure/scheduled/subscription-expiration-checker.service";
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 import { ClassModule } from "../class/class.module";
 import { IClassRepository } from "../class/domain/repositories/class.repository";
@@ -467,6 +468,27 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       ],
     },
     {
+      provide: SubscriptionExpirationCheckerService,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionRepository: ISubscriptionRepository,
+        stripeSyncService: IStripeSyncService,
+        syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase
+      ) =>
+        new SubscriptionExpirationCheckerService(
+          logger,
+          subscriptionRepository,
+          stripeSyncService,
+          syncSubscriptionFromStripeUseCase
+        ),
+      inject: [
+        LoggerService,
+        SUBSCRIPTION_REPOSITORY,
+        STRIPE_SYNC_SERVICE,
+        SyncSubscriptionFromStripeUseCase,
+      ],
+    },
+    {
       provide: SubscriptionFeatureService,
       useFactory: (
         subscriptionRepository: ISubscriptionRepository,
@@ -484,6 +506,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
     InvoiceRepository,
     SubscriptionRepository,
     SubscriptionPlanRepository,
+    PricingTierRepository,
     INVOICE_REPOSITORY,
     SUBSCRIPTION_REPOSITORY,
     SUBSCRIPTION_PLAN_REPOSITORY,

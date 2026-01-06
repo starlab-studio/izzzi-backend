@@ -156,7 +156,10 @@ export class CustomAuthAdapter implements IAuthStrategy {
     // Super admins don't need organization memberships
     const isSuperAdmin = userDetails.role === "SUPER_ADMIN";
 
-    if (!isSuperAdmin && (!userDetails.memberships || userDetails.memberships.length === 0)) {
+    if (
+      !isSuperAdmin &&
+      (!userDetails.memberships || userDetails.memberships.length === 0)
+    ) {
       throw new DomainError(
         ErrorCode.NO_MEMBERSHIPS_FOUND,
         "This account has no active organization memberships. Please contact support."
@@ -192,6 +195,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       refreshTokenHash,
       authIdentityEntity.userId || userDetails.id,
       expiresAt,
+      AuthIdentityName.CUSTOM,
       data.deviceInfo,
       data.ipAddress
     );
@@ -483,7 +487,10 @@ export class CustomAuthAdapter implements IAuthStrategy {
     // Super admins don't need organization memberships
     const isSuperAdmin = userDetails.role === "SUPER_ADMIN";
 
-    if (!isSuperAdmin && (!userDetails.memberships || userDetails.memberships.length === 0)) {
+    if (
+      !isSuperAdmin &&
+      (!userDetails.memberships || userDetails.memberships.length === 0)
+    ) {
       refreshTokenEntity.revoke();
       await this.refreshTokenRepository.save(refreshTokenEntity);
       throw new DomainError(
@@ -523,6 +530,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       newRefreshTokenHash,
       refreshTokenEntity.userId,
       expiresAt,
+      AuthIdentityName.CUSTOM,
       data.deviceInfo || refreshTokenEntity.deviceInfo,
       data.ipAddress || refreshTokenEntity.ipAddress
     );

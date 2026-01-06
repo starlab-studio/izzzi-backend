@@ -16,7 +16,8 @@ export type StripeSubscriptionStatus =
   | "past_due"
   | "canceled"
   | "unpaid"
-  | "incomplete";
+  | "incomplete"
+  | "incomplete_expired";
 
 export class SubscriptionEntity {
   private props: IUserSubscription;
@@ -418,6 +419,7 @@ export class SubscriptionEntity {
       canceled: "cancelled",
       unpaid: "expired",
       incomplete: "trial",
+      incomplete_expired: "failed",
     };
 
     const mappedStatus = statusMap[data.status];

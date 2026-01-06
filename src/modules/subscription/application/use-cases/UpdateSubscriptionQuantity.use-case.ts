@@ -205,11 +205,12 @@ export class UpdateSubscriptionQuantityUseCase
 
         const periodStart = subscription.currentPeriodStart;
         const periodEnd = subscription.currentPeriodEnd;
-        
+
         // Vérifier que les dates de période sont définies pour calculer la proration
         if (periodStart && periodEnd) {
           const totalDaysInPeriod =
-            (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24);
+            (periodEnd.getTime() - periodStart.getTime()) /
+            (1000 * 60 * 60 * 24);
           const daysRemaining =
             (periodEnd.getTime() - effectiveDate.getTime()) /
             (1000 * 60 * 60 * 24);
@@ -250,20 +251,49 @@ export class UpdateSubscriptionQuantityUseCase
             );
           }
 
-          await this.stripeSyncService.updateSubscriptionQuantity(
-            subscription.stripeSubscriptionId,
-            newQuantity,
-            newTier.stripePriceId,
-            {
-              prorationBehavior: "create_prorations",
-            }
-          );
-
           if (
             requiresPayment &&
             amountDueCents > 0 &&
             subscription.stripeCustomerId
           ) {
+            (subscription as any).props.pendingQuantity = newQuantity;
+            await this.subscriptionRepository.save(subscription);
+
+            const paymentIntent =
+              await this.stripeSyncService.createPaymentIntent({
+                customerId: subscription.stripeCustomerId,
+                amountCents: amountDueCents,
+                currency: "eur",
+                createInvoice: true,
+                description: `Quantity update: ${previousQuantity} → ${newQuantity} classes`,
+                metadata: {
+                  subscriptionId: subscription.id,
+                  organizationId: subscription.organizationId,
+                  userId: subscription.userId,
+                  type: "quantity_update",
+                  previousQuantity: previousQuantity.toString(),
+                  newQuantity: newQuantity.toString(),
+                },
+              });
+
+            stripeClientSecret = paymentIntent.clientSecret;
+          } else {
+            await this.stripeSyncService.updateSubscriptionQuantity(
+              subscription.stripeSubscriptionId,
+              newQuantity,
+              newTier.stripePriceId,
+              {
+                prorationBehavior: "none",
+              }
+            );
+
+            subscription.updateQuantity(newQuantity, true);
+          }
+        } else if (!plan.isFree && requiresPayment && amountDueCents > 0) {
+          if (subscription.stripeCustomerId) {
+            (subscription as any).props.pendingQuantity = newQuantity;
+            await this.subscriptionRepository.save(subscription);
+
             const paymentIntent =
               await this.stripeSyncService.createPaymentIntent({
                 customerId: subscription.stripeCustomerId,
@@ -284,8 +314,6 @@ export class UpdateSubscriptionQuantityUseCase
             stripeClientSecret = paymentIntent.clientSecret;
           }
         }
-
-        subscription.updateQuantity(newQuantity, true);
       } else {
         effectiveDate = subscription.currentPeriodEnd!;
         prorationApplied = false;
@@ -332,8 +360,7 @@ export class UpdateSubscriptionQuantityUseCase
 
       const planName = plan.name === "super-izzzi" ? "Super Izzzi" : "Izzzi";
 
-      // Emit upgrade event if upgrade occurred and no payment is required
-      if (isUpgrade) {
+      if (isUpgrade && !requiresPayment) {
         const user = await this.userRepository.findById(subscription.userId);
         if (user) {
           this.eventStore.publish(

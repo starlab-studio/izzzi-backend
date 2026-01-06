@@ -124,6 +124,24 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     );
   }
 
+  async findExpiredWithStripeId(
+    beforeDate: Date
+  ): Promise<SubscriptionEntity[]> {
+    const ormEntities = await this.ormRepository
+      .createQueryBuilder("subscription")
+      .where("subscription.current_period_end <= :beforeDate", { beforeDate })
+      .andWhere("subscription.stripe_subscription_id IS NOT NULL")
+      .andWhere("subscription.status IN (:...statuses)", {
+        statuses: ["active", "past_due", "trial", "cancelled"],
+      })
+      .orderBy("subscription.current_period_end", "ASC")
+      .getMany();
+
+    return ormEntities.map((ormEntity) =>
+      SubscriptionEntity.reconstitute(ormEntity)
+    );
+  }
+
   async save(entity: SubscriptionEntity): Promise<SubscriptionEntity> {
     const data = entity.toPersistence();
     const saved = await this.ormRepository.save(data);

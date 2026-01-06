@@ -35,12 +35,10 @@ export class TrialEndingCheckerService {
             subscription.planId
           );
 
-          // Only process free plans
           if (!plan || !plan.isFree) {
             continue;
           }
 
-          // Get admin emails for the organization
           const memberships =
             await this.membershipRepository.findByOrganization(
               subscription.organizationId
@@ -77,7 +75,6 @@ export class TrialEndingCheckerService {
           const planName =
             plan.name === "super-izzzi" ? "Super Izzzi" : "Izzzi";
 
-          // Publish event
           this.eventStore.publish(
             new TrialEndingSoonEvent({
               organizationId: subscription.organizationId,

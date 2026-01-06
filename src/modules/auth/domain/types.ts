@@ -140,6 +140,7 @@ export interface IRefreshToken {
   readonly id: string;
   readonly tokenHash: string;
   readonly userId: string;
+  readonly provider?: AuthIdentityName;
   readonly deviceInfo?: string;
   readonly ipAddress?: string;
   readonly isRevoked: boolean;

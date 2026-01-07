@@ -8,7 +8,7 @@ import {
 import { Server, Socket } from "socket.io";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
-import { Logger } from "@nestjs/common";
+import { Logger, Inject } from "@nestjs/common";
 import { INotificationGateway } from "../../application/gateways/notification-gateway.interface";
 import { INotification } from "../../domain/notification.types";
 import { JWTPayload } from "src/core";
@@ -17,8 +17,10 @@ import { NotificationOutput } from "../../application/use-cases/get-notification
 
 @WebSocketGateway({
   cors: {
-    origin: "*",
+    origin: ["http://localhost:3001", "http://www.localhost:3001"],
     credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
 })
 export class NotificationGateway
@@ -33,6 +35,7 @@ export class NotificationGateway
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    @Inject("SUBJECT_REPOSITORY")
     private readonly subjectRepository: ISubjectRepository
   ) {}
 
@@ -56,13 +59,11 @@ export class NotificationGateway
         return;
       }
 
-      // Stocker la connexion
       if (!this.userSockets.has(userId)) {
         this.userSockets.set(userId, new Set());
       }
       this.userSockets.get(userId)!.add(client.id);
 
-      // Joindre une room par userId pour faciliter l'émission
       client.join(`user:${userId}`);
 
       this.logger.log(`User ${userId} connected (socket: ${client.id})`);
@@ -73,7 +74,6 @@ export class NotificationGateway
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
-    // Trouver et retirer la connexion
     for (const [userId, socketIds] of this.userSockets.entries()) {
       if (socketIds.has(client.id)) {
         socketIds.delete(client.id);
@@ -95,7 +95,6 @@ export class NotificationGateway
       return;
     }
 
-    // Transformer INotification en NotificationOutput pour le frontend
     const transformedNotification =
       await this.transformNotification(notification);
     if (!transformedNotification) {
@@ -105,7 +104,6 @@ export class NotificationGateway
       return;
     }
 
-    // Émettre à tous les sockets de l'utilisateur (multi-onglets)
     this.server
       .to(`user:${userId}`)
       .emit("notification:new", transformedNotification);
@@ -159,13 +157,11 @@ export class NotificationGateway
   }
 
   private extractToken(client: Socket): string | undefined {
-    // Essayer depuis les query params
     const tokenFromQuery = client.handshake.query.token as string | undefined;
     if (tokenFromQuery) {
       return tokenFromQuery;
     }
 
-    // Essayer depuis les headers
     const authHeader = client.handshake.headers.authorization;
     if (authHeader) {
       const [type, token] = authHeader.split(" ");

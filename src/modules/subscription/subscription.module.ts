@@ -68,10 +68,12 @@ import {
 import { NotificationModule } from "../notification/notification.module";
 import { CreateEmailNotificationUseCase } from "../notification/application/use-cases/create-email-notification.use-case";
 import { GetBillingPortalLinkUseCase } from "./application/use-cases/GetBillingPortalLink.use-case";
+import { CheckBillingAccessUseCase } from "./application/use-cases/CheckBillingAccess.use-case";
 import { SendSubscriptionConfirmationEmailUseCase } from "./application/use-cases/SendSubscriptionConfirmationEmail.use-case";
 import { OrganizationAuthorizationService } from "../organization/domain/services/organization-authorization.service";
 import { TrialEndingCheckerService } from "./infrastructure/scheduled/trial-ending-checker.service";
 import { SubscriptionExpirationCheckerService } from "./infrastructure/scheduled/subscription-expiration-checker.service";
+import { StripePlansSyncService } from "./infrastructure/scheduled/stripe-plans-sync.service";
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 import { ClassModule } from "../class/class.module";
 import { IClassRepository } from "../class/domain/repositories/class.repository";
@@ -202,7 +204,8 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         pricingTierRepository: IPricingTierRepository,
         userRepository: IUserRepository,
         stripeSyncService: IStripeSyncService,
-        eventStore: IEventStore
+        eventStore: IEventStore,
+        classRepository: IClassRepository
       ) =>
         new UpdateSubscriptionQuantityUseCase(
           logger,
@@ -211,7 +214,8 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
           pricingTierRepository,
           userRepository,
           stripeSyncService,
-          eventStore
+          eventStore,
+          classRepository
         ),
       inject: [
         LoggerService,
@@ -221,6 +225,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         UserRepository,
         STRIPE_SYNC_SERVICE,
         EventStore,
+        "CLASS_REPOSITORY",
       ],
     },
     {
@@ -378,6 +383,14 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       ],
     },
     {
+      provide: CheckBillingAccessUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        subscriptionRepository: ISubscriptionRepository
+      ) => new CheckBillingAccessUseCase(logger, subscriptionRepository),
+      inject: [LoggerService, SubscriptionRepository],
+    },
+    {
       provide: SendSubscriptionConfirmationEmailUseCase,
       useFactory: (
         logger: ILoggerService,
@@ -413,7 +426,8 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         getSubscriptionUseCase: GetSubscriptionUseCase,
         syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase,
         getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase,
-        getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase
+        getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase,
+        checkBillingAccessUseCase: CheckBillingAccessUseCase
       ) =>
         new SubscriptionFacade(
           getPricingPlansUseCase,
@@ -425,7 +439,8 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
           getSubscriptionUseCase,
           syncPlansWithStripeUseCase,
           getPaymentConfirmationUseCase,
-          getBillingPortalLinkUseCase
+          getBillingPortalLinkUseCase,
+          checkBillingAccessUseCase
         ),
       inject: [
         GetPricingPlansUseCase,
@@ -438,6 +453,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         SyncPlansWithStripeUseCase,
         GetPaymentConfirmationUseCase,
         GetBillingPortalLinkUseCase,
+        CheckBillingAccessUseCase,
       ],
     },
     {
@@ -487,6 +503,14 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         STRIPE_SYNC_SERVICE,
         SyncSubscriptionFromStripeUseCase,
       ],
+    },
+    {
+      provide: StripePlansSyncService,
+      useFactory: (
+        logger: ILoggerService,
+        syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase
+      ) => new StripePlansSyncService(logger, syncPlansWithStripeUseCase),
+      inject: [LoggerService, SyncPlansWithStripeUseCase],
     },
     {
       provide: SubscriptionFeatureService,

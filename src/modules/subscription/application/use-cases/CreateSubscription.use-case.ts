@@ -118,6 +118,44 @@ export class CreateSubscriptionUseCase
         );
       }
 
+      if (plan.isFree) {
+        const allSubscriptions =
+          await this.subscriptionRepository.findAllByOrganizationId(
+            organizationId
+          );
+        const hasNonPendingSubscription = allSubscriptions.some(
+          (sub) => sub.status !== "pending"
+        );
+
+        if (hasNonPendingSubscription) {
+          throw new DomainError(
+            "FREE_PLAN_ALREADY_CREATED",
+            "Vous ne pouvez plus créer un plan gratuit. Un abonnement a déjà été créé pour cette organisation.",
+            { organizationId, planId }
+          );
+        }
+      }
+
+      if (plan.name === "izzzi") {
+        const allSubscriptions =
+          await this.subscriptionRepository.findAllByOrganizationId(
+            organizationId
+          );
+
+        for (const sub of allSubscriptions) {
+          const subPlan = await this.subscriptionPlanRepository.findById(
+            sub.planId
+          );
+          if (subPlan && subPlan.name === "super-izzzi") {
+            throw new DomainError(
+              "SUPER_IZZZI_PLAN_EXISTS",
+              "Vous ne pouvez plus bénéficier du plan gratuit. Vous avez déjà eu un plan Super Izzzi.",
+              { organizationId, planId, existingPlanId: sub.planId }
+            );
+          }
+        }
+      }
+
       let tiers = await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
         planId,
         billingPeriod

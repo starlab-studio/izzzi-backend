@@ -7,6 +7,9 @@ export interface ISubscriptionRepository
   findByOrganizationId(
     organizationId: string
   ): Promise<SubscriptionEntity | null>;
+  findAllByOrganizationId(
+    organizationId: string
+  ): Promise<SubscriptionEntity[]>;
   findByStripeSubscriptionId(
     stripeSubId: string
   ): Promise<SubscriptionEntity | null>;

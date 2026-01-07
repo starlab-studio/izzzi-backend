@@ -46,6 +46,18 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     return SubscriptionEntity.reconstitute(ormEntity);
   }
 
+  async findAllByOrganizationId(
+    organizationId: string
+  ): Promise<SubscriptionEntity[]> {
+    const ormEntities = await this.ormRepository.find({
+      where: { organizationId },
+      order: { createdAt: "DESC" },
+    });
+    return ormEntities.map((ormEntity) =>
+      SubscriptionEntity.reconstitute(ormEntity)
+    );
+  }
+
   async findByStripeSubscriptionId(
     stripeSubId: string
   ): Promise<SubscriptionEntity | null> {

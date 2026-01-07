@@ -59,6 +59,18 @@ export class HandleStripeWebhookUseCase
           );
           break;
 
+        case "payment_intent.failed":
+          await this.handlePaymentIntentFailed(
+            event.data.object as IWebhookPaymentIntent
+          );
+          break;
+
+        case "payment_intent.canceled":
+          await this.handlePaymentIntentCanceled(
+            event.data.object as IWebhookPaymentIntent
+          );
+          break;
+
         case "customer.subscription.updated":
           await this.handleSubscriptionUpdated(
             event.data.object as IWebhookSubscription
@@ -293,6 +305,48 @@ export class HandleStripeWebhookUseCase
         error instanceof Error ? error.stack || "" : ""
       );
     }
+  }
+
+  private async handlePaymentIntentFailed(
+    webhookPaymentIntent: IWebhookPaymentIntent
+  ): Promise<void> {
+    this.logger.info(
+      `Processing payment_intent.failed event for payment intent ${webhookPaymentIntent.id}`
+    );
+
+    const metadata = webhookPaymentIntent.metadata || {};
+    if (metadata.type === "quantity_update" && metadata.subscriptionId) {
+      await this.handleQuantityUpdatePaymentFailed(webhookPaymentIntent);
+    }
+
+    this.logger.info(
+      `Successfully processed payment_intent.failed event for payment intent ${webhookPaymentIntent.id}`
+    );
+  }
+
+  private async handlePaymentIntentCanceled(
+    webhookPaymentIntent: IWebhookPaymentIntent
+  ): Promise<void> {
+    this.logger.info(
+      `Processing payment_intent.canceled event for payment intent ${webhookPaymentIntent.id}`
+    );
+
+    const metadata = webhookPaymentIntent.metadata || {};
+    if (metadata.type === "quantity_update" && metadata.subscriptionId) {
+      await this.handleQuantityUpdatePaymentFailed(webhookPaymentIntent);
+    }
+
+    this.logger.info(
+      `Successfully processed payment_intent.canceled event for payment intent ${webhookPaymentIntent.id}`
+    );
+  }
+
+  private async handleQuantityUpdatePaymentFailed(
+    webhookPaymentIntent: IWebhookPaymentIntent
+  ): Promise<void> {
+    this.logger.info(
+      `Quantity update payment intent ${webhookPaymentIntent.id} failed or was canceled. No subscription quantity change has been applied.`
+    );
   }
 
   private async handleSubscriptionUpdated(

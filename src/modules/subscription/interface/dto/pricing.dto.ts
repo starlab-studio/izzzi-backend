@@ -410,6 +410,9 @@ export class SubscriptionDetailDto {
   @ApiProperty()
   quantity: number;
 
+  @ApiProperty({ enum: ["monthly", "annual"] })
+  billingPeriod: "monthly" | "annual";
+
   @ApiProperty()
   currentPeriodStart: Date;
 
@@ -528,6 +531,13 @@ export class PaymentConfirmationResponseDto {
 
   @ApiProperty()
   amountFormatted: string;
+
+  @ApiProperty({
+    description:
+      "Type de paiement: nouvel abonnement ou mise à jour de quantité",
+    enum: ["subscription", "quantity_update"],
+  })
+  paymentType: "subscription" | "quantity_update";
 
   @ApiProperty({ type: PaymentMethodDto })
   paymentMethod: PaymentMethodDto;

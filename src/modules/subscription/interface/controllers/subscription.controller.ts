@@ -195,6 +195,45 @@ export class SubscriptionController extends BaseController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
+  @Get(":organizationId/billing-access")
+  @ApiOperation({
+    summary: "Vérifier l'accès au portail de facturation",
+    description:
+      "Vérifie si l'organisation a accès au portail de facturation (a un stripeCustomerId). Seuls les administrateurs peuvent accéder à cette information.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "ID de l'organisation",
+    type: String,
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Statut d'accès au portail de facturation",
+    schema: {
+      type: "object",
+      properties: {
+        hasAccess: {
+          type: "boolean",
+          description:
+            "Indique si l'organisation a accès au portail de facturation",
+        },
+      },
+    },
+  })
+  async checkBillingAccess(
+    @CurrentUser() authenticatedUser: JWTPayload,
+    @Param("organizationId") organizationId: string
+  ) {
+    const result = await this.subscriptionFacade.checkBillingAccess({
+      organizationId,
+    });
+    return this.success(result);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Get(":organizationId/billing-portal")
   @ApiOperation({
     summary: "Générer un lien vers le portail de facturation Stripe",

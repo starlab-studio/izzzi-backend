@@ -16,6 +16,7 @@ export interface GetPaymentConfirmationOutput {
   billingPeriod: "monthly" | "annual";
   amountPaid: number;
   amountFormatted: string;
+  paymentType: "subscription" | "quantity_update";
   paymentMethod: {
     last4: string;
     brand: string;
@@ -131,6 +132,34 @@ export class GetPaymentConfirmationUseCase
         );
       }
 
+      // Déterminer le type de paiement (nouvel abonnement vs mise à jour de quantité)
+      let paymentType: "subscription" | "quantity_update" = "subscription";
+
+      try {
+        const stripeInvoice = await this.stripeSyncService.getInvoice(
+          invoice.stripeInvoiceId
+        );
+
+        if (stripeInvoice?.metadata?.type === "quantity_update") {
+          paymentType = "quantity_update";
+        } else if (
+          Array.isArray(stripeInvoice?.lines?.data) &&
+          stripeInvoice.lines.data.some(
+            (line) => line.metadata?.type === "quantity_update"
+          )
+        ) {
+          paymentType = "quantity_update";
+        }
+      } catch (stripeError) {
+        this.logger.warn(
+          `Failed to inspect Stripe invoice ${invoice.stripeInvoiceId} for payment type: ${
+            stripeError instanceof Error
+              ? stripeError.message
+              : String(stripeError)
+          }`
+        );
+      }
+
       let paymentMethod: { last4: string; brand: string } | null = null;
 
       if (subscription.stripeSubscriptionId) {
@@ -197,6 +226,7 @@ export class GetPaymentConfirmationUseCase
         billingPeriod: subscription.billingPeriod,
         amountPaid: invoice.amountCents,
         amountFormatted,
+        paymentType,
         paymentMethod,
         nextPaymentDate,
         invoicePdfUrl: invoice.pdfUrl,

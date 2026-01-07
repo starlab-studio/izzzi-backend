@@ -20,6 +20,7 @@ export interface SubscriptionDetailOutput {
     organizationId: string;
     status: string;
     quantity: number;
+    billingPeriod: "monthly" | "annual";
     currentPeriodStart: Date;
     currentPeriodEnd: Date;
     cancelAtPeriodEnd: boolean;
@@ -119,6 +120,8 @@ export class GetSubscriptionUseCase
         return null;
       }
 
+      // Plus de nettoyage d'upgrades orphelins ici : pendingQuantity est réservé aux downgrades.
+
       const plan = await this.subscriptionPlanRepository.findById(
         subscription.planId
       );
@@ -196,6 +199,7 @@ export class GetSubscriptionUseCase
           organizationId: subscription.organizationId,
           status: subscription.status,
           quantity: displayQuantity,
+          billingPeriod: subscription.billingPeriod,
           currentPeriodStart: subscription.currentPeriodStart!,
           currentPeriodEnd: subscription.currentPeriodEnd!,
           cancelAtPeriodEnd,

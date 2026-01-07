@@ -162,7 +162,18 @@ export class SyncSubscriptionFromStripeUseCase
           stripeQuantity !== subscription.quantity &&
           subscription.pendingQuantity === null
         ) {
+          // Only update quantity from Stripe if there's no pending quantity
+          // This prevents overwriting pendingQuantity that's waiting for payment
           (subscription as any).props.quantity = stripeQuantity;
+        } else if (
+          subscription.pendingQuantity !== null &&
+          stripeQuantity === subscription.pendingQuantity
+        ) {
+          // If Stripe quantity matches pendingQuantity, it means payment was processed
+          // Don't update yet, wait for payment webhook to handle it
+          this.logger.info(
+            `Stripe quantity (${stripeQuantity}) matches pendingQuantity (${subscription.pendingQuantity}) for subscription ${subscription.id}. Waiting for payment confirmation.`
+          );
         }
       }
 

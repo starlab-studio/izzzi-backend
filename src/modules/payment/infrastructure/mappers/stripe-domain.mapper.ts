@@ -7,11 +7,21 @@ import type {
   StripePrice,
   StripeSubscriptionStatus,
 } from "../../domain/types/stripe.types";
+import type {
+  ExpandedInvoice,
+  ExpandedSubscription,
+  ExpandedPaymentIntent,
+} from "../types/stripe-extended.types";
+import {
+  isExpandedSubscription,
+  isExpandedPaymentIntent,
+} from "../types/stripe-extended.types";
 
 export class StripeDomainMapper {
   static toDomainSubscription(
-    stripeSubscription: Stripe.Subscription
+    stripeSubscription: Stripe.Subscription | ExpandedSubscription
   ): StripeSubscription {
+    const expandedSubscription = stripeSubscription as ExpandedSubscription;
     return {
       id: stripeSubscription.id,
       status: stripeSubscription.status as StripeSubscriptionStatus,
@@ -19,8 +29,8 @@ export class StripeDomainMapper {
         typeof stripeSubscription.customer === "string"
           ? stripeSubscription.customer
           : { id: stripeSubscription.customer.id },
-      current_period_start: stripeSubscription.current_period_start,
-      current_period_end: stripeSubscription.current_period_end,
+      current_period_start: expandedSubscription.current_period_start,
+      current_period_end: expandedSubscription.current_period_end,
       cancel_at_period_end: stripeSubscription.cancel_at_period_end,
       canceled_at: stripeSubscription.canceled_at || null,
       items: {
@@ -50,7 +60,9 @@ export class StripeDomainMapper {
     };
   }
 
-  static toDomainInvoice(stripeInvoice: Stripe.Invoice): StripeInvoice {
+  static toDomainInvoice(
+    stripeInvoice: Stripe.Invoice | ExpandedInvoice
+  ): StripeInvoice {
     return {
       id: stripeInvoice.id,
       status: stripeInvoice.status as
@@ -63,37 +75,36 @@ export class StripeDomainMapper {
         typeof stripeInvoice.customer === "string"
           ? stripeInvoice.customer
           : { id: stripeInvoice.customer?.id || "" },
-      subscription:
-        typeof stripeInvoice.subscription === "string"
-          ? stripeInvoice.subscription
-          : stripeInvoice.subscription
-            ? {
-                id: stripeInvoice.subscription.id,
-                status: stripeInvoice.subscription
-                  .status as StripeSubscriptionStatus,
-                customer:
-                  typeof stripeInvoice.subscription.customer === "string"
-                    ? stripeInvoice.subscription.customer
-                    : { id: stripeInvoice.subscription.customer.id },
-                current_period_start:
-                  stripeInvoice.subscription.current_period_start,
-                current_period_end:
-                  stripeInvoice.subscription.current_period_end,
-                cancel_at_period_end:
-                  stripeInvoice.subscription.cancel_at_period_end,
-                canceled_at: stripeInvoice.subscription.canceled_at || null,
-                items: {
-                  data: stripeInvoice.subscription.items.data.map((item) => ({
-                    price: {
-                      id: item.price.id,
-                      unit_amount: item.price.unit_amount,
-                    },
-                    quantity: item.quantity || null,
-                  })),
+      subscription: (() => {
+        const subscription = (stripeInvoice as ExpandedInvoice).subscription;
+        if (!subscription) return null;
+        if (typeof subscription === "string") return subscription;
+        if (isExpandedSubscription(subscription)) {
+          return {
+            id: subscription.id,
+            status: subscription.status as StripeSubscriptionStatus,
+            customer:
+              typeof subscription.customer === "string"
+                ? subscription.customer
+                : { id: subscription.customer.id },
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            canceled_at: subscription.canceled_at || null,
+            items: {
+              data: subscription.items.data.map((item) => ({
+                price: {
+                  id: item.price.id,
+                  unit_amount: item.price.unit_amount,
                 },
-                metadata: stripeInvoice.subscription.metadata,
-              }
-            : null,
+                quantity: item.quantity || null,
+              })),
+            },
+            metadata: subscription.metadata,
+          };
+        }
+        return null;
+      })(),
       amount_due: stripeInvoice.amount_due,
       amount_paid: stripeInvoice.amount_paid,
       currency: stripeInvoice.currency,
@@ -106,24 +117,24 @@ export class StripeDomainMapper {
       metadata: stripeInvoice.metadata
         ? (stripeInvoice.metadata as Record<string, string>)
         : undefined,
-      payment_intent:
-        typeof stripeInvoice.payment_intent === "string"
-          ? stripeInvoice.payment_intent
-          : stripeInvoice.payment_intent
-            ? {
-                id: stripeInvoice.payment_intent.id,
-                client_secret: stripeInvoice.payment_intent.client_secret,
-                payment_method:
-                  typeof stripeInvoice.payment_intent.payment_method ===
-                  "string"
-                    ? stripeInvoice.payment_intent.payment_method
-                    : stripeInvoice.payment_intent.payment_method
-                      ? this.toDomainPaymentMethod(
-                          stripeInvoice.payment_intent.payment_method
-                        )
-                      : null,
-              }
-            : null,
+      payment_intent: (() => {
+        const paymentIntent = (stripeInvoice as ExpandedInvoice).payment_intent;
+        if (!paymentIntent) return null;
+        if (typeof paymentIntent === "string") return paymentIntent;
+        if (isExpandedPaymentIntent(paymentIntent)) {
+          return {
+            id: paymentIntent.id,
+            client_secret: paymentIntent.client_secret,
+            payment_method:
+              typeof paymentIntent.payment_method === "string"
+                ? paymentIntent.payment_method
+                : paymentIntent.payment_method
+                  ? this.toDomainPaymentMethod(paymentIntent.payment_method)
+                  : null,
+          };
+        }
+        return null;
+      })(),
     };
   }
 

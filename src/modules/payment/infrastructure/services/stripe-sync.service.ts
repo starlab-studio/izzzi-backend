@@ -13,6 +13,12 @@ import type {
   StripePrice,
 } from "../../domain/types/stripe.types";
 import { StripeDomainMapper } from "../mappers/stripe-domain.mapper";
+import type {
+  ExpandedInvoice,
+  ExpandedPaymentIntent,
+  ExpandedInvoiceLineItem,
+} from "../types/stripe-extended.types";
+import { isExpandedPaymentIntent } from "../types/stripe-extended.types";
 
 @Injectable()
 export class StripeSyncService implements IStripeSyncService {
@@ -26,7 +32,7 @@ export class StripeSyncService implements IStripeSyncService {
     }
 
     this.stripe = new Stripe(secretKey, {
-      apiVersion: "2024-11-20.acacia",
+      apiVersion: "2025-12-15.clover",
     });
   }
 
@@ -275,13 +281,18 @@ export class StripeSyncService implements IStripeSyncService {
         expand: ["payment_intent"],
       });
 
-      if (invoice.payment_intent) {
-        const paymentIntent =
-          typeof invoice.payment_intent === "string"
-            ? await this.stripe.paymentIntents.retrieve(invoice.payment_intent)
-            : invoice.payment_intent;
+      const paymentIntent = (invoice as ExpandedInvoice).payment_intent;
+      if (paymentIntent) {
+        const resolvedPaymentIntent =
+          typeof paymentIntent === "string"
+            ? await this.stripe.paymentIntents.retrieve(paymentIntent)
+            : isExpandedPaymentIntent(paymentIntent)
+              ? paymentIntent
+              : null;
 
-        clientSecret = paymentIntent.client_secret;
+        if (resolvedPaymentIntent) {
+          clientSecret = resolvedPaymentIntent.client_secret;
+        }
       }
     }
 
@@ -452,7 +463,8 @@ export class StripeSyncService implements IStripeSyncService {
     let prorationAmount = 0;
     if (preview.lines?.data) {
       for (const line of preview.lines.data) {
-        if (line.proration) {
+        const expandedLine = line as ExpandedInvoiceLineItem;
+        if (expandedLine.proration) {
           prorationAmount += line.amount;
         }
       }
@@ -597,26 +609,49 @@ export class StripeSyncService implements IStripeSyncService {
       let paymentIntentId: string;
       let clientSecret: string | null = null;
 
-      if (finalizedInvoice.payment_intent) {
+      const paymentIntent = (finalizedInvoice as ExpandedInvoice)
+        .payment_intent;
+      if (paymentIntent) {
         const paymentIntentIdStr =
-          typeof finalizedInvoice.payment_intent === "string"
-            ? finalizedInvoice.payment_intent
-            : finalizedInvoice.payment_intent.id;
+          typeof paymentIntent === "string"
+            ? paymentIntent
+            : isExpandedPaymentIntent(paymentIntent)
+              ? paymentIntent.id
+              : null;
 
-        const paymentIntent =
-          await this.stripe.paymentIntents.retrieve(paymentIntentIdStr);
+        if (paymentIntentIdStr) {
+          const resolvedPaymentIntent =
+            await this.stripe.paymentIntents.retrieve(paymentIntentIdStr);
 
-        paymentIntentId = paymentIntent.id;
-        clientSecret = paymentIntent.client_secret;
+          paymentIntentId = resolvedPaymentIntent.id;
+          clientSecret = resolvedPaymentIntent.client_secret;
 
-        if (params.metadata && Object.keys(params.metadata).length > 0) {
-          await this.stripe.paymentIntents.update(paymentIntentId, {
+          if (params.metadata && Object.keys(params.metadata).length > 0) {
+            await this.stripe.paymentIntents.update(paymentIntentId, {
+              metadata: {
+                ...resolvedPaymentIntent.metadata,
+                ...params.metadata,
+                invoiceId: invoiceId,
+              },
+            });
+          }
+        } else {
+          // If paymentIntent exists but we can't resolve it, create a new one
+          const newPaymentIntent = await this.stripe.paymentIntents.create({
+            amount: params.amountCents,
+            currency: params.currency || "eur",
+            customer: params.customerId,
             metadata: {
-              ...paymentIntent.metadata,
               ...params.metadata,
               invoiceId: invoiceId,
             },
+            automatic_payment_methods: {
+              enabled: true,
+            },
           });
+
+          paymentIntentId = newPaymentIntent.id;
+          clientSecret = newPaymentIntent.client_secret;
         }
       } else {
         const paymentIntent = await this.stripe.paymentIntents.create({

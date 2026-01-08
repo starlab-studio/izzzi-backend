@@ -28,7 +28,7 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
     private readonly userRepository: IUserRepository,
     private readonly organizationRepository: IOrganizationRepository,
     private readonly invitationRepository: IInvitationRepository,
-    private readonly subscriptionRepository: ISubscriptionRepository
+    private readonly subscriptionRepository: ISubscriptionRepository,
   ) {
     super(logger);
   }
@@ -47,7 +47,7 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
           ErrorCode.USER_NOT_FOUND,
           "Inviter not found",
           undefined,
-          HTTP_STATUS.NOT_FOUND
+          HTTP_STATUS.NOT_FOUND,
         );
       }
 
@@ -56,27 +56,28 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
           ErrorCode.ORGANIZATION_NOT_FOUND,
           "Organization not found",
           undefined,
-          HTTP_STATUS.NOT_FOUND
+          HTTP_STATUS.NOT_FOUND,
         );
       }
 
-      const existingUser = await this.userRepository.findByEmailWithActiveMemberships(
-        emailVO.value
-      );
+      const existingUser =
+        await this.userRepository.findByEmailWithActiveMemberships(
+          emailVO.value,
+        );
 
       if (existingUser?.belongsToOrganization(organization.id)) {
         throw new DomainError(
           ErrorCode.USER_IS_ALREADY_MEMBER,
           "User is already a member of this organization",
           undefined,
-          HTTP_STATUS.CONFLICT
+          HTTP_STATUS.CONFLICT,
         );
       }
 
       const pendingInvitation =
         await this.invitationRepository.findPendingByEmailAndOrg(
           emailVO.value,
-          organization.id
+          organization.id,
         );
 
       if (pendingInvitation) {
@@ -84,13 +85,13 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
           ErrorCode.INVITATION_ALREADY_SENT,
           "An invitation is already pending for this email",
           undefined,
-          HTTP_STATUS.CONFLICT
+          HTTP_STATUS.CONFLICT,
         );
       }
 
       this.authorizationService.canUserInviteToOrganization(
         inviter,
-        organization
+        organization,
       );
 
       this.authorizationService.validateInvitedRole(data.role);
@@ -99,7 +100,7 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
       if (data.role === UserRole.LEARNING_MANAGER) {
         const activeSubscription =
           await this.subscriptionRepository.findActiveByOrganizationId(
-            organization.id
+            organization.id,
           );
 
         if (!activeSubscription || activeSubscription.status === "pending") {
@@ -107,7 +108,7 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
             ErrorCode.SUBSCRIPTION_REQUIRED_FOR_INVITATION,
             "An active subscription is required to invite learning managers. Please subscribe to a plan first.",
             undefined,
-            HTTP_STATUS.FORBIDDEN
+            HTTP_STATUS.FORBIDDEN,
           );
         }
       }
@@ -124,7 +125,7 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
       if (!createdInvitation)
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Something went wrong during invitation creation. Please try again later."
+          "Something went wrong during invitation creation. Please try again later.",
         );
 
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -137,7 +138,7 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
           inviterName: `${inviter.firstName} ${inviter.lastName}`,
           invitationLink,
           role: createdInvitation.role,
-        })
+        }),
       );
 
       return createdInvitation.toPersistance();
@@ -146,5 +147,5 @@ export class SendInvitationUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

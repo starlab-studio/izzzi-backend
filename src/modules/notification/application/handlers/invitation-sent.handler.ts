@@ -7,7 +7,7 @@ import { InvitationSentEvent } from "src/modules/organization/domain/events/invi
 export class InvitationSentEventHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {
     super(logger);
   }

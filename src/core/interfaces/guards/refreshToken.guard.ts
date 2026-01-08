@@ -8,8 +8,10 @@ import {
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+  canActivate(context: ExecutionContext): boolean {
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { refreshToken?: string }>();
 
     const refreshToken = this.extractRefreshToken(request);
 
@@ -17,7 +19,7 @@ export class RefreshTokenGuard implements CanActivate {
       throw new BadRequestException("Refresh token is required");
     }
 
-    request["refreshToken"] = refreshToken;
+    request.refreshToken = refreshToken;
 
     return true;
   }
@@ -43,7 +45,9 @@ export class RefreshTokenGuard implements CanActivate {
   }
 
   private extractTokenFromBody(request: Request): string | undefined {
-    const body = request.body;
+    const body = request.body as
+      | { refreshToken?: string; refresh_token?: string }
+      | undefined;
     if (body && typeof body === "object") {
       return body.refreshToken || body.refresh_token;
     }
@@ -51,7 +55,8 @@ export class RefreshTokenGuard implements CanActivate {
   }
 
   private extractTokenFromCookie(request: Request): string | undefined {
-    return request.cookies?.["refresh_token"];
+    const cookies = request.cookies as { refresh_token?: string } | undefined;
+    return cookies?.["refresh_token"];
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

@@ -14,7 +14,7 @@ export class InvitationRepository
   constructor(
     @InjectRepository(InvitationModel)
     private readonly directRepository: Repository<InvitationModel>,
-    unitOfWork: IUnitOfWork
+    unitOfWork: IUnitOfWork,
   ) {
     super(unitOfWork);
   }
@@ -38,7 +38,9 @@ export class InvitationRepository
 
   async findByEmail(email: string): Promise<InvitationEntity[]> {
     const normalizedEmail = email.trim().toLowerCase();
-    const ormEntities = await this.directRepository.findBy({ email: normalizedEmail });
+    const ormEntities = await this.directRepository.findBy({
+      email: normalizedEmail,
+    });
     return this.toEntities(ormEntities);
   }
 
@@ -51,7 +53,7 @@ export class InvitationRepository
 
   async findByInviterAndOrganization(
     inviterId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<InvitationEntity[] | []> {
     const ormEntities = await this.directRepository.findBy({
       invitedBy: inviterId,
@@ -63,13 +65,13 @@ export class InvitationRepository
 
   async findPendingByEmailAndOrg(
     email: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<InvitationEntity | null> {
     const normalizedEmail = email.trim().toLowerCase();
     const ormEntity = await this.directRepository.findOne({
       where: {
         email: normalizedEmail,
-      organizationId,
+        organizationId,
         status: InvitationStatus.PENDING,
         expiresAt: MoreThan(new Date()),
       },
@@ -78,7 +80,7 @@ export class InvitationRepository
   }
 
   async findByOrganization(
-    organizationId: string
+    organizationId: string,
   ): Promise<InvitationEntity[] | []> {
     const ormEntities = await this.directRepository.findBy({ organizationId });
     return this.toEntities(ormEntities);

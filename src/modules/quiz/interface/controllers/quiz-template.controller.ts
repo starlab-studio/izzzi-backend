@@ -5,6 +5,7 @@ import {
   ApiResponse,
   ApiTags,
   ApiParam,
+  ApiBody,
 } from "@nestjs/swagger";
 import {
   BaseController,
@@ -16,6 +17,7 @@ import {
   type JWTPayload,
 } from "src/core";
 import { QuizFacade } from "../../application/facades/quiz.facade";
+import { CreateQuizTemplatePairDto } from "../dto/quiz.dto";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard)
@@ -29,7 +31,8 @@ export class QuizTemplateController extends BaseController {
   @Get("pairs")
   @ApiOperation({
     summary: "Récupérer les paires de templates de questionnaires",
-    description: "Récupère toutes les paires de templates actives disponibles. \
+    description:
+      "Récupère toutes les paires de templates actives disponibles. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -46,7 +49,7 @@ export class QuizTemplateController extends BaseController {
   @ApiResponse({ status: 403, description: "Accès interdit" })
   async getTemplatePairs(
     @CurrentUser() user: JWTPayload,
-    @Param("organizationId") organizationId: string,
+    @Param("organizationId") organizationId: string
   ) {
     const result = await this.quizFacade.getQuizTemplatePairs({
       organizationId,
@@ -59,7 +62,8 @@ export class QuizTemplateController extends BaseController {
   @Get(":id")
   @ApiOperation({
     summary: "Récupérer un template avec ses questions",
-    description: "Récupère un template de questionnaire avec toutes ses questions pour l'aperçu. \
+    description:
+      "Récupère un template de questionnaire avec toutes ses questions pour l'aperçu. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -83,7 +87,7 @@ export class QuizTemplateController extends BaseController {
   async getTemplateById(
     @Param("organizationId") organizationId: string,
     @Param("id") templateId: string,
-    @CurrentUser() user: JWTPayload,
+    @CurrentUser() user: JWTPayload
   ) {
     const result = await this.quizFacade.getQuizTemplateById({
       templateId,
@@ -94,10 +98,49 @@ export class QuizTemplateController extends BaseController {
     return this.success(result);
   }
 
+  @Post("pairs")
+  @ApiOperation({
+    summary: "Créer une paire de templates de questionnaires",
+    description:
+      "Crée une nouvelle paire de templates (pendant le cours et après le cours). \
+    Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "ID de l'organisation",
+    example: "d405cc32-58ac-42a0-9c2d-e9e81398bc73",
+  })
+  @ApiBody({ type: CreateQuizTemplatePairDto })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 201,
+    description: "Paire de templates créée avec succès",
+  })
+  @ApiResponse({ status: 400, description: "Données invalides" })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async createTemplatePair(
+    @Param("organizationId") organizationId: string,
+    @Body() dto: CreateQuizTemplatePairDto,
+    @CurrentUser() user: JWTPayload
+  ) {
+    const result = await this.quizFacade.createQuizTemplatePair({
+      name: dto.name,
+      description: dto.description,
+      organizationId,
+      userId: user.userId,
+      duringCourseTemplate: dto.duringCourseTemplate,
+      afterCourseTemplate: dto.afterCourseTemplate,
+    });
+
+    return this.success(result);
+  }
+
   @Post()
   @ApiOperation({
     summary: "Créer un template de questionnaire personnalisé",
-    description: "Crée un nouveau template de questionnaire avec ses questions. \
+    description:
+      "Crée un nouveau template de questionnaire avec ses questions. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -114,7 +157,8 @@ export class QuizTemplateController extends BaseController {
   @ApiResponse({ status: 403, description: "Accès interdit" })
   async createTemplate(
     @Param("organizationId") organizationId: string,
-    @Body() body: {
+    @Body()
+    body: {
       name: string;
       type: "during_course" | "after_course";
       description?: string | null;
@@ -132,7 +176,7 @@ export class QuizTemplateController extends BaseController {
         category: "global" | "course" | "instructor";
       }[];
     },
-    @CurrentUser() user: JWTPayload,
+    @CurrentUser() user: JWTPayload
   ) {
     const result = await this.quizFacade.createQuizTemplate({
       name: body.name,
@@ -147,4 +191,3 @@ export class QuizTemplateController extends BaseController {
     return this.success(result);
   }
 }
-

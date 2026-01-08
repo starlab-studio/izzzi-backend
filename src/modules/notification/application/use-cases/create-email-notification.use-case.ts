@@ -13,14 +13,14 @@ export class CreateEmailNotificationUseCase {
   constructor(
     private readonly notificationDomainService: NotificationDomainService,
     private readonly notificationRepository: INotificationRespository,
-    private readonly notificationProvider: INotificationProvider
+    private readonly notificationProvider: INotificationProvider,
   ) {}
 
   async execute(
     data: Omit<
       ICreateNotification,
       "sender" | "mode" | "deliveredAt" | "message"
-    >
+    >,
   ): Promise<INotification> {
     try {
       const name = "Izzzi";
@@ -39,6 +39,7 @@ export class CreateEmailNotificationUseCase {
         mode,
         status: NotificationStatus.PENDING,
         retryCount: 0,
+        isRead: data.isRead ?? false,
       });
       const ormNotification =
         await this.notificationRepository.create(notification);

@@ -10,6 +10,7 @@ import {
   RequestLoggingInterceptor,
   LoggerService,
 } from "./core";
+import { SocketIoAdapter } from "./core/adapters/socket-io.adapter";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -23,7 +24,7 @@ async function bootstrap() {
 
   // Custom Request logging interceptor
   app.useGlobalInterceptors(
-    new RequestLoggingInterceptor(app.get(LoggerService))
+    new RequestLoggingInterceptor(app.get(LoggerService)),
   );
 
   // Validation pipes for DTOs
@@ -32,7 +33,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    })
+    }),
   );
 
   // Enable CORS
@@ -42,6 +43,9 @@ async function bootstrap() {
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   });
+
+  // Configure WebSocket adapter
+  app.useWebSocketAdapter(new SocketIoAdapter(app));
 
   // Configure raw body for Stripe webhook (must be before cookieParser)
   app.use("/api/v1/webhooks/stripe", express.raw({ type: "application/json" }));
@@ -70,4 +74,7 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap().catch((error) => {
+  console.error("Failed to start application:", error);
+  process.exit(1);
+});

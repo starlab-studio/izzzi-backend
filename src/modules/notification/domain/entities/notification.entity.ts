@@ -16,6 +16,8 @@ export class Notification implements INotification {
   public status: NotificationStatus;
   public retryCount: number;
   public deliveredAt?: Date | undefined;
+  public isRead: boolean;
+  public metadata?: Record<string, any>;
   public createdAt!: Date;
   public updatedAt!: Date;
 
@@ -30,5 +32,7 @@ export class Notification implements INotification {
     this.status = data.status;
     this.retryCount = data.retryCount;
     this.deliveredAt = data.deliveredAt;
+    this.isRead = data.isRead ?? false;
+    this.metadata = data.metadata;
   }
 }

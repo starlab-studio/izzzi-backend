@@ -1,8 +1,4 @@
-import {
-  IUseCase,
-  BaseUseCase,
-  ILoggerService,
-} from "src/core";
+import { IUseCase, BaseUseCase, ILoggerService } from "src/core";
 
 import {
   GetClassesByOrganizationInput,
@@ -13,7 +9,10 @@ import { IClassStudentRepository } from "../../domain/repositories/class-student
 import { ClassEntity } from "../../domain/entities/class.entity";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 
-export class GetClassesByOrganizationUseCase extends BaseUseCase implements IUseCase {
+export class GetClassesByOrganizationUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly classRepository: IClassRepository,
@@ -23,7 +22,9 @@ export class GetClassesByOrganizationUseCase extends BaseUseCase implements IUse
     super(logger);
   }
 
-  async execute(data: GetClassesByOrganizationInput): Promise<ClassListItemResponse[]> {
+  async execute(
+    data: GetClassesByOrganizationInput,
+  ): Promise<ClassListItemResponse[]> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
@@ -37,16 +38,19 @@ export class GetClassesByOrganizationUseCase extends BaseUseCase implements IUse
           data.archived ? "archived" : "active",
         );
       } else {
-        classes = await this.classRepository.findByOrganization(data.organizationId);
+        classes = await this.classRepository.findByOrganization(
+          data.organizationId,
+        );
       }
-      
+
       const classesWithStudents = await Promise.all(
         classes.map(async (classEntity) => {
           const classData = classEntity.toPersistence();
-          const students = await this.classStudentRepository.findByClassAndActive(
-            classEntity.id,
-            true,
-          );
+          const students =
+            await this.classStudentRepository.findByClassAndActive(
+              classEntity.id,
+              true,
+            );
 
           return {
             id: classData.id,
@@ -55,16 +59,22 @@ export class GetClassesByOrganizationUseCase extends BaseUseCase implements IUse
             description: classData.description,
             student_count: classData.numberOfStudents,
             status: classData.status,
-            created_at: classData.createdAt ? classData.createdAt.toISOString() : new Date().toISOString(),
-            updated_at: classData.updatedAt ? classData.updatedAt.toISOString() : new Date().toISOString(),
-            archivedAt: classData.archivedAt ? classData.archivedAt.toISOString() : null,
+            created_at: classData.createdAt
+              ? classData.createdAt.toISOString()
+              : new Date().toISOString(),
+            updated_at: classData.updatedAt
+              ? classData.updatedAt.toISOString()
+              : new Date().toISOString(),
+            archivedAt: classData.archivedAt
+              ? classData.archivedAt.toISOString()
+              : null,
             students: students.map((student) => ({
               id: student.id,
               email: student.email,
             })),
             subjects: [] as Array<never>,
           };
-        })
+        }),
       );
 
       return classesWithStudents;
@@ -75,4 +85,3 @@ export class GetClassesByOrganizationUseCase extends BaseUseCase implements IUse
 
   async withCompensation(): Promise<void> {}
 }
-

@@ -8,7 +8,7 @@ import { IFaqItemRepository } from "../../domain/repositories/faq-item.repositor
 export class FaqItemRepository implements IFaqItemRepository {
   constructor(
     @InjectRepository(FaqItemModel)
-    private ormRepository: Repository<IFaqItem>
+    private ormRepository: Repository<IFaqItem>,
   ) {}
 
   async findAll(): Promise<FaqItemEntity[]> {
@@ -16,7 +16,7 @@ export class FaqItemRepository implements IFaqItemRepository {
       order: { orderIndex: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      FaqItemEntity.reconstitute(ormEntity)
+      FaqItemEntity.reconstitute(ormEntity),
     );
   }
 
@@ -26,7 +26,7 @@ export class FaqItemRepository implements IFaqItemRepository {
       order: { orderIndex: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      FaqItemEntity.reconstitute(ormEntity)
+      FaqItemEntity.reconstitute(ormEntity),
     );
   }
 
@@ -36,7 +36,7 @@ export class FaqItemRepository implements IFaqItemRepository {
       order: { orderIndex: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      FaqItemEntity.reconstitute(ormEntity)
+      FaqItemEntity.reconstitute(ormEntity),
     );
   }
 
@@ -46,14 +46,16 @@ export class FaqItemRepository implements IFaqItemRepository {
       order: { orderIndex: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      FaqItemEntity.reconstitute(ormEntity)
+      FaqItemEntity.reconstitute(ormEntity),
     );
   }
 
   async findById(id: string): Promise<FaqItemEntity | null> {
     const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) return null;
-    const ormEntity = await this.ormRepository.findOne({ where: { id: parsedId } });
+    const ormEntity = await this.ormRepository.findOne({
+      where: { id: parsedId },
+    });
     if (!ormEntity) return null;
     return FaqItemEntity.reconstitute(ormEntity);
   }

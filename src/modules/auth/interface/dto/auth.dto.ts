@@ -92,7 +92,9 @@ export class SignInDto implements SignInData {
   @Matches(/(?=.*[\W_])/, {
     message: "Password must contain at least one special character",
   })
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => {
+    return typeof value === "string" ? value.trim() : String(value);
+  })
   password: string;
 }
 

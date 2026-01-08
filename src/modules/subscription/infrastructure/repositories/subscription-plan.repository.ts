@@ -8,7 +8,7 @@ import { ISubscriptionPlanRepository } from "../../domain/repositories/subscript
 export class SubscriptionPlanRepository implements ISubscriptionPlanRepository {
   constructor(
     @InjectRepository(SubscriptionPlanModel)
-    private ormRepository: Repository<ISubscriptionPlan>
+    private ormRepository: Repository<ISubscriptionPlan>,
   ) {}
 
   async findAll(): Promise<SubscriptionPlanEntity[]> {
@@ -16,7 +16,7 @@ export class SubscriptionPlanRepository implements ISubscriptionPlanRepository {
       order: { displayOrder: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      SubscriptionPlanEntity.reconstitute(ormEntity)
+      SubscriptionPlanEntity.reconstitute(ormEntity),
     );
   }
 
@@ -26,7 +26,7 @@ export class SubscriptionPlanRepository implements ISubscriptionPlanRepository {
       order: { displayOrder: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      SubscriptionPlanEntity.reconstitute(ormEntity)
+      SubscriptionPlanEntity.reconstitute(ormEntity),
     );
   }
 
@@ -42,7 +42,9 @@ export class SubscriptionPlanRepository implements ISubscriptionPlanRepository {
     return SubscriptionPlanEntity.reconstitute(ormEntity);
   }
 
-  async create(entity: SubscriptionPlanEntity): Promise<SubscriptionPlanEntity> {
+  async create(
+    entity: SubscriptionPlanEntity,
+  ): Promise<SubscriptionPlanEntity> {
     const data = entity.toPersistence();
     const ormEntity = this.ormRepository.create(data);
     const saved = await this.ormRepository.save(ormEntity);

@@ -9,7 +9,7 @@ import {
 export class SignInUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly authProvider: IAuthStrategy
+    private readonly authProvider: IAuthStrategy,
   ) {
     super(logger);
   }
@@ -22,5 +22,6 @@ export class SignInUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: AuthIdentityFailedPayload): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: AuthIdentityFailedPayload): Promise<void> {}
 }

@@ -1,8 +1,4 @@
-import {
-  IUseCase,
-  BaseUseCase,
-  ILoggerService,
-} from "src/core";
+import { IUseCase, BaseUseCase, ILoggerService } from "src/core";
 import {
   CreateQuizTemplateInput,
   CreateQuizTemplateOutput,
@@ -52,9 +48,8 @@ export class CreateQuizTemplateUseCase extends BaseUseCase implements IUseCase {
 
       templateEntity.setQuestions(questions);
 
-      const createdTemplate = await this.quizTemplateRepository.create(
-        templateEntity,
-      );
+      const createdTemplate =
+        await this.quizTemplateRepository.create(templateEntity);
 
       return {
         id: createdTemplate.id,
@@ -79,4 +74,3 @@ export class CreateQuizTemplateUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

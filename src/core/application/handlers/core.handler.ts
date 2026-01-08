@@ -14,13 +14,13 @@ export abstract class BaseEventHandler<T = any> implements IEventHandler<T> {
 
   protected logEventHandling(event: IDomainEvent<T>): void {
     this.logger.info(
-      `Handling event: ${event.name}. Occured on ${event.occurredOn}`
+      `Handling event: ${event.name}. Occured on ${event.occurredOn.toISOString()}`,
     );
   }
 
   protected logEventHandlingError(event: IDomainEvent<T>, error: Error): void {
     this.logger.warn(
-      `Error handling event: ${event.name}. Error : ${error.message}`
+      `Error handling event: ${event.name}. Error : ${error.message}`,
     );
   }
 }

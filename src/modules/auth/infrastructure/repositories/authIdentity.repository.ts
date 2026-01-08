@@ -9,7 +9,7 @@ import { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.
 export class AuthIdentityRepository implements IAuthIdentityRepository {
   constructor(
     @InjectRepository(AuthIdentityModel)
-    private ormRepository: Repository<IAuthIdentity>
+    private ormRepository: Repository<IAuthIdentity>,
   ) {}
 
   async create(entity: AuthIdentityEntity): Promise<AuthIdentityEntity> {
@@ -29,7 +29,9 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
 
   async findByUsername(username: string): Promise<AuthIdentityEntity | null> {
     const normalizedUsername = username.trim().toLowerCase();
-    const ormEntity = await this.ormRepository.findOne({ where: { username: normalizedUsername } });
+    const ormEntity = await this.ormRepository.findOne({
+      where: { username: normalizedUsername },
+    });
     if (!ormEntity) return null;
 
     return AuthIdentityEntity.reconstitute(ormEntity);
@@ -37,7 +39,7 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
 
   async findByProviderAndUsername(
     provider: AuthIdentityName,
-    username: string
+    username: string,
   ): Promise<AuthIdentityEntity | null> {
     const normalizedUsername = username.trim().toLowerCase();
     const ormEntity = await this.ormRepository.findOne({
@@ -48,11 +50,33 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
     return AuthIdentityEntity.reconstitute(ormEntity);
   }
 
+  async findByProviderAndProviderUserId(
+    provider: AuthIdentityName,
+    providerUserId: string,
+  ): Promise<AuthIdentityEntity | null> {
+    const ormEntity = await this.ormRepository.findOne({
+      where: { provider, providerUserId },
+    });
+    if (!ormEntity) return null;
+
+    return AuthIdentityEntity.reconstitute(ormEntity);
+  }
+
+  async findAllByUserId(userId: string): Promise<AuthIdentityEntity[]> {
+    const ormEntityList = await this.ormRepository.find({
+      where: { userId },
+    });
+
+    return ormEntityList.map((ormEntity) =>
+      AuthIdentityEntity.reconstitute(ormEntity),
+    );
+  }
+
   async findAll(): Promise<AuthIdentityEntity[]> {
     const ormEntityList = await this.ormRepository.find();
 
     return ormEntityList.map((ormEntity) =>
-      AuthIdentityEntity.reconstitute(ormEntity)
+      AuthIdentityEntity.reconstitute(ormEntity),
     );
   }
 

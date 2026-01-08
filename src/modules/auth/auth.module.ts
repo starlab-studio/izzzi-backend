@@ -1,4 +1,5 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module, forwardRef, OnModuleInit } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule, JwtService } from "@nestjs/jwt";
@@ -24,6 +25,7 @@ import {
 import { SignUpUseCase } from "./application/use-cases/SignUp.use-case";
 import { AuthService } from "./application/services/auth.service";
 import { AuthController } from "./interface/controllers/auth.controller";
+import { GoogleAuthController } from "./interface/controllers/google-auth.controller";
 import { AuthIdentityModel } from "./infrastructure/models/authIdentity.model";
 import { AuthIdentityUniquenessService } from "./domain/services/authIdentity-uniqueness.service";
 import { VerificationTokenModel } from "./infrastructure/models/verificationToken.model";
@@ -37,7 +39,10 @@ import { AuthIdentityFailedHandler } from "./application/handlers/AuthIdentityFa
 import { UserFailedHandler } from "./application/handlers/UserFailed.handler";
 import { CognitoAdapter } from "./infrastructure/factories/cognito.adapter";
 import { CustomAuthAdapter } from "./infrastructure/factories/custom.adapter";
+import { GoogleAuthAdapter } from "./infrastructure/adapters/google-auth.adapter";
 import { SignInUseCase } from "./application/use-cases/SignIn.use-case";
+import { HandleGoogleCallbackUseCase } from "./application/use-cases/HandleGoogleCallback.use-case";
+import { CompleteGoogleSignUpUseCase } from "./application/use-cases/CompleteGoogleSignUp.use-case";
 import { ConfirmSignUpUseCase } from "./application/use-cases/ConfirmSignUp.use-case";
 import { RefreshTokenModel } from "./infrastructure/models/refreshToken.model";
 import { RefreshTokenRepository } from "./infrastructure/repositories/refreshToken.repository";
@@ -73,7 +78,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, GoogleAuthController],
   providers: [
     LoggerService,
     AuthIdentityRepository,
@@ -94,13 +99,13 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         configService: ConfigService,
         authIdentityRepository: IAuthIdentityRepository,
         logger: ILoggerService,
-        verificationTokenRepository: VerificationTokenRepository
+        verificationTokenRepository: VerificationTokenRepository,
       ) =>
         new CognitoAdapter(
           configService,
           authIdentityRepository,
           logger,
-          verificationTokenRepository
+          verificationTokenRepository,
         ),
       inject: [
         ConfigService,
@@ -120,7 +125,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         verificationTokenRepository: VerificationTokenRepository,
         refreshTokenRepository: RefreshTokenRepository,
         passwordResetTokenRepository: IPasswordResetTokenRepository,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
       ) =>
         new CustomAuthAdapter(
           configService,
@@ -131,7 +136,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
           verificationTokenRepository,
           refreshTokenRepository,
           passwordResetTokenRepository,
-          createEmailNotificationUseCase
+          createEmailNotificationUseCase,
         ),
       inject: [
         ConfigService,
@@ -146,20 +151,48 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       ],
     },
     {
+      provide: GoogleAuthAdapter,
+      useFactory: (
+        configService: ConfigService,
+        jwtService: JwtService,
+        authIdentityRepository: IAuthIdentityRepository,
+        refreshTokenRepository: RefreshTokenRepository,
+        organizationFacade: OrganizationFacade,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+      ) =>
+        new GoogleAuthAdapter(
+          configService,
+          jwtService,
+          authIdentityRepository,
+          refreshTokenRepository,
+          organizationFacade,
+          createEmailNotificationUseCase,
+        ),
+      inject: [
+        ConfigService,
+        JwtService,
+        AuthIdentityRepository,
+        RefreshTokenRepository,
+        OrganizationFacade,
+        CreateEmailNotificationUseCase,
+      ],
+    },
+    {
       provide: AUTH_STRATEGY_TOKEN,
       useFactory: (
         cognitoAdapter: CognitoAdapter,
-        customAuthAdapter: CustomAuthAdapter
+        customAuthAdapter: CustomAuthAdapter,
+        googleAuthAdapter: GoogleAuthAdapter,
       ): IAuthStrategy[] => {
-        return [cognitoAdapter, customAuthAdapter];
+        return [cognitoAdapter, customAuthAdapter, googleAuthAdapter];
       },
-      inject: [CognitoAdapter, CustomAuthAdapter],
+      inject: [CognitoAdapter, CustomAuthAdapter, GoogleAuthAdapter],
     },
     {
       provide: "AUTH_IDENTITY_PROVIDER",
       useFactory: (
         factory: AuthIdentityFactory,
-        configService: ConfigService
+        configService: ConfigService,
       ): IAuthStrategy => {
         const provider =
           configService.get<string>("auth.provider") || AuthIdentityName.CUSTOM;
@@ -179,13 +212,13 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         logger: LoggerService,
         eventStore: EventStore,
         signUpUseCase: SignUpUseCase,
-        authIdentityRepository: IAuthIdentityRepository
+        authIdentityRepository: IAuthIdentityRepository,
       ) =>
         new AuthService(
           logger,
           eventStore,
           signUpUseCase,
-          authIdentityRepository
+          authIdentityRepository,
         ),
       inject: [
         LoggerService,
@@ -202,9 +235,17 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
     },
     {
       provide: RefreshAccessTokenUseCase,
-      useFactory: (logger: ILoggerService, authProvider: IAuthStrategy) =>
-        new RefreshAccessTokenUseCase(logger, authProvider),
-      inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
+      useFactory: (
+        logger: ILoggerService,
+        authStrategies: IAuthStrategy[],
+        refreshTokenRepository: RefreshTokenRepository,
+      ) =>
+        new RefreshAccessTokenUseCase(
+          logger,
+          authStrategies,
+          refreshTokenRepository,
+        ),
+      inject: [LoggerService, AUTH_STRATEGY_TOKEN, RefreshTokenRepository],
     },
     {
       provide: ForgotPasswordUseCase,
@@ -236,8 +277,12 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         resetPasswordUseCase: ResetPasswordUseCase,
         changePasswordUseCase: ChangePasswordUseCase,
         signUpFromInvitationUseCase: SignUpFromInvitationUseCase,
+        handleGoogleCallbackUseCase: HandleGoogleCallbackUseCase,
+        completeGoogleSignUpUseCase: CompleteGoogleSignUpUseCase,
         authStrategy: IAuthStrategy,
-        refreshTokenRepository: IRefreshTokenRepository
+        refreshTokenRepository: IRefreshTokenRepository,
+        authIdentityRepository: IAuthIdentityRepository,
+        googleAuthAdapter: GoogleAuthAdapter,
       ) =>
         new AuthFacade(
           authService,
@@ -249,8 +294,12 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
           resetPasswordUseCase,
           changePasswordUseCase,
           signUpFromInvitationUseCase,
+          handleGoogleCallbackUseCase,
+          completeGoogleSignUpUseCase,
           authStrategy,
-          refreshTokenRepository
+          refreshTokenRepository,
+          authIdentityRepository,
+          googleAuthAdapter,
         ),
       inject: [
         AuthService,
@@ -262,8 +311,12 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         ResetPasswordUseCase,
         ChangePasswordUseCase,
         SignUpFromInvitationUseCase,
+        HandleGoogleCallbackUseCase,
+        CompleteGoogleSignUpUseCase,
         "AUTH_IDENTITY_PROVIDER",
         RefreshTokenRepository,
+        AuthIdentityRepository,
+        GoogleAuthAdapter,
       ],
     },
     {
@@ -273,14 +326,14 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         eventStore: IEventStore,
         authProvider: IAuthStrategy,
         authIdentityRepository: IAuthIdentityRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new SignUpFromInvitationUseCase(
           logger,
           eventStore,
           authProvider,
           authIdentityRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -295,7 +348,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       useFactory: (
         logger: ILoggerService,
         eventStore: IEventStore,
-        signUpUseCase: SignUpUseCase
+        signUpUseCase: SignUpUseCase,
       ) => new AuthIdentityFailedHandler(logger, eventStore, signUpUseCase),
       inject: [LoggerService, EventStore, SignUpUseCase],
     },
@@ -304,7 +357,7 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
       useFactory: (
         logger: ILoggerService,
         eventStore: IEventStore,
-        signUpUseCase: SignUpUseCase
+        signUpUseCase: SignUpUseCase,
       ) => new UserFailedHandler(logger, eventStore, signUpUseCase),
       inject: [LoggerService, EventStore, SignUpUseCase],
     },
@@ -314,24 +367,41 @@ import { IPasswordResetTokenRepository } from "./domain/repositories/passwordRes
         new ConfirmSignUpUseCase(logger, authProvider),
       inject: [LoggerService, "AUTH_IDENTITY_PROVIDER"],
     },
+    {
+      provide: HandleGoogleCallbackUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        googleAuthAdapter: GoogleAuthAdapter,
+      ) => new HandleGoogleCallbackUseCase(logger, googleAuthAdapter),
+      inject: [LoggerService, GoogleAuthAdapter],
+    },
+    {
+      provide: CompleteGoogleSignUpUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        googleAuthAdapter: GoogleAuthAdapter,
+      ) => new CompleteGoogleSignUpUseCase(logger, googleAuthAdapter),
+      inject: [LoggerService, GoogleAuthAdapter],
+    },
   ],
   exports: [AuthFacade, "AUTH_IDENTITY_PROVIDER", RefreshTokenRepository],
 })
-export class AuthModule {
+export class AuthModule implements OnModuleInit {
   constructor(
     private readonly eventHandlerRegistry: EventHandlerRegistry,
     private readonly authIdentityFailedHandler: AuthIdentityFailedHandler,
-    private readonly userFailedHandler: UserFailedHandler
+    private readonly moduleRef: ModuleRef,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
+    const userFailedHandler = this.moduleRef.get(UserFailedHandler, {
+      strict: false,
+    });
+
     this.eventHandlerRegistry.registerHandler(
       "auth_identity.failed",
-      this.authIdentityFailedHandler
+      this.authIdentityFailedHandler,
     );
-    this.eventHandlerRegistry.registerHandler(
-      "user.failed",
-      this.userFailedHandler
-    );
+    this.eventHandlerRegistry.registerHandler("user.failed", userFailedHandler);
   }
 }

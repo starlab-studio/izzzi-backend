@@ -26,35 +26,43 @@ export class GetOrganizationStatsUseCase {
     private readonly classRepository: IClassRepository,
     private readonly subjectRepository: ISubjectRepository,
     private readonly quizRepository: IQuizRepository,
-    private readonly responseRepository: IResponseRepository
+    private readonly responseRepository: IResponseRepository,
   ) {}
 
   async execute(data: GetOrganizationStatsData): Promise<OrganizationStats> {
-    this.logger.info(`Getting organization stats: organizationId=${data.organizationId}`);
+    this.logger.info(
+      `Getting organization stats: organizationId=${data.organizationId}`,
+    );
 
     // Verify requester has admin role in the organization
-    const requesterMembership = await this.membershipRepository.findByUserAndOrganization(
-      data.requesterId,
-      data.organizationId
-    );
+    const requesterMembership =
+      await this.membershipRepository.findByUserAndOrganization(
+        data.requesterId,
+        data.organizationId,
+      );
 
     if (!requesterMembership || requesterMembership.role !== UserRole.ADMIN) {
       throw new DomainError(
         ErrorCode.UNAUTHORIZED_ROLE,
-        "Only admin can view organization stats"
+        "Only admin can view organization stats",
       );
     }
 
-    const memberships = await this.membershipRepository.findActiveByOrganization(
-      data.organizationId
-    );
+    const memberships =
+      await this.membershipRepository.findActiveByOrganization(
+        data.organizationId,
+      );
     const totalUsers = memberships.length;
 
-    const classes = await this.classRepository.findByOrganization(data.organizationId);
+    const classes = await this.classRepository.findByOrganization(
+      data.organizationId,
+    );
     const totalClasses = classes.length;
 
-    const subjects = await this.subjectRepository.findByOrganization(data.organizationId);
-    
+    const subjects = await this.subjectRepository.findByOrganization(
+      data.organizationId,
+    );
+
     let totalQuizzes = 0;
     let totalFeedbacks = 0;
 
@@ -63,13 +71,17 @@ export class GetOrganizationStatsUseCase {
       totalQuizzes += quizzes.length;
 
       for (const quiz of quizzes) {
-        const responseCount = await this.responseRepository.countByQuiz(quiz.id);
+        const responseCount = await this.responseRepository.countByQuiz(
+          quiz.id,
+        );
         totalFeedbacks += responseCount;
       }
     }
 
-    const avgQuizzesPerClass = totalClasses > 0 ? totalQuizzes / totalClasses : 0;
-    const avgFeedbacksPerClass = totalClasses > 0 ? totalFeedbacks / totalClasses : 0;
+    const avgQuizzesPerClass =
+      totalClasses > 0 ? totalQuizzes / totalClasses : 0;
+    const avgFeedbacksPerClass =
+      totalClasses > 0 ? totalFeedbacks / totalClasses : 0;
 
     return {
       totalUsers,

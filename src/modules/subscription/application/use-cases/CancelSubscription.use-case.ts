@@ -36,13 +36,13 @@ export class CancelSubscriptionUseCase
   constructor(
     readonly logger: ILoggerService,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    input: CancelSubscriptionInput
+    input: CancelSubscriptionInput,
   ): Promise<CancelSubscriptionOutput> {
     try {
       const { subscriptionId, organizationId, userId, immediate, reason } =
@@ -58,7 +58,7 @@ export class CancelSubscriptionUseCase
         throw new DomainError(
           "INSUFFICIENT_PERMISSIONS",
           "Vous devez être administrateur de cette organisation pour annuler la subscription",
-          { userId, organizationId }
+          { userId, organizationId },
         );
       }
 
@@ -68,7 +68,7 @@ export class CancelSubscriptionUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
           "Subscription not found",
-          { subscriptionId }
+          { subscriptionId },
         );
       }
 
@@ -76,7 +76,7 @@ export class CancelSubscriptionUseCase
         throw new DomainError(
           "SUBSCRIPTION_ORGANIZATION_MISMATCH",
           "Subscription does not belong to this organisation",
-          { subscriptionId, organizationId }
+          { subscriptionId, organizationId },
         );
       }
 
@@ -84,7 +84,7 @@ export class CancelSubscriptionUseCase
         throw new DomainError(
           "SUBSCRIPTION_ALREADY_CANCELLED",
           "This subscription is already cancelled",
-          { subscriptionId, status: subscription.status }
+          { subscriptionId, status: subscription.status },
         );
       }
 
@@ -92,7 +92,7 @@ export class CancelSubscriptionUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_CANCELLABLE",
           "Only active or trialing subscriptions can be cancelled",
-          { subscriptionId, status: subscription.status }
+          { subscriptionId, status: subscription.status },
         );
       }
 
@@ -106,7 +106,7 @@ export class CancelSubscriptionUseCase
         wasImmediate = true;
 
         this.logger.info(
-          `Subscription ${subscriptionId} cancelled immediately by user ${userId}. Organization: ${organizationId}. Reason: ${reason || "N/A"}`
+          `Subscription ${subscriptionId} cancelled immediately by user ${userId}. Organization: ${organizationId}. Reason: ${reason || "N/A"}`,
         );
       } else {
         const periodEnd = subscription.currentPeriodEnd;
@@ -114,7 +114,7 @@ export class CancelSubscriptionUseCase
           throw new DomainError(
             "INVALID_SUBSCRIPTION_STATE",
             "Cannot schedule cancellation: subscription has no period end date",
-            { subscriptionId }
+            { subscriptionId },
           );
         }
 
@@ -129,7 +129,7 @@ export class CancelSubscriptionUseCase
         wasImmediate = false;
 
         this.logger.info(
-          `Subscription ${subscriptionId} scheduled for cancellation at end of period by user ${userId}. Organization: ${organizationId}. Effective date: ${effectiveDate.toISOString()}. Reason: ${reason || "N/A"}`
+          `Subscription ${subscriptionId} scheduled for cancellation at end of period by user ${userId}. Organization: ${organizationId}. Effective date: ${effectiveDate.toISOString()}. Reason: ${reason || "N/A"}`,
         );
 
         const savedSubscription =

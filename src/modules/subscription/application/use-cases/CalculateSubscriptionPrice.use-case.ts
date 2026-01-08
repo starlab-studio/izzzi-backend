@@ -31,7 +31,7 @@ export class CalculateSubscriptionPriceUseCase
   constructor(
     readonly logger: ILoggerService,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
-    private readonly pricingTierRepository: IPricingTierRepository
+    private readonly pricingTierRepository: IPricingTierRepository,
   ) {
     super(logger);
   }
@@ -49,7 +49,7 @@ export class CalculateSubscriptionPriceUseCase
         throw new DomainError(
           ErrorCode.INVALID_CLASS_COUNT,
           "classCount must be an integer between 1 and 20",
-          { classCount }
+          { classCount },
         );
       }
 
@@ -57,7 +57,7 @@ export class CalculateSubscriptionPriceUseCase
         throw new DomainError(
           ErrorCode.INVALID_BILLING_PERIOD,
           "billingPeriod must be 'monthly' or 'annual'",
-          { billingPeriod }
+          { billingPeriod },
         );
       }
 
@@ -66,7 +66,7 @@ export class CalculateSubscriptionPriceUseCase
         throw new DomainError(
           ErrorCode.PLAN_NOT_FOUND,
           "Le plan de subscription n'existe pas",
-          { planId }
+          { planId },
         );
       }
 
@@ -74,26 +74,26 @@ export class CalculateSubscriptionPriceUseCase
         throw new DomainError(
           ErrorCode.PLAN_NOT_ACTIVE,
           "Le plan de subscription n'est pas actif",
-          { planId }
+          { planId },
         );
       }
 
       const tiers =
         await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
           plan.id,
-          billingPeriod
+          billingPeriod,
         );
 
       if (tiers.length === 0) {
         throw new DomainError(
           ErrorCode.NO_PRICING_TIERS,
           "Aucun palier de tarification trouvé pour ce plan et cette période",
-          { planId, billingPeriod }
+          { planId, billingPeriod },
         );
       }
 
       const tier = tiers.find(
-        (t) => classCount >= t.minClasses && classCount <= t.maxClasses
+        (t) => classCount >= t.minClasses && classCount <= t.maxClasses,
       );
 
       if (!tier) {
@@ -108,7 +108,7 @@ export class CalculateSubscriptionPriceUseCase
               min: t.minClasses,
               max: t.maxClasses,
             })),
-          }
+          },
         );
       }
 

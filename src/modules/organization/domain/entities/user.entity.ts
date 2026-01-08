@@ -36,7 +36,7 @@ export class UserEntity {
 
   belongsToOrganization(organizationId: string): boolean {
     return this.memberships.some(
-      (m) => m.organizationId === organizationId && m.isActive()
+      (m) => m.organizationId === organizationId && m.isActive(),
     );
   }
 
@@ -69,7 +69,7 @@ export class UserEntity {
     if (this.belongsToOrganization(membership.organizationId)) {
       throw new DomainError(
         "ALREADY_MEMBER",
-        "User is already a member of this organization"
+        "User is already a member of this organization",
       );
     }
     this.memberships.push(membership);
@@ -154,10 +154,10 @@ export class UserEntity {
   }
 
   private findActiveMembership(
-    organizationId: string
+    organizationId: string,
   ): MembershipEntity | undefined {
     return this.memberships.find(
-      (m) => m.organizationId === organizationId && m.isActive()
+      (m) => m.organizationId === organizationId && m.isActive(),
     );
   }
 

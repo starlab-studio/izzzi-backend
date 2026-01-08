@@ -33,18 +33,18 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
     private readonly organizationFacade: OrganizationFacade,
     private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: SendQuizToStudentsInput
+    data: SendQuizToStudentsInput,
   ): Promise<SendQuizToStudentsOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       const quiz = await this.quizRepository.findById(data.quizId);
@@ -60,44 +60,44 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
       if (subject.organizationId !== data.organizationId) {
         throw new DomainError(
           ErrorCode.UNAUTHORIZED_ACCESS,
-          "Unauthorized access to quiz"
+          "Unauthorized access to quiz",
         );
       }
 
       // Check subscription and trial status for free plans
       const subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          data.organizationId
+          data.organizationId,
         );
 
       if (subscription) {
         const plan = await this.subscriptionPlanRepository.findById(
-          subscription.planId
+          subscription.planId,
         );
 
         if (plan && plan.isFree && !subscription.isTrialActive) {
           throw new DomainError(
             ErrorCode.TRIAL_ENDED,
             "Votre période d'essai est terminée. Vous devez souscrire à un abonnement payant pour continuer à partager des questionnaires.",
-            { organizationId: data.organizationId }
+            { organizationId: data.organizationId },
           );
         }
       }
 
       const assignments = await this.subjectAssignmentRepository.findBySubject(
-        subject.id
+        subject.id,
       );
       const activeAssignment = assignments.find((a) => a.isActive);
       if (!activeAssignment) {
         throw new DomainError(
           ErrorCode.UNEXPECTED_ERROR,
-          "Subject is not assigned to any class"
+          "Subject is not assigned to any class",
         );
       }
 
       const students = await this.classStudentRepository.findByClassAndActive(
         activeAssignment.classId,
-        true
+        true,
       );
 
       if (students.length === 0) {
@@ -112,10 +112,10 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
 
       for (const student of students) {
         const existingTokens = await this.studentQuizTokenRepository.findByQuiz(
-          data.quizId
+          data.quizId,
         );
         const existingToken = existingTokens.find(
-          (t) => t.classStudentId === student.id
+          (t) => t.classStudentId === student.id,
         );
 
         if (existingToken && existingToken.emailSentAt) {
@@ -164,10 +164,12 @@ export class SendQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
               template,
             });
             sentCount++;
-          } catch (error) {
+          } catch (error: unknown) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
             this.logger.error(
               `Failed to send email to ${student.email}:`,
-              error
+              errorMessage,
             );
           }
         }

@@ -14,19 +14,21 @@ export class GetFaqContentByTabUseCase {
 
   async execute(tabId: number): Promise<IFaqCategoryWithItems[]> {
     const categories = await this.faqCategoryRepository.findByTabId(tabId);
-    
+
     const categoriesWithItems = await Promise.all(
       categories.map(async (category) => {
-        const items = await this.faqItemRepository.findByCategoryId(category.id!);
-        const activeItems = items.filter(item => item.isActive);
-        
+        const items = await this.faqItemRepository.findByCategoryId(
+          category.id!,
+        );
+        const activeItems = items.filter((item) => item.isActive);
+
         return {
           ...category.toPersistence(),
-          items: activeItems.map(item => item.toPersistence()),
+          items: activeItems.map((item) => item.toPersistence()),
         };
-      })
+      }),
     );
 
-    return categoriesWithItems.filter(c => c.isActive);
+    return categoriesWithItems.filter((c) => c.isActive);
   }
 }

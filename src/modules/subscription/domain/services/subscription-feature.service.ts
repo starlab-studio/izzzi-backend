@@ -4,13 +4,13 @@ import type { ISubscriptionPlanRepository } from "../repositories/subscription-p
 export class SubscriptionFeatureService {
   constructor(
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
   ) {}
 
   async canShareQuizzes(organizationId: string): Promise<boolean> {
     const subscription =
       await this.subscriptionRepository.findActiveByOrganizationId(
-        organizationId
+        organizationId,
       );
 
     if (!subscription) {
@@ -22,7 +22,7 @@ export class SubscriptionFeatureService {
     }
 
     const plan = await this.subscriptionPlanRepository.findById(
-      subscription.planId
+      subscription.planId,
     );
 
     if (!plan) {
@@ -39,7 +39,7 @@ export class SubscriptionFeatureService {
   async canSeeAllResponses(organizationId: string): Promise<boolean> {
     const subscription =
       await this.subscriptionRepository.findActiveByOrganizationId(
-        organizationId
+        organizationId,
       );
 
     if (!subscription) {
@@ -51,7 +51,7 @@ export class SubscriptionFeatureService {
     }
 
     const plan = await this.subscriptionPlanRepository.findById(
-      subscription.planId
+      subscription.planId,
     );
 
     if (!plan) {
@@ -68,7 +68,7 @@ export class SubscriptionFeatureService {
   async getMaxVisibleResponses(organizationId: string): Promise<number | null> {
     const subscription =
       await this.subscriptionRepository.findActiveByOrganizationId(
-        organizationId
+        organizationId,
       );
 
     if (!subscription) {
@@ -80,7 +80,7 @@ export class SubscriptionFeatureService {
     }
 
     const plan = await this.subscriptionPlanRepository.findById(
-      subscription.planId
+      subscription.planId,
     );
 
     if (!plan) {
@@ -100,7 +100,7 @@ export class SubscriptionFeatureService {
   async canLiftAnonymity(organizationId: string): Promise<boolean> {
     const subscription =
       await this.subscriptionRepository.findActiveByOrganizationId(
-        organizationId
+        organizationId,
       );
 
     if (!subscription) {
@@ -112,7 +112,7 @@ export class SubscriptionFeatureService {
     }
 
     const plan = await this.subscriptionPlanRepository.findById(
-      subscription.planId
+      subscription.planId,
     );
 
     if (!plan) {

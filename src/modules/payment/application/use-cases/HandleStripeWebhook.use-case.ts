@@ -9,6 +9,9 @@ import type {
   IWebhookPaymentIntent,
   IWebhookSubscription,
 } from "../../domain/types/webhook-event.types";
+import type { ISubscriptionRepository } from "../../../subscription/domain/repositories/subscription.repository";
+import type { IPricingTierRepository } from "../../../subscription/domain/repositories/pricing-tier.repository";
+import type { IInvoiceRepository } from "../../../subscription/domain/repositories/invoice.repository";
 
 export interface HandleStripeWebhookInput {
   event: IWebhookEvent;
@@ -27,19 +30,22 @@ export class HandleStripeWebhookUseCase
     logger: ILoggerService,
     private readonly syncInvoiceFromStripeUseCase: SyncInvoiceFromStripeUseCase,
     private readonly syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase,
-    private readonly stripeSyncService: IStripeSyncService
+    private readonly stripeSyncService: IStripeSyncService,
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly pricingTierRepository: IPricingTierRepository,
+    private readonly invoiceRepository: IInvoiceRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    input: HandleStripeWebhookInput
+    input: HandleStripeWebhookInput,
   ): Promise<HandleStripeWebhookOutput> {
     const { event } = input;
 
     try {
       this.logger.info(
-        `Processing Stripe webhook event: ${event.type} (id: ${event.id})`
+        `Processing Stripe webhook event: ${event.type} (id: ${event.id})`,
       );
 
       switch (event.type) {
@@ -49,19 +55,31 @@ export class HandleStripeWebhookUseCase
 
         case "payment_intent.succeeded":
           await this.handlePaymentIntentSucceeded(
-            event.data.object as IWebhookPaymentIntent
+            event.data.object as IWebhookPaymentIntent,
+          );
+          break;
+
+        case "payment_intent.failed":
+          await this.handlePaymentIntentFailed(
+            event.data.object as IWebhookPaymentIntent,
+          );
+          break;
+
+        case "payment_intent.canceled":
+          await this.handlePaymentIntentCanceled(
+            event.data.object as IWebhookPaymentIntent,
           );
           break;
 
         case "customer.subscription.updated":
           await this.handleSubscriptionUpdated(
-            event.data.object as IWebhookSubscription
+            event.data.object as IWebhookSubscription,
           );
           break;
 
         case "customer.subscription.deleted":
           await this.handleSubscriptionDeleted(
-            event.data.object as IWebhookSubscription
+            event.data.object as IWebhookSubscription,
           );
           break;
 
@@ -71,7 +89,7 @@ export class HandleStripeWebhookUseCase
       }
 
       this.logger.info(
-        `Successfully processed Stripe webhook event: ${event.type} (id: ${event.id})`
+        `Successfully processed Stripe webhook event: ${event.type} (id: ${event.id})`,
       );
 
       return { processed: true, eventType: event.type };
@@ -80,7 +98,7 @@ export class HandleStripeWebhookUseCase
         `Error processing Stripe webhook event ${event.type}: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
       return { processed: false, eventType: event.type };
     }
@@ -91,15 +109,14 @@ export class HandleStripeWebhookUseCase
   }
 
   private async handleInvoicePaid(
-    webhookInvoice: IWebhookInvoice
+    webhookInvoice: IWebhookInvoice,
   ): Promise<void> {
     this.logger.info(
-      `Processing invoice.paid event for invoice ${webhookInvoice.id}`
+      `Processing invoice.paid event for invoice ${webhookInvoice.id}`,
     );
 
-    // Retrieve the full Stripe invoice via the domain service
     const stripeInvoice = await this.stripeSyncService.getInvoice(
-      webhookInvoice.id
+      webhookInvoice.id,
     );
 
     if (!stripeInvoice) {
@@ -112,16 +129,33 @@ export class HandleStripeWebhookUseCase
     });
 
     this.logger.info(
-      `Successfully processed invoice.paid event for invoice ${webhookInvoice.id}`
+      `Successfully processed invoice.paid event for invoice ${webhookInvoice.id}`,
     );
   }
 
   private async handlePaymentIntentSucceeded(
-    webhookPaymentIntent: IWebhookPaymentIntent
+    webhookPaymentIntent: IWebhookPaymentIntent,
   ): Promise<void> {
     this.logger.info(
-      `Processing payment_intent.succeeded event for payment intent ${webhookPaymentIntent.id}`
+      `Processing payment_intent.succeeded event for payment intent ${webhookPaymentIntent.id}`,
     );
+
+    if (webhookPaymentIntent.invoice) {
+      const invoiceId =
+        typeof webhookPaymentIntent.invoice === "string"
+          ? webhookPaymentIntent.invoice
+          : webhookPaymentIntent.invoice.id;
+
+      const existingInvoice =
+        await this.invoiceRepository.findByStripeInvoiceId(invoiceId);
+
+      if (existingInvoice && existingInvoice.status === "paid") {
+        this.logger.warn(
+          `Payment intent ${webhookPaymentIntent.id} already processed (invoice ${invoiceId} is already paid), skipping`,
+        );
+        return;
+      }
+    }
 
     if (webhookPaymentIntent.invoice) {
       const invoiceId =
@@ -137,7 +171,7 @@ export class HandleStripeWebhookUseCase
             stripeInvoice,
           });
           this.logger.info(
-            `Synchronized invoice ${invoiceId} from payment intent ${webhookPaymentIntent.id}`
+            `Synchronized invoice ${invoiceId} from payment intent ${webhookPaymentIntent.id}`,
           );
         }
       } catch (invoiceError) {
@@ -147,13 +181,15 @@ export class HandleStripeWebhookUseCase
               ? invoiceError.message
               : String(invoiceError)
           }`,
-          invoiceError instanceof Error ? invoiceError.stack || "" : ""
+          invoiceError instanceof Error ? invoiceError.stack || "" : "",
         );
       }
     }
 
-    if (webhookPaymentIntent.metadata?.subscriptionId) {
-      const subscriptionId = webhookPaymentIntent.metadata.subscriptionId;
+    const metadata = webhookPaymentIntent.metadata || {};
+
+    if (metadata.subscriptionId) {
+      const subscriptionId = metadata.subscriptionId;
       try {
         const stripeSubscription =
           await this.stripeSyncService.getSubscription(subscriptionId);
@@ -163,7 +199,7 @@ export class HandleStripeWebhookUseCase
             stripeSubscription,
           });
           this.logger.info(
-            `Synchronized subscription ${subscriptionId} from payment intent ${webhookPaymentIntent.id}`
+            `Synchronized subscription ${subscriptionId} from payment intent ${webhookPaymentIntent.id}`,
           );
         }
       } catch (subscriptionError) {
@@ -175,32 +211,161 @@ export class HandleStripeWebhookUseCase
           }`,
           subscriptionError instanceof Error
             ? subscriptionError.stack || ""
-            : ""
+            : "",
         );
       }
     }
 
+    if (metadata.type === "quantity_update" && metadata.subscriptionId) {
+      await this.handleQuantityUpdateAfterPayment(webhookPaymentIntent);
+    }
+
     this.logger.info(
-      `Successfully processed payment_intent.succeeded event for payment intent ${webhookPaymentIntent.id}`
+      `Successfully processed payment_intent.succeeded event for payment intent ${webhookPaymentIntent.id}`,
+    );
+  }
+
+  private async handleQuantityUpdateAfterPayment(
+    webhookPaymentIntent: IWebhookPaymentIntent,
+  ): Promise<void> {
+    const metadata = webhookPaymentIntent.metadata || {};
+    const subscriptionId = metadata.subscriptionId;
+    const newQuantityStr = metadata.newQuantity;
+
+    if (!subscriptionId || !newQuantityStr) {
+      this.logger.warn(
+        `Quantity update payment_intent.succeeded ${webhookPaymentIntent.id} missing subscriptionId or newQuantity in metadata`,
+      );
+      return;
+    }
+
+    const newQuantity = Number(newQuantityStr);
+    if (!Number.isInteger(newQuantity) || newQuantity < 1 || newQuantity > 20) {
+      this.logger.warn(
+        `Invalid newQuantity "${newQuantityStr}" in quantity_update metadata for payment intent ${webhookPaymentIntent.id}`,
+      );
+      return;
+    }
+
+    const subscription =
+      await this.subscriptionRepository.findById(subscriptionId);
+    if (!subscription) {
+      this.logger.error(
+        `Subscription ${subscriptionId} not found while handling quantity_update for payment intent ${webhookPaymentIntent.id}`,
+        "",
+      );
+      return;
+    }
+
+    if (!subscription.stripeSubscriptionId) {
+      this.logger.error(
+        `Subscription ${subscription.id} has no stripeSubscriptionId while handling quantity_update for payment intent ${webhookPaymentIntent.id}`,
+        "",
+      );
+      return;
+    }
+
+    const tiers = await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
+      subscription.planId,
+      subscription.billingPeriod,
+    );
+    const newTier = tiers.find(
+      (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses,
+    );
+
+    if (!newTier || !newTier.stripePriceId) {
+      this.logger.error(
+        `No pricing tier with stripePriceId found for plan ${subscription.planId}, billingPeriod ${subscription.billingPeriod}, quantity ${newQuantity} while handling quantity_update for payment intent ${webhookPaymentIntent.id}`,
+        "",
+      );
+      return;
+    }
+
+    await this.stripeSyncService.updateSubscriptionQuantity(
+      subscription.stripeSubscriptionId,
+      newQuantity,
+      newTier.stripePriceId,
+      {
+        prorationBehavior: "none",
+        billingCycleAnchor: "unchanged",
+      },
+    );
+
+    try {
+      subscription.updateQuantity(newQuantity, true);
+      await this.subscriptionRepository.save(subscription);
+      this.logger.info(
+        `Applied quantity_update to subscription ${subscription.id} (new quantity: ${newQuantity}) after payment intent ${webhookPaymentIntent.id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to update local subscription ${subscription.id} quantity after payment intent ${webhookPaymentIntent.id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack || "" : "",
+      );
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  private async handlePaymentIntentFailed(
+    webhookPaymentIntent: IWebhookPaymentIntent,
+  ): Promise<void> {
+    this.logger.info(
+      `Processing payment_intent.failed event for payment intent ${webhookPaymentIntent.id}`,
+    );
+
+    const metadata = webhookPaymentIntent.metadata || {};
+    if (metadata.type === "quantity_update" && metadata.subscriptionId) {
+      this.handleQuantityUpdatePaymentFailed(webhookPaymentIntent);
+    }
+
+    this.logger.info(
+      `Successfully processed payment_intent.failed event for payment intent ${webhookPaymentIntent.id}`,
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  private async handlePaymentIntentCanceled(
+    webhookPaymentIntent: IWebhookPaymentIntent,
+  ): Promise<void> {
+    this.logger.info(
+      `Processing payment_intent.canceled event for payment intent ${webhookPaymentIntent.id}`,
+    );
+
+    const metadata = webhookPaymentIntent.metadata || {};
+    if (metadata.type === "quantity_update" && metadata.subscriptionId) {
+      this.handleQuantityUpdatePaymentFailed(webhookPaymentIntent);
+    }
+
+    this.logger.info(
+      `Successfully processed payment_intent.canceled event for payment intent ${webhookPaymentIntent.id}`,
+    );
+  }
+
+  private handleQuantityUpdatePaymentFailed(
+    webhookPaymentIntent: IWebhookPaymentIntent,
+  ): void {
+    this.logger.info(
+      `Quantity update payment intent ${webhookPaymentIntent.id} failed or was canceled. No subscription quantity change has been applied.`,
     );
   }
 
   private async handleSubscriptionUpdated(
-    webhookSubscription: IWebhookSubscription
+    webhookSubscription: IWebhookSubscription,
   ): Promise<void> {
     this.logger.info(
-      `Processing customer.subscription.updated event for subscription ${webhookSubscription.id}`
+      `Processing customer.subscription.updated event for subscription ${webhookSubscription.id}`,
     );
 
-    // Retrieve the full Stripe subscription via the domain service
     const stripeSubscription = await this.stripeSyncService.getSubscription(
-      webhookSubscription.id
+      webhookSubscription.id,
     );
 
     if (!stripeSubscription) {
       this.logger.error(
         `Subscription ${webhookSubscription.id} not found in Stripe`,
-        ""
+        "",
       );
       return;
     }
@@ -210,26 +375,25 @@ export class HandleStripeWebhookUseCase
     });
 
     this.logger.info(
-      `Successfully processed customer.subscription.updated event for subscription ${webhookSubscription.id}`
+      `Successfully processed customer.subscription.updated event for subscription ${webhookSubscription.id}`,
     );
   }
 
   private async handleSubscriptionDeleted(
-    webhookSubscription: IWebhookSubscription
+    webhookSubscription: IWebhookSubscription,
   ): Promise<void> {
     this.logger.info(
-      `Processing customer.subscription.deleted event for subscription ${webhookSubscription.id}`
+      `Processing customer.subscription.deleted event for subscription ${webhookSubscription.id}`,
     );
 
-    // Retrieve the full Stripe subscription via the domain service
     const stripeSubscription = await this.stripeSyncService.getSubscription(
-      webhookSubscription.id
+      webhookSubscription.id,
     );
 
     if (!stripeSubscription) {
       this.logger.error(
         `Subscription ${webhookSubscription.id} not found in Stripe`,
-        ""
+        "",
       );
       return;
     }
@@ -239,7 +403,7 @@ export class HandleStripeWebhookUseCase
     });
 
     this.logger.info(
-      `Successfully processed customer.subscription.deleted event for subscription ${webhookSubscription.id}`
+      `Successfully processed customer.subscription.deleted event for subscription ${webhookSubscription.id}`,
     );
   }
 }

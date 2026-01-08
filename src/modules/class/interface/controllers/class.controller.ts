@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Put, Body, UseGuards, Param, Query } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Body,
+  UseGuards,
+  Param,
+  Query,
+} from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -28,7 +37,8 @@ export class ClassController extends BaseController {
   @Get()
   @ApiOperation({
     summary: "Récupérer les classes d'une organisation",
-    description: "Retourne la liste des classes de l'organisation spécifiée. \
+    description:
+      "Retourne la liste des classes de l'organisation spécifiée. \
     Utilisez le paramètre query 'archived' pour filtrer les classes archivées (true) ou actives (false). \
     Si non spécifié, retourne toutes les classes.",
   })
@@ -71,7 +81,8 @@ export class ClassController extends BaseController {
     @Param("organizationId") organizationId: string,
     @Query("archived") archived?: string,
   ) {
-    const archivedParam = archived === "true" ? true : archived === "false" ? false : undefined;
+    const archivedParam =
+      archived === "true" ? true : archived === "false" ? false : undefined;
     const classes = await this.classFacade.getClassesByOrganization(
       organizationId,
       user.userId,
@@ -82,9 +93,10 @@ export class ClassController extends BaseController {
   }
 
   @Post()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: "Créer une nouvelle classe",
-    description: "Crée une nouvelle classe dans l'organisation spécifiée. \
+    description:
+      "Crée une nouvelle classe dans l'organisation spécifiée. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiBearerAuth()
@@ -95,8 +107,8 @@ export class ClassController extends BaseController {
   })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: "Classe créée avec succès",
     schema: {
       example: {
@@ -120,7 +132,10 @@ export class ClassController extends BaseController {
   })
   @ApiResponse({ status: 400, description: "Données invalides" })
   @ApiResponse({ status: 401, description: "Authentification requise" })
-  @ApiResponse({ status: 403, description: "Accès interdit - Rôle insuffisant" })
+  @ApiResponse({
+    status: 403,
+    description: "Accès interdit - Rôle insuffisant",
+  })
   async createClass(
     @Body() dto: CreateClassDto,
     @CurrentUser() user: JWTPayload,
@@ -142,7 +157,8 @@ export class ClassController extends BaseController {
   @Get(":classId")
   @ApiOperation({
     summary: "Récupérer une classe par son ID",
-    description: "Récupère les détails d'une classe spécifique. \
+    description:
+      "Récupère les détails d'une classe spécifique. \
     Nécessite le rôle LEARNING_MANAGER, ADMIN ou STUDENT.",
   })
   @ApiBearerAuth()
@@ -201,7 +217,8 @@ export class ClassController extends BaseController {
   @Put(":classId")
   @ApiOperation({
     summary: "Modifier une classe",
-    description: "Met à jour les informations d'une classe. \
+    description:
+      "Met à jour les informations d'une classe. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiBearerAuth()
@@ -242,7 +259,10 @@ export class ClassController extends BaseController {
   })
   @ApiResponse({ status: 400, description: "Données invalides" })
   @ApiResponse({ status: 401, description: "Authentification requise" })
-  @ApiResponse({ status: 403, description: "Accès interdit - Rôle insuffisant" })
+  @ApiResponse({
+    status: 403,
+    description: "Accès interdit - Rôle insuffisant",
+  })
   @ApiResponse({ status: 404, description: "Classe non trouvée" })
   async updateClass(
     @Body() dto: UpdateClassDto,
@@ -263,7 +283,8 @@ export class ClassController extends BaseController {
   @Post(":classId/archive")
   @ApiOperation({
     summary: "Archiver une classe",
-    description: "Archive une classe (désactive la classe). \
+    description:
+      "Archive une classe (désactive la classe). \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiBearerAuth()
@@ -303,7 +324,10 @@ export class ClassController extends BaseController {
     },
   })
   @ApiResponse({ status: 401, description: "Authentification requise" })
-  @ApiResponse({ status: 403, description: "Accès interdit - Rôle insuffisant" })
+  @ApiResponse({
+    status: 403,
+    description: "Accès interdit - Rôle insuffisant",
+  })
   @ApiResponse({ status: 404, description: "Classe non trouvée" })
   async archiveClass(
     @CurrentUser() user: JWTPayload,

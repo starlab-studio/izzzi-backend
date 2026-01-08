@@ -51,12 +51,12 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
       useFactory: (
         subscriptionRepository: ISubscriptionRepository,
         subscriptionPlanRepository: ISubscriptionPlanRepository,
-        classRepository: IClassRepository
+        classRepository: IClassRepository,
       ) =>
         new ClassLimitService(
           subscriptionRepository,
           subscriptionPlanRepository,
-          classRepository
+          classRepository,
         ),
       inject: [
         SUBSCRIPTION_REPOSITORY,
@@ -68,7 +68,7 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
       provide: ClassRepository,
       useFactory: (
         ormRepository: Repository<ClassModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new ClassRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(ClassModel), TypeOrmUnitOfWork],
     },
@@ -80,7 +80,7 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
       provide: ClassStudentRepository,
       useFactory: (
         ormRepository: Repository<ClassStudentModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new ClassStudentRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(ClassStudentModel), TypeOrmUnitOfWork],
     },
@@ -98,7 +98,7 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
         eventStore: EventStore,
         classLimitService: ClassLimitService,
         subscriptionRepository: ISubscriptionRepository,
-        subscriptionPlanRepository: ISubscriptionPlanRepository
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
       ) =>
         new CreateClassUseCase(
           logger,
@@ -108,7 +108,7 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
           eventStore,
           classLimitService,
           subscriptionRepository,
-          subscriptionPlanRepository
+          subscriptionPlanRepository,
         ),
       inject: [
         LoggerService,
@@ -127,13 +127,13 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
         logger: ILoggerService,
         classRepository: IClassRepository,
         classStudentRepository: IClassStudentRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new GetClassesByOrganizationUseCase(
           logger,
           classRepository,
           classStudentRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -148,13 +148,13 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
         logger: ILoggerService,
         classRepository: IClassRepository,
         classStudentRepository: IClassStudentRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new GetClassByIdUseCase(
           logger,
           classRepository,
           classStudentRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -169,13 +169,13 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
         logger: ILoggerService,
         classRepository: IClassRepository,
         classStudentRepository: IClassStudentRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new UpdateClassUseCase(
           logger,
           classRepository,
           classStudentRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -190,13 +190,13 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
         logger: ILoggerService,
         classRepository: IClassRepository,
         organizationFacade: OrganizationFacade,
-        eventStore: EventStore
+        eventStore: EventStore,
       ) =>
         new ArchiveClassUseCase(
           logger,
           classRepository,
           organizationFacade,
-          eventStore
+          eventStore,
         ),
       inject: [LoggerService, ClassRepository, OrganizationFacade, EventStore],
     },
@@ -207,14 +207,14 @@ import { ClassLimitService } from "./domain/services/class-limit.service";
         getClassesByOrganizationUseCase: GetClassesByOrganizationUseCase,
         getClassByIdUseCase: GetClassByIdUseCase,
         updateClassUseCase: UpdateClassUseCase,
-        archiveClassUseCase: ArchiveClassUseCase
+        archiveClassUseCase: ArchiveClassUseCase,
       ) =>
         new ClassFacade(
           createClassUseCase,
           getClassesByOrganizationUseCase,
           getClassByIdUseCase,
           updateClassUseCase,
-          archiveClassUseCase
+          archiveClassUseCase,
         ),
       inject: [
         CreateClassUseCase,

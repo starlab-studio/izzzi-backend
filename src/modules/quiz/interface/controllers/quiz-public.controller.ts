@@ -1,10 +1,5 @@
 import { Controller, Get, Post, Param, Body, Req } from "@nestjs/common";
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-  ApiParam,
-} from "@nestjs/swagger";
+import { ApiOperation, ApiResponse, ApiTags, ApiParam } from "@nestjs/swagger";
 import { BaseController } from "src/core";
 import { QuizFacade } from "../../application/facades/quiz.facade";
 
@@ -18,7 +13,8 @@ export class QuizPublicController extends BaseController {
   @Get(":accessToken")
   @ApiOperation({
     summary: "Récupérer un quiz par son access token (public)",
-    description: "Récupère les détails d'un quiz via son access token. Endpoint public, pas d'authentification requise.",
+    description:
+      "Récupère les détails d'un quiz via son access token. Endpoint public, pas d'authentification requise.",
   })
   @ApiParam({
     name: "accessToken",
@@ -30,9 +26,7 @@ export class QuizPublicController extends BaseController {
     description: "Quiz récupéré avec succès",
   })
   @ApiResponse({ status: 404, description: "Quiz non trouvé ou non actif" })
-  async getQuizByAccessToken(
-    @Param("accessToken") accessToken: string,
-  ) {
+  async getQuizByAccessToken(@Param("accessToken") accessToken: string) {
     const result = await this.quizFacade.getQuizByAccessToken({
       accessToken,
     });
@@ -51,7 +45,8 @@ export class QuizPublicSubmitController extends BaseController {
   @Get(":id/response-status")
   @ApiOperation({
     summary: "Vérifier si un quiz a déjà été répondu (public)",
-    description: "Vérifie si l'utilisateur a déjà répondu à ce quiz. Endpoint public, pas d'authentification requise.",
+    description:
+      "Vérifie si l'utilisateur a déjà répondu à ce quiz. Endpoint public, pas d'authentification requise.",
   })
   @ApiParam({
     name: "id",
@@ -67,7 +62,10 @@ export class QuizPublicSubmitController extends BaseController {
     @Param("id") quizId: string,
     @Req() request: any,
   ) {
-    const ipAddress = request.ip || request.headers["x-forwarded-for"] || request.connection.remoteAddress;
+    const ipAddress =
+      request.ip ||
+      request.headers["x-forwarded-for"] ||
+      request.connection.remoteAddress;
     const userAgent = request.headers["user-agent"] || null;
 
     const result = await this.quizFacade.checkQuizResponseStatus({
@@ -82,7 +80,8 @@ export class QuizPublicSubmitController extends BaseController {
   @Post(":id/submit")
   @ApiOperation({
     summary: "Soumettre une réponse à un quiz (public)",
-    description: "Soumet les réponses d'un étudiant à un quiz. Endpoint public, pas d'authentification requise.",
+    description:
+      "Soumet les réponses d'un étudiant à un quiz. Endpoint public, pas d'authentification requise.",
   })
   @ApiParam({
     name: "id",
@@ -97,10 +96,22 @@ export class QuizPublicSubmitController extends BaseController {
   @ApiResponse({ status: 404, description: "Quiz non trouvé" })
   async submitQuizResponse(
     @Param("id") quizId: string,
-    @Body() body: { responses: Array<{ questionId: string; valueText?: string; valueNumber?: number; valueJson?: any }>; studentToken?: string | null },
+    @Body()
+    body: {
+      responses: Array<{
+        questionId: string;
+        valueText?: string;
+        valueNumber?: number;
+        valueJson?: any;
+      }>;
+      studentToken?: string | null;
+    },
     @Req() request: any,
   ) {
-    const ipAddress = request.ip || request.headers["x-forwarded-for"] || request.connection.remoteAddress;
+    const ipAddress =
+      request.ip ||
+      request.headers["x-forwarded-for"] ||
+      request.connection.remoteAddress;
     const userAgent = request.headers["user-agent"] || null;
 
     const result = await this.quizFacade.submitQuizResponse({
@@ -115,4 +126,3 @@ export class QuizPublicSubmitController extends BaseController {
     return this.success(result);
   }
 }
-

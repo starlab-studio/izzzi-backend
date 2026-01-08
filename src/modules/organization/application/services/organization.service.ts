@@ -17,7 +17,7 @@ export class OrganizationService {
 
   async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
     try {
-      return await this.unitOfWork.withTransaction(async (uow) => {
+      return await this.unitOfWork.withTransaction(async () => {
         const user = await this.createUserUseCase.execute(data);
         const organization = await this.createOrganizationUseCase.execute({
           name: data.organization,
@@ -33,7 +33,7 @@ export class OrganizationService {
         return user;
       });
     } catch (error) {
-      this.createUserUseCase.withCompensation({
+      void this.createUserUseCase.withCompensation({
         username: data.email,
         authIdentityId: data.authIdentityId,
       });

@@ -12,6 +12,7 @@ import { IUserRepository } from "src/modules/organization/domain/repositories/us
 import { UserRole } from "src/core/domain/types";
 import type { IStripeSyncService } from "src/modules/payment/domain/services/stripe-sync.service";
 import { SubscriptionUpgradedEvent } from "../../domain/events/subscription-upgraded.event";
+import { IClassRepository } from "src/modules/class/domain/repositories/class.repository";
 
 export interface UpdateQuantityInput {
   subscriptionId: string;
@@ -55,7 +56,8 @@ export class UpdateSubscriptionQuantityUseCase
     private readonly pricingTierRepository: IPricingTierRepository,
     private readonly userRepository: IUserRepository,
     private readonly stripeSyncService: IStripeSyncService,
-    private readonly eventStore: IEventStore
+    private readonly eventStore: IEventStore,
+    private readonly classRepository: IClassRepository,
   ) {
     super(logger);
   }
@@ -68,7 +70,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "INVALID_CLASS_COUNT",
           "Number of classes must be between 1 and 20",
-          { newQuantity }
+          { newQuantity },
         );
       }
 
@@ -82,7 +84,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "INSUFFICIENT_PERMISSIONS",
           "You must be an administrator of this organization to modify the subscription",
-          { userId, organizationId }
+          { userId, organizationId },
         );
       }
 
@@ -92,7 +94,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
           "Subscription not found",
-          { subscriptionId }
+          { subscriptionId },
         );
       }
 
@@ -100,7 +102,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "SUBSCRIPTION_ORGANIZATION_MISMATCH",
           "Subscription does not belong to this organisation",
-          { subscriptionId, organizationId }
+          { subscriptionId, organizationId },
         );
       }
 
@@ -108,7 +110,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_ACTIVE",
           "Only active subscription can be update",
-          { subscriptionId, status: subscription.status }
+          { subscriptionId, status: subscription.status },
         );
       }
 
@@ -116,32 +118,54 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "QUANTITY_UNCHANGED",
           "New quantity is identical to current quantity",
-          { quantity: newQuantity }
+          { quantity: newQuantity },
         );
       }
 
       const previousQuantity = subscription.quantity;
       const isUpgrade = newQuantity > previousQuantity;
 
+      // Si downgrade, vérifier que l'organisation n'a pas déjà créé plus de classes
+      // que la nouvelle quantité demandée (ex: 10 classes créées, downgrade vers 9 interdit).
+      if (!isUpgrade) {
+        const classesUsed = await this.classRepository.countByOrganization(
+          subscription.organizationId,
+        );
+
+        if (classesUsed > newQuantity) {
+          throw new DomainError(
+            "DOWNGRADE_BELOW_USAGE_NOT_ALLOWED",
+            "You cannot reduce classes below the number of classes already created",
+            {
+              classesUsed,
+              requestedQuantity: newQuantity,
+              currentQuantity: subscription.quantity,
+            },
+          );
+        }
+      }
+
       const plan = await this.subscriptionPlanRepository.findById(
-        subscription.planId
+        subscription.planId,
       );
       if (!plan) {
         throw new DomainError(
           "PLAN_NOT_FOUND",
           "Subscription plan does not exist",
-          { planId: subscription.planId }
+          { planId: subscription.planId },
         );
       }
 
       let previousPriceCents = 0;
       let newPriceCents = 0;
+      let previousTier: any = null;
+      let newTier: any = null;
 
       if (!plan.isFree) {
         const tiers =
           await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
             subscription.planId,
-            subscription.billingPeriod
+            subscription.billingPeriod,
           );
 
         if (tiers.length === 0) {
@@ -151,16 +175,17 @@ export class UpdateSubscriptionQuantityUseCase
             {
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
-            }
+            },
           );
         }
 
-        const previousTier = tiers.find(
+        previousTier = tiers.find(
           (t) =>
-            previousQuantity >= t.minClasses && previousQuantity <= t.maxClasses
+            previousQuantity >= t.minClasses &&
+            previousQuantity <= t.maxClasses,
         );
-        const newTier = tiers.find(
-          (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+        newTier = tiers.find(
+          (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses,
         );
 
         if (!previousTier) {
@@ -171,7 +196,7 @@ export class UpdateSubscriptionQuantityUseCase
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
               quantity: previousQuantity,
-            }
+            },
           );
         }
 
@@ -183,7 +208,7 @@ export class UpdateSubscriptionQuantityUseCase
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
               quantity: newQuantity,
-            }
+            },
           );
         }
 
@@ -205,26 +230,51 @@ export class UpdateSubscriptionQuantityUseCase
 
         const periodStart = subscription.currentPeriodStart;
         const periodEnd = subscription.currentPeriodEnd;
-        
+
         // Vérifier que les dates de période sont définies pour calculer la proration
         if (periodStart && periodEnd) {
-          const totalDaysInPeriod =
-            (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24);
-          const daysRemaining =
-            (periodEnd.getTime() - effectiveDate.getTime()) /
-            (1000 * 60 * 60 * 24);
+          if (subscription.billingPeriod === "annual") {
+            // For annual plans, calculate the number of months remaining (including current month)
+            // priceDifferenceCents is the monthly difference (pricePerClassCents is always monthly)
+            // We need to multiply by months remaining to get the prorated amount
+            const monthsRemaining = this.calculateMonthsRemaining(
+              effectiveDate,
+              periodEnd,
+            );
 
-          if (totalDaysInPeriod > 0 && daysRemaining > 0) {
-            const prorationRatio = daysRemaining / totalDaysInPeriod;
-            amountDueCents = Math.round(priceDifferenceCents * prorationRatio);
+            // Calculate the prorated amount: monthly difference * months remaining
+            // Example: 115€/month difference * 12 months = 1380€ total
+            amountDueCents = Math.round(priceDifferenceCents * monthsRemaining);
             requiresPayment = amountDueCents > 0;
           } else {
-            amountDueCents = priceDifferenceCents;
-            requiresPayment = amountDueCents > 0;
+            // For monthly plans, use day-based proration
+            const totalDaysInPeriod =
+              (periodEnd.getTime() - periodStart.getTime()) /
+              (1000 * 60 * 60 * 24);
+            const daysRemaining =
+              (periodEnd.getTime() - effectiveDate.getTime()) /
+              (1000 * 60 * 60 * 24);
+
+            if (totalDaysInPeriod > 0 && daysRemaining > 0) {
+              const prorationRatio = daysRemaining / totalDaysInPeriod;
+              amountDueCents = Math.round(
+                priceDifferenceCents * prorationRatio,
+              );
+              requiresPayment = amountDueCents > 0;
+            } else {
+              amountDueCents = priceDifferenceCents;
+              requiresPayment = amountDueCents > 0;
+            }
           }
         } else {
           // Si pas de période définie, appliquer le prix complet
-          amountDueCents = priceDifferenceCents;
+          if (subscription.billingPeriod === "annual") {
+            // For annual plans, assume 12 months remaining
+            amountDueCents = Math.round(priceDifferenceCents * 12);
+          } else {
+            // For monthly plans, priceDifferenceCents is the monthly difference
+            amountDueCents = priceDifferenceCents;
+          }
           requiresPayment = amountDueCents > 0;
         }
 
@@ -232,10 +282,10 @@ export class UpdateSubscriptionQuantityUseCase
           const tiers =
             await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
               subscription.planId,
-              subscription.billingPeriod
+              subscription.billingPeriod,
             );
           const newTier = tiers.find(
-            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses,
           );
 
           if (!newTier?.stripePriceId) {
@@ -246,18 +296,9 @@ export class UpdateSubscriptionQuantityUseCase
                 tierId: newTier?.id,
                 planId: subscription.planId,
                 billingPeriod: subscription.billingPeriod,
-              }
+              },
             );
           }
-
-          await this.stripeSyncService.updateSubscriptionQuantity(
-            subscription.stripeSubscriptionId,
-            newQuantity,
-            newTier.stripePriceId,
-            {
-              prorationBehavior: "create_prorations",
-            }
-          );
 
           if (
             requiresPayment &&
@@ -282,10 +323,40 @@ export class UpdateSubscriptionQuantityUseCase
               });
 
             stripeClientSecret = paymentIntent.clientSecret;
+          } else {
+            await this.stripeSyncService.updateSubscriptionQuantity(
+              subscription.stripeSubscriptionId,
+              newQuantity,
+              newTier.stripePriceId,
+              {
+                prorationBehavior: "none",
+              },
+            );
+
+            subscription.updateQuantity(newQuantity, true);
+          }
+        } else if (!plan.isFree && requiresPayment && amountDueCents > 0) {
+          if (subscription.stripeCustomerId) {
+            const paymentIntent =
+              await this.stripeSyncService.createPaymentIntent({
+                customerId: subscription.stripeCustomerId,
+                amountCents: amountDueCents,
+                currency: "eur",
+                createInvoice: true,
+                description: `Quantity update: ${previousQuantity} → ${newQuantity} classes`,
+                metadata: {
+                  subscriptionId: subscription.id,
+                  organizationId: subscription.organizationId,
+                  userId: subscription.userId,
+                  type: "quantity_update",
+                  previousQuantity: previousQuantity.toString(),
+                  newQuantity: newQuantity.toString(),
+                },
+              });
+
+            stripeClientSecret = paymentIntent.clientSecret;
           }
         }
-
-        subscription.updateQuantity(newQuantity, true);
       } else {
         effectiveDate = subscription.currentPeriodEnd!;
         prorationApplied = false;
@@ -296,10 +367,10 @@ export class UpdateSubscriptionQuantityUseCase
           const tiers =
             await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
               subscription.planId,
-              subscription.billingPeriod
+              subscription.billingPeriod,
             );
           const newTier = tiers.find(
-            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses,
           );
 
           if (!newTier?.stripePriceId) {
@@ -310,7 +381,7 @@ export class UpdateSubscriptionQuantityUseCase
                 tierId: newTier?.id,
                 planId: subscription.planId,
                 billingPeriod: subscription.billingPeriod,
-              }
+              },
             );
           }
 
@@ -320,7 +391,7 @@ export class UpdateSubscriptionQuantityUseCase
             newTier.stripePriceId,
             {
               prorationBehavior: "none",
-            }
+            },
           );
         }
 
@@ -332,8 +403,7 @@ export class UpdateSubscriptionQuantityUseCase
 
       const planName = plan.name === "super-izzzi" ? "Super Izzzi" : "Izzzi";
 
-      // Emit upgrade event if upgrade occurred and no payment is required
-      if (isUpgrade) {
+      if (isUpgrade && !requiresPayment) {
         const user = await this.userRepository.findById(subscription.userId);
         if (user) {
           this.eventStore.publish(
@@ -346,15 +416,10 @@ export class UpdateSubscriptionQuantityUseCase
               newQuantity,
               previousPriceCents,
               newPriceCents,
-            })
+            }),
           );
         }
       }
-
-      const displayQuantity =
-        savedSubscription.pendingQuantity !== null
-          ? savedSubscription.pendingQuantity
-          : savedSubscription.quantity;
 
       return {
         subscription: {
@@ -362,7 +427,10 @@ export class UpdateSubscriptionQuantityUseCase
           planId: savedSubscription.planId,
           planName,
           status: savedSubscription.status,
-          quantity: displayQuantity,
+          quantity:
+            savedSubscription.pendingQuantity !== null
+              ? savedSubscription.pendingQuantity
+              : savedSubscription.quantity,
           currentPeriodStart: savedSubscription.currentPeriodStart!,
           currentPeriodEnd: savedSubscription.currentPeriodEnd!,
         },
@@ -382,6 +450,17 @@ export class UpdateSubscriptionQuantityUseCase
     } catch (error) {
       this.handleError(error);
     }
+  }
+
+  private calculateMonthsRemaining(now: Date, periodEnd: Date): number {
+    let months = (periodEnd.getFullYear() - now.getFullYear()) * 12;
+    months += periodEnd.getMonth() - now.getMonth();
+
+    if (now.getDate() > periodEnd.getDate()) {
+      months -= 1;
+    }
+
+    return Math.max(1, months);
   }
 
   async withCompensation(): Promise<void> {}

@@ -1,5 +1,5 @@
-import { FileMetadata } from '../value-objects/file-metadata.vo';
-import { PresignedUrlEntity } from '../entities/presigned-url.entity';
+import { FileMetadata } from "../value-objects/file-metadata.vo";
+import { PresignedUrlEntity } from "../entities/presigned-url.entity";
 
 export interface IStorageService {
   generateUploadUrl(
@@ -8,7 +8,10 @@ export interface IStorageService {
     expiresIn: number,
   ): Promise<PresignedUrlEntity>;
 
-  generateDownloadUrl(fileKey: string, expiresIn: number): Promise<PresignedUrlEntity>;
+  generateDownloadUrl(
+    fileKey: string,
+    expiresIn: number,
+  ): Promise<PresignedUrlEntity>;
 
   fileExists(fileKey: string): Promise<boolean>;
 
@@ -17,4 +20,4 @@ export interface IStorageService {
   getPublicUrl(fileKey: string): string;
 }
 
-export const STORAGE_SERVICE = Symbol('STORAGE_SERVICE');
+export const STORAGE_SERVICE = Symbol("STORAGE_SERVICE");

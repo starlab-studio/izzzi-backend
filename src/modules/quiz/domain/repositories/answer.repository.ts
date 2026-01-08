@@ -6,4 +6,3 @@ export interface IAnswerRepository extends IRepository<AnswerEntity> {
   findByResponse(responseId: string): Promise<AnswerEntity[]>;
   findByQuiz(quizId: string): Promise<AnswerEntity[]>;
 }
-

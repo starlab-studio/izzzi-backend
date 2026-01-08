@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 
-import { IRefreshToken } from "../types";
+import { IRefreshToken, AuthIdentityName } from "../types";
 
 export class RefreshToken {
   private props: IRefreshToken;
@@ -13,8 +13,9 @@ export class RefreshToken {
     tokenHash: string,
     userId: string,
     expiresAt: Date,
+    provider?: AuthIdentityName,
     deviceInfo?: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): RefreshToken {
     const now = new Date();
 
@@ -22,6 +23,7 @@ export class RefreshToken {
       id: randomUUID(),
       tokenHash,
       userId,
+      provider,
       deviceInfo,
       ipAddress,
       isRevoked: false,
@@ -66,7 +68,27 @@ export class RefreshToken {
     if (!this.props.deviceInfo) {
       return true;
     }
-    return this.props.deviceInfo === deviceInfo;
+
+    if (!deviceInfo) {
+      return !this.props.deviceInfo;
+    }
+
+    const normalize = (ua: string): string => {
+      const browserMatch = ua.match(
+        /(Chrome|Firefox|Safari|Edge|Opera|MSIE|Trident)/i,
+      );
+      const browser = browserMatch ? browserMatch[1].toLowerCase() : "";
+
+      const osMatch = ua.match(/(Windows|Mac|Linux|Android|iOS|iPhone|iPad)/i);
+      const os = osMatch ? osMatch[1].toLowerCase() : "";
+
+      return `${browser}-${os}`;
+    };
+
+    const normalizedStored = normalize(this.props.deviceInfo);
+    const normalizedProvided = normalize(deviceInfo);
+
+    return normalizedStored === normalizedProvided;
   }
 
   isNearExpiration(hoursBeforeExpiration: number = 24): boolean {
@@ -92,6 +114,9 @@ export class RefreshToken {
   }
   get userId(): string {
     return this.props.userId;
+  }
+  get provider(): AuthIdentityName | undefined {
+    return this.props.provider;
   }
   get deviceInfo(): string | undefined {
     return this.props.deviceInfo;

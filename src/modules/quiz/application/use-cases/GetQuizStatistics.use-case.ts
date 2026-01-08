@@ -41,18 +41,18 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
     private readonly responseVisibilityService: ResponseVisibilityService,
     private readonly subscriptionFeatureService: SubscriptionFeatureService,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: GetQuizStatisticsInput
+    data: GetQuizStatisticsInput,
   ): Promise<GetQuizStatisticsOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       const quiz = await this.quizRepository.findById(data.quizId);
@@ -62,30 +62,30 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
 
       const subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          data.organizationId
+          data.organizationId,
         );
       const plan = subscription
         ? await this.subscriptionPlanRepository.findById(subscription.planId)
         : null;
 
       const allResponses = await this.responseRepository.findByQuiz(
-        data.quizId
+        data.quizId,
       );
 
       const responseEntities = allResponses.map((r) =>
-        ResponseEntity.reconstitute(r)
+        ResponseEntity.reconstitute(r),
       );
 
       const visibleResponses =
         this.responseVisibilityService.getVisibleResponses(
           responseEntities,
           subscription,
-          plan
+          plan,
         );
 
       const visibleResponseIds = new Set(visibleResponses.map((r) => r.id));
       const responses = allResponses.filter((r) =>
-        visibleResponseIds.has(r.id)
+        visibleResponseIds.has(r.id),
       );
 
       const allAnswers = await this.answerRepository.findByQuiz(data.quizId);
@@ -97,7 +97,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
       });
 
       const template = await this.quizTemplateRepository.findById(
-        quiz.templateId
+        quiz.templateId,
       );
       if (!template) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Template not found");
@@ -105,13 +105,13 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
 
       const maxVisibleResponses =
         await this.subscriptionFeatureService.getMaxVisibleResponses(
-          data.organizationId
+          data.organizationId,
         );
 
       const questionsStats: QuestionStatistics[] = template.questionsList.map(
         (question) => {
           const questionAnswers = visibleAnswers.filter(
-            (answer) => answer.questionId === question.id
+            (answer) => answer.questionId === question.id,
           );
 
           const stats: QuestionStatistics = {
@@ -136,7 +136,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
                   acc[val] = (acc[val] || 0) + 1;
                   return acc;
                 },
-                {} as Record<number, number>
+                {} as Record<number, number>,
               );
             }
           } else if (question.type === "radio") {
@@ -148,7 +148,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
                 acc[val] = (acc[val] || 0) + 1;
                 return acc;
               },
-              {} as Record<string, number>
+              {} as Record<string, number>,
             );
           } else if (question.type === "checkbox") {
             const checkboxValues = questionAnswers
@@ -159,7 +159,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
                 acc[val] = (acc[val] || 0) + 1;
                 return acc;
               },
-              {} as Record<string, number>
+              {} as Record<string, number>,
             );
           } else if (question.type === "textarea") {
             const textValues = questionAnswers
@@ -176,7 +176,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
           }
 
           return stats;
-        }
+        },
       );
 
       const temporalMap = new Map<
@@ -194,7 +194,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
         existing.count += 1;
 
         const responseAnswers = visibleAnswers.filter(
-          (a) => a.responseId === response.id
+          (a) => a.responseId === response.id,
         );
         const starsAnswer = responseAnswers.find((a) => {
           const q = template.questionsList.find((q) => q.id === a.questionId);
@@ -213,7 +213,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
       });
 
       const temporalEvolution: TemporalDataPoint[] = Array.from(
-        temporalMap.entries()
+        temporalMap.entries(),
       )
         .map(([date, data]) => ({
           date,
@@ -231,11 +231,11 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
         const activeAssignment = assignments.find((a) => a.isActive);
         if (activeAssignment) {
           const classEntity = await this.classRepository.findById(
-            activeAssignment.classId
+            activeAssignment.classId,
           );
           if (classEntity) {
             const organization = await this.organizationRepository.findById(
-              classEntity.organizationId
+              classEntity.organizationId,
             );
             if (organization) {
               subjectInfo = {
@@ -260,7 +260,7 @@ export class GetQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
         this.responseVisibilityService.calculateVisibilityStats(
           responseEntities,
           subscription,
-          plan
+          plan,
         );
 
       return {

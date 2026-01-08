@@ -34,3 +34,6 @@ export * from "./interfaces/guards/auth.guard";
 export * from "./interfaces/guards/role.guard";
 export * from "./interfaces/decorators/current-user.decorator";
 export * from "./interfaces/decorators/role.decorator";
+
+// Decorators
+export * from "./decorators/public.decorator";

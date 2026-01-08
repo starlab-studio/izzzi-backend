@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class CreateAiAndEmailLogTables1766015565000 implements MigrationInterface {
+export class CreateAiAndEmailLogTables1766015565000
+  implements MigrationInterface
+{
   name = "CreateAiAndEmailLogTables1766015565000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -62,12 +64,17 @@ export class CreateAiAndEmailLogTables1766015565000 implements MigrationInterfac
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_email_logs_recipient_user_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_email_logs_recipient_email"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_ai_analyses_subject_id"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_email_logs_recipient_user_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_email_logs_recipient_email"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_ai_analyses_subject_id"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_ai_analyses_quiz_id"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "email_logs"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "ai_analyses"`);
   }
 }
-

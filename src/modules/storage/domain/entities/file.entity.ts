@@ -1,4 +1,4 @@
-import { FileMetadata } from '../value-objects/file-metadata.vo';
+import { FileMetadata } from "../value-objects/file-metadata.vo";
 
 export class FileEntity {
   constructor(

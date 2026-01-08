@@ -66,4 +66,3 @@ export class ResponseEntity extends BaseEntity {
     return { ...this.props };
   }
 }
-

@@ -16,7 +16,7 @@ export class MembershipRepository
   constructor(
     @InjectRepository(MembershipModel)
     private readonly directRepository: Repository<MembershipModel>,
-    unitOfWork: IUnitOfWork
+    unitOfWork: IUnitOfWork,
   ) {
     super(unitOfWork);
   }
@@ -35,14 +35,14 @@ export class MembershipRepository
   }
 
   async findByOrganization(
-    organizationId: string
+    organizationId: string,
   ): Promise<MembershipEntity[]> {
     const ormEntities = await this.directRepository.findBy({ organizationId });
     return this.toEntities(ormEntities);
   }
 
   async findActiveByOrganization(
-    organizationId: string
+    organizationId: string,
   ): Promise<MembershipEntity[]> {
     const memberships = await this.directRepository.find({
       where: {
@@ -74,7 +74,7 @@ export class MembershipRepository
   }
 
   async findByUserIdWithOrganizations(
-    userId: string
+    userId: string,
   ): Promise<MembershipEntity[]> {
     const memberships = await this.directRepository.find({
       where: {
@@ -103,7 +103,7 @@ export class MembershipRepository
 
   async findByUserAndOrganization(
     userId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<MembershipEntity | null> {
     const ormEntity = await this.directRepository.findOne({
       where: { userId, organizationId },
@@ -156,7 +156,7 @@ export class MembershipRepository
   }
 
   private toEntityWithOrganization(
-    model: MembershipModel | null
+    model: MembershipModel | null,
   ): MembershipEntity | null {
     if (!model) return null;
 
@@ -177,7 +177,7 @@ export class MembershipRepository
   }
 
   private toEntitiesWithOrganizations(
-    models: MembershipModel[]
+    models: MembershipModel[],
   ): MembershipEntity[] {
     return models.map((model) => {
       return MembershipEntity.reconstitute({
@@ -212,7 +212,7 @@ export class MembershipRepository
   }
 
   private toEntityWithUser(
-    model: MembershipModel | null
+    model: MembershipModel | null,
   ): MembershipEntity | null {
     if (!model) return null;
 

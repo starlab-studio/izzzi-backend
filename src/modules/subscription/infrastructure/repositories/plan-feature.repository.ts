@@ -8,7 +8,7 @@ import { IPlanFeatureRepository } from "../../domain/repositories/plan-feature.r
 export class PlanFeatureRepository implements IPlanFeatureRepository {
   constructor(
     @InjectRepository(PlanFeatureModel)
-    private ormRepository: Repository<IPlanFeature>
+    private ormRepository: Repository<IPlanFeature>,
   ) {}
 
   async findByPlanId(planId: string): Promise<PlanFeatureEntity[]> {
@@ -17,7 +17,7 @@ export class PlanFeatureRepository implements IPlanFeatureRepository {
       order: { displayOrder: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      PlanFeatureEntity.reconstitute(ormEntity)
+      PlanFeatureEntity.reconstitute(ormEntity),
     );
   }
 
@@ -26,7 +26,7 @@ export class PlanFeatureRepository implements IPlanFeatureRepository {
       order: { displayOrder: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      PlanFeatureEntity.reconstitute(ormEntity)
+      PlanFeatureEntity.reconstitute(ormEntity),
     );
   }
 

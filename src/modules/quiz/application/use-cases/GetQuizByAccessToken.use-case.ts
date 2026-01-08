@@ -16,7 +16,10 @@ import { ISubjectAssignmentRepository } from "src/modules/subject/domain/reposit
 import { IClassRepository } from "src/modules/class/domain/repositories/class.repository";
 import { IOrganizationRepository } from "src/modules/organization/domain/repositories/organization.repository";
 
-export class GetQuizByAccessTokenUseCase extends BaseUseCase implements IUseCase {
+export class GetQuizByAccessTokenUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly quizRepository: IQuizRepository,
@@ -29,9 +32,13 @@ export class GetQuizByAccessTokenUseCase extends BaseUseCase implements IUseCase
     super(logger);
   }
 
-  async execute(data: GetQuizByAccessTokenInput): Promise<GetQuizByAccessTokenOutput> {
+  async execute(
+    data: GetQuizByAccessTokenInput,
+  ): Promise<GetQuizByAccessTokenOutput> {
     try {
-      const quiz = await this.quizRepository.findByAccessToken(data.accessToken);
+      const quiz = await this.quizRepository.findByAccessToken(
+        data.accessToken,
+      );
       if (!quiz) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Quiz not found");
       }
@@ -45,23 +52,37 @@ export class GetQuizByAccessTokenUseCase extends BaseUseCase implements IUseCase
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject not found");
       }
 
-      const assignments = await this.subjectAssignmentRepository.findBySubject(subject.id);
+      const assignments = await this.subjectAssignmentRepository.findBySubject(
+        subject.id,
+      );
       const activeAssignment = assignments.find((a) => a.isActive);
       if (!activeAssignment) {
-        throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject is not assigned to any class");
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "Subject is not assigned to any class",
+        );
       }
 
-      const classEntity = await this.classRepository.findById(activeAssignment.classId);
+      const classEntity = await this.classRepository.findById(
+        activeAssignment.classId,
+      );
       if (!classEntity) {
         throw new DomainError(ErrorCode.CLASS_NOT_FOUND, "Class not found");
       }
 
-      const organization = await this.organizationRepository.findById(classEntity.organizationId);
+      const organization = await this.organizationRepository.findById(
+        classEntity.organizationId,
+      );
       if (!organization) {
-        throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Organization not found");
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "Organization not found",
+        );
       }
 
-      const template = await this.quizTemplateRepository.findById(quiz.templateId);
+      const template = await this.quizTemplateRepository.findById(
+        quiz.templateId,
+      );
       if (!template) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Template not found");
       }
@@ -103,4 +124,3 @@ export class GetQuizByAccessTokenUseCase extends BaseUseCase implements IUseCase
 
   async withCompensation(): Promise<void> {}
 }
-

@@ -16,10 +16,10 @@ export class QuizModel implements IQuiz {
   @Column({ type: "enum", enum: ["during_course", "after_course"] })
   type: "during_course" | "after_course";
 
-  @Column({ 
-    type: "enum", 
-    enum: ["draft", "active", "closed"], 
-    default: "draft" 
+  @Column({
+    type: "enum",
+    enum: ["draft", "active", "closed"],
+    default: "draft",
   })
   status: "draft" | "active" | "closed";
 
@@ -47,4 +47,3 @@ export class QuizModel implements IQuiz {
   @Column({ name: "updated_at", type: "timestamp" })
   updatedAt: Date;
 }
-

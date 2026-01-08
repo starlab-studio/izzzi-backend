@@ -1,10 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AddNumberOfStudentsAndStudentEmailsToClass1764591932350 implements MigrationInterface {
+export class AddNumberOfStudentsAndStudentEmailsToClass1764591932350
+  implements MigrationInterface
+{
   name = "AddNumberOfStudentsAndStudentEmailsToClass1764591932350";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     const hasNumberOfStudents = (await queryRunner.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -33,7 +34,11 @@ export class AddNumberOfStudentsAndStudentEmailsToClass1764591932350 implements 
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "class" DROP COLUMN IF EXISTS "number_of_students"`);
-    await queryRunner.query(`ALTER TABLE "class" DROP COLUMN IF EXISTS "student_emails"`);
+    await queryRunner.query(
+      `ALTER TABLE "class" DROP COLUMN IF EXISTS "number_of_students"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "class" DROP COLUMN IF EXISTS "student_emails"`,
+    );
   }
 }

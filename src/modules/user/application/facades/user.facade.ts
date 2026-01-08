@@ -17,7 +17,7 @@ export class UserFacade {
     private readonly getProfileUseCase: GetProfileUseCase,
     private readonly updateProfileUseCase: UpdateProfileUseCase,
     private readonly deleteAccountUseCase: DeleteAccountUseCase,
-    private readonly updateAvatarUseCase: UpdateAvatarUseCase
+    private readonly updateAvatarUseCase: UpdateAvatarUseCase,
   ) {}
 
   async getProfile(data: GetProfileInput): Promise<GetProfileOutput> {
@@ -52,4 +52,3 @@ export class UserFacade {
     }
   }
 }
-

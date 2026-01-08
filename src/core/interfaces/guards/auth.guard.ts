@@ -7,16 +7,29 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Reflector } from "@nestjs/core";
+import { IS_PUBLIC_KEY } from "src/core/decorators/public.decorator";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    // Vérifier si la route est marquée comme publique
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
+      return true;
+    }
+
+    const request = context.switchToHttp().getRequest<Request>();
 
     const token = this.extractToken(request);
 
@@ -25,14 +38,14 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get("auth.jwt.secret"),
-      });
+      const payload = (await this.jwtService.verifyAsync(token, {
+        secret: this.configService.get<string>("auth.jwt.secret"),
+      })) as unknown;
 
-      request["user"] = payload;
+      (request as Request & { user?: unknown }).user = payload;
 
       return true;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException("Invalid or expired token");
     }
   }
@@ -57,6 +70,7 @@ export class AuthGuard implements CanActivate {
   }
 
   private extractTokenFromCookie(request: Request): string | undefined {
-    return request.cookies?.["access_token"];
+    const cookies = request.cookies as { access_token?: string } | undefined;
+    return cookies?.["access_token"];
   }
 }

@@ -24,7 +24,7 @@ export class SyncPlansWithStripeUseCase
     readonly logger: ILoggerService,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly pricingTierRepository: IPricingTierRepository,
-    private readonly stripeSyncService: IStripeSyncService
+    private readonly stripeSyncService: IStripeSyncService,
   ) {
     super(logger);
   }
@@ -60,7 +60,7 @@ export class SyncPlansWithStripeUseCase
 
           if (tiers.length === 0) {
             this.logger.warn(
-              `No pricing tiers found for plan ${plan.name} (${plan.id})`
+              `No pricing tiers found for plan ${plan.name} (${plan.id})`,
             );
             details.push({
               planId: plan.id,
@@ -74,7 +74,7 @@ export class SyncPlansWithStripeUseCase
           const tierToPriceIdMap =
             await this.stripeSyncService.syncPricingTiersToStripe(
               productId,
-              tiers
+              tiers,
             );
 
           let planTiersSynced = 0;
@@ -99,12 +99,12 @@ export class SyncPlansWithStripeUseCase
           });
 
           this.logger.info(
-            `Synced plan ${plan.name}: ${planTiersSynced} tiers synchronized`
+            `Synced plan ${plan.name}: ${planTiersSynced} tiers synchronized`,
           );
         } catch (error) {
           this.logger.error(
             `Failed to sync plan ${plan.name} (${plan.id}): ${error}`,
-            error instanceof Error ? error.stack || "" : ""
+            error instanceof Error ? error.stack || "" : "",
           );
           throw error;
         }

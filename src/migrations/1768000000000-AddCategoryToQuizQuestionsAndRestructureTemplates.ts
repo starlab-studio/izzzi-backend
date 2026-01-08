@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AddCategoryToQuizQuestionsAndRestructureTemplates1768000000000 implements MigrationInterface {
+export class AddCategoryToQuizQuestionsAndRestructureTemplates1768000000000
+  implements MigrationInterface
+{
   name = "AddCategoryToQuizQuestionsAndRestructureTemplates1768000000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -988,4 +990,3 @@ export class AddCategoryToQuizQuestionsAndRestructureTemplates1768000000000 impl
     `);
   }
 }
-

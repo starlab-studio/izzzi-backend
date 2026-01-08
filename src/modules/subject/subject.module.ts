@@ -10,7 +10,6 @@ import {
   IUnitOfWork,
 } from "src/core";
 import { CoreModule } from "src/core/core.module";
-import { NotificationModule } from "../notification/notification.module";
 import { OrganizationModule } from "src/modules/organization/organization.module";
 
 import { SubjectModel } from "./infrastructure/models/subject.model";
@@ -32,9 +31,6 @@ import { ClassModule } from "../class/class.module";
 import { IClassRepository } from "../class/domain/repositories/class.repository";
 import { ISubjectAssignmentRepository } from "./domain/repositories/subject-assignment.repository";
 import { OrganizationFacade } from "../organization/application/facades/organization.facade";
-import { SubjectCreatedEventHandler } from "./application/handlers/subject-created.handler";
-import { EventHandlerRegistry } from "src/core";
-import { CreateEmailNotificationUseCase } from "src/modules/notification/application/use-cases/create-email-notification.use-case";
 import { QuizModule } from "../quiz/quiz.module";
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { IQuizRepository } from "../quiz/domain/repositories/quiz.repository";
@@ -54,7 +50,6 @@ import { SUBSCRIPTION_PLAN_REPOSITORY } from "../subscription/domain/repositorie
       MembershipModel,
     ]),
     forwardRef(() => CoreModule),
-    NotificationModule,
     forwardRef(() => OrganizationModule),
     forwardRef(() => ClassModule),
     forwardRef(() => QuizModule),
@@ -227,15 +222,6 @@ import { SUBSCRIPTION_PLAN_REPOSITORY } from "../subscription/domain/repositorie
         BulkCreateSubjectsUseCase,
       ],
     },
-    {
-      provide: SubjectCreatedEventHandler,
-      useFactory: (
-        logger: ILoggerService,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase
-      ) =>
-        new SubjectCreatedEventHandler(logger, createEmailNotificationUseCase),
-      inject: [LoggerService, CreateEmailNotificationUseCase],
-    },
   ],
   exports: [
     SubjectFacade,
@@ -246,15 +232,5 @@ import { SUBSCRIPTION_PLAN_REPOSITORY } from "../subscription/domain/repositorie
   ],
 })
 export class SubjectModule {
-  constructor(
-    private readonly eventHandlerRegistry: EventHandlerRegistry,
-    private readonly subjectCreatedEventHandler: SubjectCreatedEventHandler
-  ) {}
-
-  async onModuleInit() {
-    this.eventHandlerRegistry.registerHandler(
-      "subject.created",
-      this.subjectCreatedEventHandler
-    );
-  }
+  constructor() {}
 }

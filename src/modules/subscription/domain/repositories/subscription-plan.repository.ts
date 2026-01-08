@@ -9,5 +9,5 @@ export interface ISubscriptionPlanRepository
 }
 
 export const SUBSCRIPTION_PLAN_REPOSITORY = Symbol(
-  "ISubscriptionPlanRepository"
+  "ISubscriptionPlanRepository",
 );

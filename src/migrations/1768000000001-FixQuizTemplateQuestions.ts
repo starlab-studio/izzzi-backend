@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class FixQuizTemplateQuestions1768000000001 implements MigrationInterface {
+export class FixQuizTemplateQuestions1768000000001
+  implements MigrationInterface
+{
   name = "FixQuizTemplateQuestions1768000000001";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -954,9 +956,8 @@ export class FixQuizTemplateQuestions1768000000001 implements MigrationInterface
     `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
+  public async down(): Promise<void> {
     // This migration only fixes data, so down would just delete and recreate the same way
     // For simplicity, we'll leave it empty as the previous migration handles the structure
   }
 }
-

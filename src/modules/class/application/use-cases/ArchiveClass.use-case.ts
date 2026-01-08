@@ -2,7 +2,6 @@ import {
   IUseCase,
   BaseUseCase,
   ILoggerService,
-  ApplicationError,
   ErrorCode,
   UserRole,
   DomainError,
@@ -18,7 +17,7 @@ export class ArchiveClassUseCase extends BaseUseCase implements IUseCase {
     readonly logger: ILoggerService,
     private readonly classRepository: IClassRepository,
     private readonly organizationFacade: OrganizationFacade,
-    private readonly eventStore: IEventStore,
+    private readonly eventStore: IEventStore
   ) {
     super(logger);
   }
@@ -28,29 +27,26 @@ export class ArchiveClassUseCase extends BaseUseCase implements IUseCase {
       await this.organizationFacade.validateUserCanCreateClass(
         data.userId,
         data.organizationId,
-        [UserRole.LEARNING_MANAGER, UserRole.ADMIN],
+        [UserRole.LEARNING_MANAGER, UserRole.ADMIN]
       );
 
       const classEntity = await this.classRepository.findById(data.classId);
 
       if (!classEntity) {
-        throw new DomainError(
-          ErrorCode.CLASS_NOT_FOUND,
-          "Class not found",
-        );
+        throw new DomainError(ErrorCode.CLASS_NOT_FOUND, "Class not found");
       }
 
       if (classEntity.organizationId !== data.organizationId) {
         throw new DomainError(
           ErrorCode.UNAUTHORIZED_ROLE,
-          "Class does not belong to this organization",
+          "Class does not belong to this organization"
         );
       }
 
       if (classEntity.status === "archived") {
         throw new DomainError(
           ErrorCode.CLASS_ALREADY_ARCHIVED,
-          "Class is already archived",
+          "Class is already archived"
         );
       }
 
@@ -67,7 +63,7 @@ export class ArchiveClassUseCase extends BaseUseCase implements IUseCase {
           organizationId: archivedClass.organizationId,
           userId: archivedClass.userId,
           userEmail: data.userEmail,
-        }),
+        })
       );
 
       return archivedClass.toPersistence();
@@ -78,4 +74,3 @@ export class ArchiveClassUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

@@ -45,6 +45,11 @@ import {
   GetBillingPortalLinkInput,
   GetBillingPortalLinkOutput,
 } from "../use-cases/GetBillingPortalLink.use-case";
+import {
+  CheckBillingAccessUseCase,
+  CheckBillingAccessInput,
+  CheckBillingAccessOutput,
+} from "../use-cases/CheckBillingAccess.use-case";
 
 export class SubscriptionFacade {
   constructor(
@@ -57,7 +62,8 @@ export class SubscriptionFacade {
     private readonly getSubscriptionUseCase: GetSubscriptionUseCase,
     private readonly syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase,
     private readonly getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase,
-    private readonly getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase
+    private readonly getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase,
+    private readonly checkBillingAccessUseCase: CheckBillingAccessUseCase,
   ) {}
 
   async getPricingPlans(): Promise<PricingPlanResponse[]> {
@@ -70,7 +76,7 @@ export class SubscriptionFacade {
 
   async getPricingTiers(
     planId: string,
-    billingPeriod: "monthly" | "annual"
+    billingPeriod: "monthly" | "annual",
   ): Promise<PricingTierResponse[]> {
     try {
       return await this.getPricingTiersUseCase.execute({
@@ -83,7 +89,7 @@ export class SubscriptionFacade {
   }
 
   async calculatePrice(
-    input: CalculatePriceInput
+    input: CalculatePriceInput,
   ): Promise<CalculatePriceOutput> {
     try {
       return await this.calculateSubscriptionPriceUseCase.execute(input);
@@ -93,7 +99,7 @@ export class SubscriptionFacade {
   }
 
   async createSubscription(
-    input: CreateSubscriptionInput
+    input: CreateSubscriptionInput,
   ): Promise<CreateSubscriptionOutput> {
     try {
       return await this.createSubscriptionUseCase.execute(input);
@@ -103,7 +109,7 @@ export class SubscriptionFacade {
   }
 
   async updateQuantity(
-    input: UpdateQuantityInput
+    input: UpdateQuantityInput,
   ): Promise<UpdateQuantityOutput> {
     try {
       return await this.updateSubscriptionQuantityUseCase.execute(input);
@@ -113,7 +119,7 @@ export class SubscriptionFacade {
   }
 
   async cancelSubscription(
-    input: CancelSubscriptionInput
+    input: CancelSubscriptionInput,
   ): Promise<CancelSubscriptionOutput> {
     try {
       return await this.cancelSubscriptionUseCase.execute(input);
@@ -123,7 +129,7 @@ export class SubscriptionFacade {
   }
 
   async getSubscription(
-    input: GetSubscriptionInput
+    input: GetSubscriptionInput,
   ): Promise<SubscriptionDetailOutput | null> {
     try {
       return await this.getSubscriptionUseCase.execute(input);
@@ -141,7 +147,7 @@ export class SubscriptionFacade {
   }
 
   async getPaymentConfirmation(
-    input: GetPaymentConfirmationInput
+    input: GetPaymentConfirmationInput,
   ): Promise<GetPaymentConfirmationOutput> {
     try {
       return await this.getPaymentConfirmationUseCase.execute(input);
@@ -151,10 +157,20 @@ export class SubscriptionFacade {
   }
 
   async getBillingPortalLink(
-    input: GetBillingPortalLinkInput
+    input: GetBillingPortalLinkInput,
   ): Promise<GetBillingPortalLinkOutput> {
     try {
       return await this.getBillingPortalLinkUseCase.execute(input);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async checkBillingAccess(
+    input: CheckBillingAccessInput,
+  ): Promise<CheckBillingAccessOutput> {
+    try {
+      return await this.checkBillingAccessUseCase.execute(input);
     } catch (error) {
       throw error;
     }

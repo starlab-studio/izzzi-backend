@@ -32,4 +32,3 @@ export class ResponseModel implements IResponse {
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

@@ -6,7 +6,6 @@ import {
   ErrorCode,
 } from "src/core";
 import {
-  ISubject,
   GetSubjectsByClassInput,
   GetSubjectsByClassOutput,
   ClassSubjectDetailsResponse,
@@ -138,16 +137,16 @@ export class GetSubjectsByClassUseCase extends BaseUseCase implements IUseCase {
                 quizData.type === "during_course"
                   ? "Pendant le cours"
                   : "Fin du cours";
-              const icon =
+              const icon: "clock" | "check" =
                 quizData.type === "during_course" ? "clock" : "check";
+              const type: "during" | "end" =
+                quizData.type === "during_course" ? "during" : "end";
 
               return {
                 id: quiz.id,
-                type: (quizData.type === "during_course" ? "during" : "end") as
-                  | "during"
-                  | "end",
+                type,
                 label: typeLabel,
-                icon: icon as "clock" | "check",
+                icon,
                 formLink: quizData.publicUrl || "",
                 qrCodeUrl: quizData.qrCodeUrl || undefined,
                 feedbackStats: {

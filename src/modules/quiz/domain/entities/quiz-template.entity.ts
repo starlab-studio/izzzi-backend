@@ -87,4 +87,3 @@ export class QuizTemplateEntity extends BaseEntity {
     return { ...this.props };
   }
 }
-

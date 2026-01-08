@@ -17,7 +17,7 @@ export class PricingTierEntity {
       | "maxClasses"
       | "pricePerClassCents"
       | "stripePriceId"
-    >
+    >,
   ): PricingTierEntity {
     return new PricingTierEntity({
       id: randomUUID(),

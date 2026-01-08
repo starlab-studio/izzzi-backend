@@ -104,4 +104,3 @@ export class StudentQuizTokenEntity extends BaseEntity {
     return new StudentQuizTokenEntity(data);
   }
 }
-

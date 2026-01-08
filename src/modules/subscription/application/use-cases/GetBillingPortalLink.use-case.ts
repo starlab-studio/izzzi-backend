@@ -22,26 +22,26 @@ export class GetBillingPortalLinkUseCase
     logger: ILoggerService,
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly stripeSyncService: IStripeSyncService,
-    private readonly organizationAuthorizationService: OrganizationAuthorizationService
+    private readonly organizationAuthorizationService: OrganizationAuthorizationService,
   ) {
     super(logger);
   }
 
   async execute(
-    input: GetBillingPortalLinkInput
+    input: GetBillingPortalLinkInput,
   ): Promise<GetBillingPortalLinkOutput> {
     const { organizationId, userId, returnUrl } = input;
 
     try {
       let subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          organizationId
+          organizationId,
         );
 
       if (!subscription) {
         subscription =
           await this.subscriptionRepository.findByOrganizationId(
-            organizationId
+            organizationId,
           );
       }
 
@@ -49,20 +49,20 @@ export class GetBillingPortalLinkUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
           "No subscription found for this organization",
-          { organizationId }
+          { organizationId },
         );
       }
 
       await this.organizationAuthorizationService.assertCanAccess(
         userId,
-        organizationId
+        organizationId,
       );
 
       if (!subscription.stripeCustomerId) {
         throw new DomainError(
           "STRIPE_CUSTOMER_ID_MISSING",
           "Subscription does not have an associated Stripe customer",
-          { subscriptionId: subscription.id }
+          { subscriptionId: subscription.id },
         );
       }
 
@@ -72,7 +72,7 @@ export class GetBillingPortalLinkUseCase
           returnUrl:
             returnUrl ||
             `${process.env.FRONTEND_DOMAIN_URL || "http://localhost:3001"}/profile/admin`,
-        }
+        },
       );
 
       return {

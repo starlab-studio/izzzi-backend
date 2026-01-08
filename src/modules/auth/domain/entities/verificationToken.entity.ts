@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes } from "crypto";
+import { randomUUID } from "crypto";
 
 import { DomainError, ErrorCode } from "src/core";
 import { IVerificationToken, VerificationTokenType } from "../types";
@@ -14,7 +14,7 @@ export class VerificationTokenEntity {
 
   static create(
     email: string,
-    type: VerificationTokenType
+    type: VerificationTokenType,
   ): VerificationTokenEntity {
     const now = new Date();
 

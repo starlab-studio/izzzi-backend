@@ -46,6 +46,7 @@ export enum AuthIdentityName {
   AWS_COGNITO = "AWS_COGNITO",
   SUPABASE = "SUPABASE",
   FIREBASE = "FIREBASE",
+  GOOGLE = "GOOGLE",
 }
 
 export type IAuthIdentityCreate = SignUpResponse;
@@ -139,6 +140,7 @@ export interface IRefreshToken {
   readonly id: string;
   readonly tokenHash: string;
   readonly userId: string;
+  readonly provider?: AuthIdentityName;
   readonly deviceInfo?: string;
   readonly ipAddress?: string;
   readonly isRevoked: boolean;
@@ -191,3 +193,35 @@ export type ResetPasswordData = {
   token: string;
   newPassword: string;
 };
+
+export interface GoogleUserInfo {
+  id: string;
+  email: string;
+  name: string;
+  given_name?: string;
+  family_name?: string;
+  picture?: string;
+  verified_email: boolean;
+}
+
+export interface GoogleAuthResult {
+  type: "login" | "pending_registration";
+  accessToken?: string;
+  refreshToken?: string;
+  pendingToken?: string;
+  userInfo?: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    picture?: string;
+  };
+}
+
+export interface PendingTokenPayload {
+  type: "google_pending_registration";
+  googleId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  picture?: string;
+}

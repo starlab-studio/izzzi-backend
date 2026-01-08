@@ -6,7 +6,7 @@ export interface IVerificationTokenRepository {
 
   findByEmailAndType(
     email: string,
-    type: VerificationTokenType
+    type: VerificationTokenType,
   ): Promise<VerificationTokenEntity | null>;
 
   findByToken(token: string): Promise<VerificationTokenEntity | null>;
@@ -17,6 +17,6 @@ export interface IVerificationTokenRepository {
 
   deleteByEmailAndType(
     email: string,
-    type: VerificationTokenType
+    type: VerificationTokenType,
   ): Promise<void>;
 }

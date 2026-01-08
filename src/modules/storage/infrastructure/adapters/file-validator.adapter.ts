@@ -1,12 +1,17 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { IFileValidator } from '../../domain/interfaces/file-validator.interface';
-import { FileMetadata } from '../../domain/value-objects/file-metadata.vo';
-import { FileType, MimeType } from '../../domain/value-objects/file-type.vo';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { IFileValidator } from "../../domain/interfaces/file-validator.interface";
+import { FileMetadata } from "../../domain/value-objects/file-metadata.vo";
+import { FileType, MimeType } from "../../domain/value-objects/file-type.vo";
 
 @Injectable()
 export class FileValidatorAdapter implements IFileValidator {
   private readonly allowedMimeTypesMap: Record<FileType, MimeType[]> = {
-    [FileType.IMAGE]: [MimeType.JPEG, MimeType.PNG, MimeType.GIF, MimeType.WEBP],
+    [FileType.IMAGE]: [
+      MimeType.JPEG,
+      MimeType.PNG,
+      MimeType.GIF,
+      MimeType.WEBP,
+    ],
     [FileType.AVATAR]: [MimeType.JPEG, MimeType.PNG, MimeType.WEBP],
     [FileType.DOCUMENT]: [MimeType.PDF, MimeType.DOC, MimeType.DOCX],
     [FileType.VIDEO]: [MimeType.MP4, MimeType.WEBM, MimeType.MOV],
@@ -29,7 +34,7 @@ export class FileValidatorAdapter implements IFileValidator {
 
     if (!allowedMimeTypes.includes(metadata.mimeType)) {
       throw new BadRequestException(
-        `MIME type not allowed for ${metadata.fileType}. Allowed types: ${allowedMimeTypes.join(', ')}`,
+        `MIME type not allowed for ${metadata.fileType}. Allowed types: ${allowedMimeTypes.join(", ")}`,
       );
     }
   }
@@ -45,12 +50,12 @@ export class FileValidatorAdapter implements IFileValidator {
   }
 
   private formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
 
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   }
 }

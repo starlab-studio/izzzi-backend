@@ -15,7 +15,12 @@ export class QuizTemplateModel implements IQuizTemplate {
   @Column({ type: "text", nullable: true })
   description: string | null;
 
-  @Column({ name: "preview_image_url", type: "varchar", length: 500, nullable: true })
+  @Column({
+    name: "preview_image_url",
+    type: "varchar",
+    length: 500,
+    nullable: true,
+  })
   previewImageUrl: string | null;
 
   @Column({ name: "is_active", type: "boolean", default: true })
@@ -30,4 +35,3 @@ export class QuizTemplateModel implements IQuizTemplate {
   @Column({ name: "updated_at", type: "timestamp" })
   updatedAt: Date;
 }
-

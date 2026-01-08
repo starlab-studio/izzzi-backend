@@ -25,7 +25,7 @@ export class StripeWebhookController extends BaseController {
   constructor(
     @Inject(STRIPE_SYNC_SERVICE)
     private readonly stripeSyncService: IStripeSyncService,
-    private readonly handleStripeWebhookUseCase: HandleStripeWebhookUseCase
+    private readonly handleStripeWebhookUseCase: HandleStripeWebhookUseCase,
   ) {
     super();
   }
@@ -65,11 +65,11 @@ export class StripeWebhookController extends BaseController {
 
       const stripeEvent = this.stripeSyncService.constructWebhookEvent(
         rawBody,
-        signature
-      );
+        signature,
+      ) as Stripe.Event;
 
       this.logger.log(
-        `Received Stripe event: ${stripeEvent.type} (id: ${stripeEvent.id})`
+        `Received Stripe event: ${stripeEvent.type} (id: ${stripeEvent.id})`,
       );
 
       const domainEvent = WebhookEventMapper.toDomainEvent(stripeEvent);
@@ -79,7 +79,7 @@ export class StripeWebhookController extends BaseController {
       return res.status(HttpStatus.OK).json({ received: true });
     } catch (error) {
       this.logger.error(
-        `Webhook error: ${error instanceof Error ? error.message : String(error)}`
+        `Webhook error: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       if (error instanceof Stripe.errors.StripeSignatureVerificationError) {

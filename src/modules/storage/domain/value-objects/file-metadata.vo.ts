@@ -1,4 +1,4 @@
-import { FileType, MimeType } from './file-type.vo';
+import { FileType, MimeType } from "./file-type.vo";
 
 export class FileMetadata {
   constructor(
@@ -13,23 +13,23 @@ export class FileMetadata {
 
   private validate(): void {
     if (!this.fileName || this.fileName.trim().length === 0) {
-      throw new Error('File name cannot be empty');
+      throw new Error("File name cannot be empty");
     }
 
     if (this.fileSize <= 0) {
-      throw new Error('File size must be greater than 0');
+      throw new Error("File size must be greater than 0");
     }
 
     if (this.fileSize > 100 * 1024 * 1024) {
-      throw new Error('File size cannot exceed 100MB');
+      throw new Error("File size cannot exceed 100MB");
     }
   }
 
   getSanitizedFileName(): string {
     return this.fileName
       .toLowerCase()
-      .replace(/[^a-z0-9.-]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
+      .replace(/[^a-z0-9.-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
   }
 }

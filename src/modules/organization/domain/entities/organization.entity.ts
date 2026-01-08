@@ -1,4 +1,3 @@
-import { DomainError, ErrorCode } from "src/core";
 import { GeneralUtils } from "src/utils/general.utils";
 import { IOrganization, IOrganizationCreate } from "../types";
 import { randomUUID } from "crypto";

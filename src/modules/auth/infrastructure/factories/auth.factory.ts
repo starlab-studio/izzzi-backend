@@ -11,7 +11,7 @@ export class AuthIdentityFactory {
   private readonly strategies: Map<AuthIdentityName, IAuthStrategy>;
   constructor(@Inject(AUTH_STRATEGY_TOKEN) strategies: IAuthStrategy[]) {
     this.strategies = new Map(
-      strategies.map((strategy) => [strategy.name, strategy])
+      strategies.map((strategy) => [strategy.name, strategy]),
     );
   }
 
@@ -21,7 +21,7 @@ export class AuthIdentityFactory {
     if (!strategy) {
       throw new ApplicationError(
         ErrorCode.INVALID_AUTH_POVIDER,
-        `Invalid authentication provider: ${identity}`
+        `Invalid authentication provider: ${identity}`,
       );
     }
 

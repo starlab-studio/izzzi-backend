@@ -74,7 +74,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       verificationTokenEntity
     );
 
-    const { password, ...userData } = data;
+    const { password: _password, ...userData } = data;
     return {
       ...userData,
       authIdentityId: ormAuthIdentity.id,
@@ -153,7 +153,13 @@ export class CustomAuthAdapter implements IAuthStrategy {
       );
     }
 
-    if (!userDetails.memberships || userDetails.memberships.length === 0) {
+    // Super admins don't need organization memberships
+    const isSuperAdmin = userDetails.role === "SUPER_ADMIN";
+
+    if (
+      !isSuperAdmin &&
+      (!userDetails.memberships || userDetails.memberships.length === 0)
+    ) {
       throw new DomainError(
         ErrorCode.NO_MEMBERSHIPS_FOUND,
         "This account has no active organization memberships. Please contact support."
@@ -164,7 +170,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       sub: authIdentityEntity.providerUserId,
       userId: authIdentityEntity.userId || userDetails.id,
       username: userDetails.email,
-      roles: userDetails.memberships,
+      roles: isSuperAdmin ? [] : userDetails.memberships,
     };
 
     const accessToken = await this.jwtService.signAsync<JWTPayload>(payload, {
@@ -189,6 +195,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       refreshTokenHash,
       authIdentityEntity.userId || userDetails.id,
       expiresAt,
+      AuthIdentityName.CUSTOM,
       data.deviceInfo,
       data.ipAddress
     );
@@ -477,7 +484,13 @@ export class CustomAuthAdapter implements IAuthStrategy {
       );
     }
 
-    if (!userDetails.memberships || userDetails.memberships.length === 0) {
+    // Super admins don't need organization memberships
+    const isSuperAdmin = userDetails.role === "SUPER_ADMIN";
+
+    if (
+      !isSuperAdmin &&
+      (!userDetails.memberships || userDetails.memberships.length === 0)
+    ) {
       refreshTokenEntity.revoke();
       await this.refreshTokenRepository.save(refreshTokenEntity);
       throw new DomainError(
@@ -490,7 +503,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       sub: userDetails.id,
       userId: refreshTokenEntity.userId,
       username: userDetails.email,
-      roles: userDetails.memberships,
+      roles: isSuperAdmin ? [] : userDetails.memberships,
     };
 
     const accessToken = await this.jwtService.signAsync<JWTPayload>(payload, {
@@ -517,6 +530,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       newRefreshTokenHash,
       refreshTokenEntity.userId,
       expiresAt,
+      AuthIdentityName.CUSTOM,
       data.deviceInfo || refreshTokenEntity.deviceInfo,
       data.ipAddress || refreshTokenEntity.ipAddress
     );
@@ -529,11 +543,14 @@ export class CustomAuthAdapter implements IAuthStrategy {
   async generateAccessTokenForUser(userId: string): Promise<string> {
     const userDetails = await this.organizationFacade.getUserProfile(userId);
 
+    // Super admins don't need organization memberships
+    const isSuperAdmin = userDetails.role === "SUPER_ADMIN";
+
     const payload: JWTPayload = {
       sub: userDetails.id,
       userId: userDetails.id,
       username: userDetails.email,
-      roles: userDetails.memberships,
+      roles: isSuperAdmin ? [] : userDetails.memberships,
     };
 
     const accessToken = await this.jwtService.signAsync<JWTPayload>(payload, {

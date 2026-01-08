@@ -19,7 +19,10 @@ import { IStudentQuizTokenRepository } from "../../domain/repositories/student-q
 import { ISubjectAssignmentRepository } from "src/modules/subject/domain/repositories/subject-assignment.repository";
 import { IClassStudentRepository } from "src/modules/class/domain/repositories/class-student.repository";
 
-export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase {
+export class GetQuizzesBySubjectUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly quizRepository: IQuizRepository,
@@ -33,7 +36,9 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
     super(logger);
   }
 
-  async execute(data: GetQuizzesBySubjectInput): Promise<GetQuizzesBySubjectOutput> {
+  async execute(
+    data: GetQuizzesBySubjectInput,
+  ): Promise<GetQuizzesBySubjectOutput> {
     try {
       // Validate user belongs to organization
       await this.organizationFacade.validateUserBelongsToOrganization(
@@ -41,47 +46,66 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
         data.organizationId,
       );
 
-      const subjectEntity = await this.subjectRepository.findById(data.subjectId);
+      const subjectEntity = await this.subjectRepository.findById(
+        data.subjectId,
+      );
       if (!subjectEntity) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject not found");
       }
 
       if (subjectEntity.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to subject");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to subject",
+        );
       }
 
       const quizzes = await this.quizRepository.findBySubject(data.subjectId);
 
       const templateIds = quizzes.map((q) => q.templateId);
-      const templates = await this.quizTemplateRepository.findByIds(templateIds);
+      const templates =
+        await this.quizTemplateRepository.findByIds(templateIds);
       const templateMap = new Map(templates.map((t) => [t.id, t]));
 
-      const assignments = await this.subjectAssignmentRepository.findBySubject(data.subjectId);
+      const assignments = await this.subjectAssignmentRepository.findBySubject(
+        data.subjectId,
+      );
       const activeAssignment = assignments.find((a) => a.isActive);
       const students = activeAssignment
-        ? await this.classStudentRepository.findByClassAndActive(activeAssignment.classId, true)
+        ? await this.classStudentRepository.findByClassAndActive(
+            activeAssignment.classId,
+            true,
+          )
         : [];
       const totalStudents = students.length;
 
       const quizzesResponse: QuizResponse[] = await Promise.all(
         quizzes.map(async (quiz) => {
           const template = templateMap.get(quiz.templateId);
-          
+
           let qrCodeUrl = quiz.qrCodeUrl;
           if (!qrCodeUrl && quiz.publicUrl) {
-            qrCodeUrl = await QRCodeService.generateQRCodeDataURL(quiz.publicUrl);
-            
+            qrCodeUrl = await QRCodeService.generateQRCodeDataURL(
+              quiz.publicUrl,
+            );
+
             quiz.updateUrls(quiz.publicUrl, qrCodeUrl);
             await this.quizRepository.save(quiz);
           }
-          
-          const tokens = await this.studentQuizTokenRepository.findByQuiz(quiz.id);
-          const hasBeenSent = tokens.some((token) => token.emailSentAt !== null);
-          
+
+          const tokens = await this.studentQuizTokenRepository.findByQuiz(
+            quiz.id,
+          );
+          const hasBeenSent = tokens.some(
+            (token) => token.emailSentAt !== null,
+          );
+
           const tokenStudentIds = new Set(tokens.map((t) => t.classStudentId));
-          const newStudentsCount = students.filter((s) => !tokenStudentIds.has(s.id)).length;
+          const newStudentsCount = students.filter(
+            (s) => !tokenStudentIds.has(s.id),
+          ).length;
           const toRemindCount = tokens.filter((t) => !t.hasResponded).length;
-          
+
           return {
             id: quiz.id,
             type: quiz.type,
@@ -99,7 +123,7 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
               name: template?.name || "Unknown Template",
             },
           };
-        })
+        }),
       );
 
       return { quizzes: quizzesResponse };
@@ -110,4 +134,3 @@ export class GetQuizzesBySubjectUseCase extends BaseUseCase implements IUseCase 
 
   async withCompensation(): Promise<void> {}
 }
-

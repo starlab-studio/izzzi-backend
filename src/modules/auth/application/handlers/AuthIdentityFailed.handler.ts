@@ -7,7 +7,7 @@ export class AuthIdentityFailedHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
     readonly eventStore: IEventStore,
-    readonly signUpUseCase: SignUpUseCase
+    readonly signUpUseCase: SignUpUseCase,
   ) {
     super(logger);
   }
@@ -20,7 +20,10 @@ export class AuthIdentityFailedHandler extends BaseEventHandler {
         username: event.payload.username,
       });
     } catch (error) {
-      this.logEventHandlingError(event, error);
+      this.logEventHandlingError(
+        event,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   }
 

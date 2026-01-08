@@ -20,7 +20,10 @@ import { GeneralUtils } from "src/utils/general.utils";
 import { StudentQuizTokenEntity } from "../../domain/entities/student-quiz-token.entity";
 import { randomBytes } from "crypto";
 
-export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase {
+export class RemindQuizToStudentsUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly quizRepository: IQuizRepository,
@@ -34,7 +37,9 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
     super(logger);
   }
 
-  async execute(data: RemindQuizToStudentsInput): Promise<RemindQuizToStudentsOutput> {
+  async execute(
+    data: RemindQuizToStudentsInput,
+  ): Promise<RemindQuizToStudentsOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
@@ -52,16 +57,26 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
       }
 
       if (subject.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to quiz");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to quiz",
+        );
       }
 
-      const assignments = await this.subjectAssignmentRepository.findBySubject(subject.id);
+      const assignments = await this.subjectAssignmentRepository.findBySubject(
+        subject.id,
+      );
       const activeAssignment = assignments.find((a) => a.isActive);
       if (!activeAssignment) {
-        throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject is not assigned to any class");
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "Subject is not assigned to any class",
+        );
       }
 
-      const allTokens = await this.studentQuizTokenRepository.findByQuiz(data.quizId);
+      const allTokens = await this.studentQuizTokenRepository.findByQuiz(
+        data.quizId,
+      );
       const students = await this.classStudentRepository.findByClassAndActive(
         activeAssignment.classId,
         true,
@@ -76,7 +91,8 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
           remindedCount: 0,
           newStudentsSentCount: 0,
           alreadyRespondedCount: 0,
-          message: "Aucun étudiant n'a encore reçu ce questionnaire. Veuillez d'abord l'envoyer aux étudiants.",
+          message:
+            "Aucun étudiant n'a encore reçu ce questionnaire. Veuillez d'abord l'envoyer aux étudiants.",
         };
       }
 
@@ -111,24 +127,30 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
 
         if (studentUrl) {
           try {
-            const quizTypeLabel = quiz.type === "during_course" 
-              ? "Pendant le cours" 
-              : "Fin du cours";
-            
+            const quizTypeLabel =
+              quiz.type === "during_course"
+                ? "Pendant le cours"
+                : "Fin du cours";
+
             const template = GeneralUtils.htmlTemplateReader("quiz-send.html", {
               subjectName: subject.name,
               quizUrl: studentUrl,
               quizType: quizTypeLabel,
             });
-            
+
             await this.createEmailNotificationUseCase.execute({
               target: student.email,
               subject: `Questionnaire de retour - ${subject.name}`,
               template,
             });
             newStudentsSentCount++;
-          } catch (error) {
-            this.logger.error(`Failed to send email to new student ${student.email}:`, error);
+          } catch (error: unknown) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            this.logger.error(
+              `Failed to send email to new student ${student.email}:`,
+              errorMessage,
+            );
           }
         }
       }
@@ -146,29 +168,40 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
 
         if (studentUrl) {
           try {
-            const quizTypeLabel = quiz.type === "during_course" 
-              ? "Pendant le cours" 
-              : "Fin du cours";
-            
-            const template = GeneralUtils.htmlTemplateReader("quiz-remind.html", {
-              subjectName: subject.name,
-              quizUrl: studentUrl,
-              quizType: quizTypeLabel,
-            });
-            
+            const quizTypeLabel =
+              quiz.type === "during_course"
+                ? "Pendant le cours"
+                : "Fin du cours";
+
+            const template = GeneralUtils.htmlTemplateReader(
+              "quiz-remind.html",
+              {
+                subjectName: subject.name,
+                quizUrl: studentUrl,
+                quizType: quizTypeLabel,
+              },
+            );
+
             await this.createEmailNotificationUseCase.execute({
               target: student.email,
               subject: `Rappel - Questionnaire de retour - ${subject.name}`,
               template,
             });
             remindedCount++;
-          } catch (error) {
-            this.logger.error(`Failed to send reminder to ${student.email}:`, error);
+          } catch (error: unknown) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            this.logger.error(
+              `Failed to send reminder to ${student.email}:`,
+              errorMessage,
+            );
           }
         }
       }
 
-      const alreadyRespondedCount = allTokens.filter((t) => t.hasResponded).length;
+      const alreadyRespondedCount = allTokens.filter(
+        (t) => t.hasResponded,
+      ).length;
 
       return {
         remindedCount,
@@ -186,4 +219,3 @@ export class RemindQuizToStudentsUseCase extends BaseUseCase implements IUseCase
 
   async withCompensation(): Promise<void> {}
 }
-

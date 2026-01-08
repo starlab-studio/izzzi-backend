@@ -1,14 +1,14 @@
-import { DataSource, EntityManager } from "typeorm";
+import { DataSource, EntityManager, QueryRunner } from "typeorm";
 import { IUnitOfWork } from "src/core/application/interfaces/unit_of_work.interface";
 
 export class TypeOrmUnitOfWork implements IUnitOfWork {
-  private queryRunner?: any;
+  private queryRunner?: QueryRunner;
   private entityManager?: EntityManager;
 
   constructor(private readonly dataSource: DataSource) {}
 
   async withTransaction<T>(
-    operation: (uow: IUnitOfWork) => Promise<T>
+    operation: (uow: IUnitOfWork) => Promise<T>,
   ): Promise<T> {
     this.queryRunner = this.dataSource.createQueryRunner();
     await this.queryRunner.connect();
@@ -36,7 +36,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   getRepository<T>(repositoryClass: new (uow: IUnitOfWork) => T): T {
     if (!this.entityManager) {
       throw new Error(
-        "No active transaction. Repository can only be accessed within a transaction."
+        "No active transaction. Repository can only be accessed within a transaction.",
       );
     }
     return new repositoryClass(this);
@@ -46,7 +46,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   getEntityManager(): EntityManager {
     if (!this.entityManager) {
       throw new Error(
-        "No active transaction. EntityManager can only be accessed within a transaction."
+        "No active transaction. EntityManager can only be accessed within a transaction.",
       );
     }
     return this.entityManager;

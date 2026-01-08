@@ -7,11 +7,7 @@ import {
   IEventStore,
 } from "src/core";
 
-import {
-  ISubject,
-  CreateSubjectInput,
-  CreateSubjectOutput,
-} from "../../domain/types";
+import { CreateSubjectInput, CreateSubjectOutput } from "../../domain/types";
 import { ISubjectRepository } from "../../domain/repositories/subject.repository";
 import { ISubjectAssignmentRepository } from "../../domain/repositories/subject-assignment.repository";
 import { IClassRepository } from "src/modules/class/domain/repositories/class.repository";
@@ -27,7 +23,7 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
     private readonly subjectRepository: ISubjectRepository,
     private readonly subjectAssignmentRepository: ISubjectAssignmentRepository,
     private readonly organizationFacade: OrganizationFacade,
-    private readonly eventStore: IEventStore,
+    private readonly eventStore: IEventStore
   ) {
     super(logger);
   }
@@ -36,7 +32,7 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId,
+        data.organizationId
       );
 
       const classEntity = await this.classRepository.findById(data.classId);
@@ -45,46 +41,65 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
       }
 
       if (classEntity.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to class");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to class"
+        );
       }
 
-      const assignmentsForClass = await this.subjectAssignmentRepository.findByClass(data.classId);
-      
+      const assignmentsForClass =
+        await this.subjectAssignmentRepository.findByClass(data.classId);
+
       let existingSubjectId: string | null = null;
       for (const assignment of assignmentsForClass) {
-        const subjectEntity = await this.subjectRepository.findById(assignment.subjectId);
-        if (subjectEntity && subjectEntity.name.trim().toLowerCase() === data.name.trim().toLowerCase()) {
+        const subjectEntity = await this.subjectRepository.findById(
+          assignment.subjectId
+        );
+        if (
+          subjectEntity &&
+          subjectEntity.name.trim().toLowerCase() ===
+            data.name.trim().toLowerCase()
+        ) {
           existingSubjectId = subjectEntity.id;
           break;
         }
       }
 
-      let subjectEntity;
+      let subjectEntity: SubjectEntity;
       let isNewSubject = false;
 
       if (existingSubjectId) {
-        subjectEntity = await this.subjectRepository.findById(existingSubjectId);
-        if (!subjectEntity) {
-          throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject not found");
+        const found = await this.subjectRepository.findById(existingSubjectId);
+        if (!found) {
+          throw new DomainError(
+            ErrorCode.UNEXPECTED_ERROR,
+            "Subject not found"
+          );
         }
+        subjectEntity = found;
       } else {
         isNewSubject = true;
-        subjectEntity = SubjectEntity.create({
+        const newEntity = SubjectEntity.create({
           name: data.name.trim(),
           organizationId: data.organizationId,
           createdBy: data.userId,
           instructorName: data.instructorName ?? null,
           instructorEmail: data.instructorEmail ?? null,
-          firstCourseDate: data.firstCourseDate ? new Date(data.firstCourseDate) : null,
-          lastCourseDate: data.lastCourseDate ? new Date(data.lastCourseDate) : null,
+          firstCourseDate: data.firstCourseDate
+            ? new Date(data.firstCourseDate)
+            : null,
+          lastCourseDate: data.lastCourseDate
+            ? new Date(data.lastCourseDate)
+            : null,
         });
-        subjectEntity = await this.subjectRepository.create(subjectEntity);
+        subjectEntity = await this.subjectRepository.create(newEntity);
       }
 
-      const existingAssignment = await this.subjectAssignmentRepository.findBySubjectAndClass(
-        subjectEntity.id,
-        data.classId,
-      );
+      const existingAssignment =
+        await this.subjectAssignmentRepository.findBySubjectAndClass(
+          subjectEntity.id,
+          data.classId
+        );
 
       if (existingAssignment) {
         if (!existingAssignment.isActive) {
@@ -92,7 +107,7 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
           await this.subjectAssignmentRepository.toggleActive(
             subjectEntity.id,
             data.classId,
-            true,
+            true
           );
         }
         return {
@@ -107,7 +122,8 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
         classId: data.classId,
       });
 
-      const createdAssignment = await this.subjectAssignmentRepository.assign(assignmentEntity);
+      const createdAssignment =
+        await this.subjectAssignmentRepository.assign(assignmentEntity);
 
       // Publie l'événement uniquement lors de la création d'une nouvelle matière (pas lors de la réutilisation)
       if (isNewSubject) {
@@ -118,7 +134,7 @@ export class CreateSubjectUseCase extends BaseUseCase implements IUseCase {
             organizationId: subjectEntity.organizationId,
             createdBy: subjectEntity.createdBy,
             userEmail: data.userEmail,
-          }),
+          })
         );
       }
 

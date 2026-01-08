@@ -20,7 +20,7 @@ export class Password {
     if (!hashedPassword) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Hashed password cannot be empty"
+        "Hashed password cannot be empty",
       );
     }
     return new Password(hashedPassword, true);
@@ -30,21 +30,21 @@ export class Password {
     if (!password) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password cannot be empty"
+        "Password cannot be empty",
       );
     }
 
     if (password.length < 8) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password must be at least 8 characters long"
+        "Password must be at least 8 characters long",
       );
     }
 
     if (password.length > 128) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password must not exceed 128 characters"
+        "Password must not exceed 128 characters",
       );
     }
 
@@ -56,28 +56,28 @@ export class Password {
     if (!hasLowerCase) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password must contain at least one lowercase letter"
+        "Password must contain at least one lowercase letter",
       );
     }
 
     if (!hasUpperCase) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password must contain at least one uppercase letter"
+        "Password must contain at least one uppercase letter",
       );
     }
 
     if (!hasDigit) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password must contain at least one number"
+        "Password must contain at least one number",
       );
     }
 
     if (!hasSpecialChar) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password must contain at least one special character"
+        "Password must contain at least one special character",
       );
     }
 
@@ -97,7 +97,7 @@ export class Password {
       if (pattern.test(password)) {
         throw new DomainError(
           ErrorCode.INVALID_PASSWORD,
-          "Password contains common patterns and is too weak"
+          "Password contains common patterns and is too weak",
         );
       }
     }
@@ -105,14 +105,14 @@ export class Password {
     if (this.hasSequentialCharacters(password)) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password contains sequential characters (e.g., 'abc', '123')"
+        "Password contains sequential characters (e.g., 'abc', '123')",
       );
     }
 
     if (/(.)\1{3,}/.test(password)) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Password contains too many repeated characters"
+        "Password contains too many repeated characters",
       );
     }
   }
@@ -159,13 +159,13 @@ export class Password {
     if (!this._isHashed) {
       throw new DomainError(
         ErrorCode.INVALID_PASSWORD,
-        "Cannot compare unhashed password"
+        "Cannot compare unhashed password",
       );
     }
 
     try {
       return await argon2.verify(this._hashedValue, plainPassword);
-    } catch (error) {
+    } catch {
       return false;
     }
   }

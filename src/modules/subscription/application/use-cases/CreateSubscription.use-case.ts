@@ -9,6 +9,7 @@ import { PricingTierEntity } from "../../domain/entities/pricing-tier.entity";
 import { UserRole } from "src/core/domain/types";
 import type { IPaymentService } from "../../domain/services/payment.service";
 import type { IStripeSyncService } from "src/modules/payment/domain/services/stripe-sync.service";
+import type { StripeSubscription } from "src/modules/payment/domain/types/stripe.types";
 
 export interface CreateSubscriptionInput {
   userId: string;
@@ -46,13 +47,13 @@ export class CreateSubscriptionUseCase
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly userRepository: IUserRepository,
     private readonly paymentService: IPaymentService,
-    private readonly stripeSyncService: IStripeSyncService
+    private readonly stripeSyncService: IStripeSyncService,
   ) {
     super(logger);
   }
 
   async execute(
-    input: CreateSubscriptionInput
+    input: CreateSubscriptionInput,
   ): Promise<CreateSubscriptionOutput> {
     try {
       const {
@@ -67,7 +68,7 @@ export class CreateSubscriptionUseCase
         throw new DomainError(
           "INVALID_CLASS_COUNT",
           "Le nombre de classes doit être entre 1 et 20",
-          { quantity }
+          { quantity },
         );
       }
 
@@ -81,13 +82,13 @@ export class CreateSubscriptionUseCase
         throw new DomainError(
           "INSUFFICIENT_PERMISSIONS",
           "Vous devez être administrateur de cette organisation pour créer une subscription",
-          { userId, organizationId }
+          { userId, organizationId },
         );
       }
 
       const existingSubscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          organizationId
+          organizationId,
         );
       if (existingSubscription) {
         throw new DomainError(
@@ -96,7 +97,7 @@ export class CreateSubscriptionUseCase
           {
             organizationId,
             existingSubscriptionId: existingSubscription.id,
-          }
+          },
         );
       }
 
@@ -105,7 +106,7 @@ export class CreateSubscriptionUseCase
         throw new DomainError(
           "PLAN_NOT_FOUND",
           "Le plan de subscription n'existe pas",
-          { planId }
+          { planId },
         );
       }
 
@@ -113,19 +114,68 @@ export class CreateSubscriptionUseCase
         throw new DomainError(
           "PLAN_NOT_ACTIVE",
           "Le plan de subscription n'est pas actif",
-          { planId }
+          { planId },
         );
+      }
+
+      if (plan.isFree) {
+        const allSubscriptions =
+          await this.subscriptionRepository.findAllByOrganizationId(
+            organizationId,
+          );
+        const hasNonPendingSubscription = allSubscriptions.some(
+          (sub) => sub.status !== "pending",
+        );
+
+        if (hasNonPendingSubscription) {
+          throw new DomainError(
+            "FREE_PLAN_ALREADY_CREATED",
+            "Vous ne pouvez plus créer un plan gratuit. Un abonnement a déjà été créé pour cette organisation.",
+            { organizationId, planId },
+          );
+        }
+      }
+
+      if (plan.name === "izzzi") {
+        const allSubscriptions =
+          await this.subscriptionRepository.findAllByOrganizationId(
+            organizationId,
+          );
+
+        for (const sub of allSubscriptions) {
+          const subPlan = await this.subscriptionPlanRepository.findById(
+            sub.planId,
+          );
+          if (subPlan && subPlan.name === "super-izzzi") {
+            throw new DomainError(
+              "SUPER_IZZZI_PLAN_EXISTS",
+              "Vous ne pouvez plus bénéficier du plan gratuit. Vous avez déjà eu un plan Super Izzzi.",
+              { organizationId, planId, existingPlanId: sub.planId },
+            );
+          }
+        }
       }
 
       let tiers = await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
         planId,
-        billingPeriod
+        billingPeriod,
       );
 
-      // For free plans, create missing pricing tiers if they don't exist
+      if (tiers.length > 0 && tiers[0].billingPeriod !== billingPeriod) {
+        throw new DomainError(
+          "BILLING_PERIOD_MISMATCH",
+          `BillingPeriod mismatch: requested ${billingPeriod} but tier is ${tiers[0].billingPeriod}`,
+          {
+            requestedBillingPeriod: billingPeriod,
+            tierBillingPeriod: tiers[0].billingPeriod,
+            planId,
+          },
+        );
+      }
+
       if (plan.isFree && tiers.length === 0) {
         this.logger.info(
-          `Creating missing pricing tiers for free plan ${plan.name} (${planId}) with billing period ${billingPeriod}`
+          `Creating missing pricing tiers for free plan ${plan.name} (${planId}) with billing period ${billingPeriod}`,
         );
 
         const freeTier = PricingTierEntity.create({
@@ -139,12 +189,11 @@ export class CreateSubscriptionUseCase
 
         const savedTier = await this.pricingTierRepository.save(freeTier);
 
-        // Sync with Stripe to get stripePriceId
         if (plan.stripeProductId) {
           const tierToPriceIdMap =
             await this.stripeSyncService.syncPricingTiersToStripe(
               plan.stripeProductId,
-              [savedTier]
+              [savedTier],
             );
 
           const priceId = tierToPriceIdMap.get(savedTier.id);
@@ -168,7 +217,7 @@ export class CreateSubscriptionUseCase
         throw new DomainError(
           "NO_PRICING_TIERS",
           "Aucun palier de tarification trouvé pour ce plan",
-          { planId, billingPeriod }
+          { planId, billingPeriod },
         );
       }
 
@@ -177,7 +226,7 @@ export class CreateSubscriptionUseCase
       if (tiers.length > 0) {
         selectedTier =
           tiers.find(
-            (t) => quantity >= t.minClasses && quantity <= t.maxClasses
+            (t) => quantity >= t.minClasses && quantity <= t.maxClasses,
           ) || null;
 
         if (!selectedTier) {
@@ -192,23 +241,22 @@ export class CreateSubscriptionUseCase
                 min: t.minClasses,
                 max: t.maxClasses,
               })),
-            }
+            },
           );
         }
 
         pricePerClassCents = selectedTier.pricePerClassCents;
 
-        // For free plans, sync tier with Stripe if stripePriceId is missing
         if (plan.isFree && selectedTier && !selectedTier.stripePriceId) {
           this.logger.info(
-            `Syncing pricing tier ${selectedTier.id} with Stripe for free plan`
+            `Syncing pricing tier ${selectedTier.id} with Stripe for free plan`,
           );
 
           if (plan.stripeProductId) {
             const tierToPriceIdMap =
               await this.stripeSyncService.syncPricingTiersToStripe(
                 plan.stripeProductId,
-                [selectedTier]
+                [selectedTier],
               );
 
             const priceId = tierToPriceIdMap.get(selectedTier.id);
@@ -238,7 +286,6 @@ export class CreateSubscriptionUseCase
       let stripeSubscriptionId: string | null = null;
       let stripeCustomerId: string | null = null;
 
-      // For free plans, we still create a Stripe subscription to track invoices
       if (requiresPayment || isFreePlan) {
         const pendingSubscription = isFreePlan
           ? SubscriptionEntity.create({
@@ -266,14 +313,14 @@ export class CreateSubscriptionUseCase
         stripeCustomerId = await this.paymentService.getOrCreateCustomer(
           organizationId,
           userEmail,
-          userName
+          userName,
         );
 
         if (!selectedTier?.stripePriceId) {
           throw new DomainError(
             "STRIPE_PRICE_ID_MISSING",
             "Le palier de tarification n'a pas de stripePriceId configuré",
-            { tierId: selectedTier?.id, planId, billingPeriod }
+            { tierId: selectedTier?.id, planId, billingPeriod },
           );
         }
 
@@ -289,7 +336,7 @@ export class CreateSubscriptionUseCase
               organizationId,
               planId,
             },
-          }
+          },
         );
 
         stripeSubscriptionId = stripeSubscription.subscriptionId;
@@ -298,6 +345,53 @@ export class CreateSubscriptionUseCase
         savedSubscription.linkToStripe(stripeSubscriptionId, stripeCustomerId);
         savedSubscription =
           await this.subscriptionRepository.save(savedSubscription);
+
+        try {
+          const fullStripeSubscription: StripeSubscription | null =
+            await this.stripeSyncService.getSubscription(stripeSubscriptionId);
+
+          if (
+            fullStripeSubscription &&
+            fullStripeSubscription.current_period_start &&
+            fullStripeSubscription.current_period_end
+          ) {
+            (savedSubscription as any).props.currentPeriodStart = new Date(
+              fullStripeSubscription.current_period_start * 1000,
+            );
+            (savedSubscription as any).props.currentPeriodEnd = new Date(
+              fullStripeSubscription.current_period_end * 1000,
+            );
+            (savedSubscription as any).props.updatedAt = new Date();
+
+            // La synchronisation fine du statut et de la quantité sera gérée
+            // par les webhooks via SyncSubscriptionFromStripeUseCase.
+            /*
+            savedSubscription.syncFromStripe({
+              status: fullStripeSubscription.status as any,
+              currentPeriodStart: new Date(
+                fullStripeSubscription.current_period_start * 1000
+              ),
+              currentPeriodEnd: new Date(
+                fullStripeSubscription.current_period_end * 1000
+              ),
+              cancelAtPeriodEnd: fullStripeSubscription.cancel_at_period_end,
+              quantity:
+                fullStripeSubscription.items?.data?.[0]?.quantity ?? undefined,
+            });
+            */
+
+            savedSubscription =
+              await this.subscriptionRepository.save(savedSubscription);
+          }
+        } catch (stripeSyncError) {
+          this.logger.warn(
+            `Failed to pre-sync subscription ${savedSubscription.id} periods from Stripe after creation: ${
+              stripeSyncError instanceof Error
+                ? stripeSyncError.message
+                : String(stripeSyncError)
+            }`,
+          );
+        }
       } else {
         const subscription = SubscriptionEntity.create({
           userId,

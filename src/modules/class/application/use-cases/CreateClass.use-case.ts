@@ -32,7 +32,7 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
     private readonly eventStore: IEventStore,
     private readonly classLimitService: ClassLimitService,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
   ) {
     super(logger);
   }
@@ -42,30 +42,30 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
       await this.organizationFacade.validateUserCanCreateClass(
         data.userId,
         data.organizationId,
-        [UserRole.LEARNING_MANAGER, UserRole.ADMIN]
+        [UserRole.LEARNING_MANAGER, UserRole.ADMIN],
       );
 
       const limitCheck = await this.classLimitService.canCreateClass(
-        data.organizationId
+        data.organizationId,
       );
       if (!limitCheck.canCreate) {
         throw new DomainError(
           ErrorCode.CLASS_LIMIT_REACHED,
           limitCheck.reason ||
-            "You have reached the class limit allowed by your subscription"
+            "You have reached the class limit allowed by your subscription",
         );
       }
 
       const existingClass =
         await this.classRepository.findByNameAndOrganization(
           data.name,
-          data.organizationId
+          data.organizationId,
         );
 
       if (existingClass) {
         throw new DomainError(
           ErrorCode.CLASS_ALREADY_EXISTS,
-          "A class with this name already exists in this organization"
+          "A class with this name already exists in this organization",
         );
       }
 
@@ -81,14 +81,14 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
         data.numberOfStudents,
         validatedEmails,
         data.organizationId,
-        data.userId
+        data.userId,
       );
 
       const createdClass = await this.classRepository.create(classEntity);
       if (!createdClass) {
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Failed to create class. Please try again later."
+          "Failed to create class. Please try again later.",
         );
       }
 
@@ -110,18 +110,18 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
           organizationId: createdClass.organizationId,
           userId: createdClass.userId,
           userEmail: data.userEmail,
-        })
+        }),
       );
 
       // Check if limit is reached after creating the class
       const subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          data.organizationId
+          data.organizationId,
         );
 
       if (subscription && subscription.status !== "pending") {
         const plan = await this.subscriptionPlanRepository.findById(
-          subscription.planId
+          subscription.planId,
         );
 
         if (plan && !plan.isFree) {
@@ -139,7 +139,7 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
                 currentClassCount,
                 maxClasses: currentQuantity,
                 planName,
-              })
+              }),
             );
           }
         }
@@ -151,5 +151,6 @@ export class CreateClassUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: IClass): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: IClass): Promise<void> {}
 }

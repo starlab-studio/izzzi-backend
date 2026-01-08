@@ -12,13 +12,13 @@ export class ClassLimitService {
   constructor(
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
-    private readonly classRepository: IClassRepository
+    private readonly classRepository: IClassRepository,
   ) {}
 
   async canCreateClass(organizationId: string): Promise<ClassLimitCheckResult> {
     const subscription =
       await this.subscriptionRepository.findActiveByOrganizationId(
-        organizationId
+        organizationId,
       );
 
     if (!subscription) {
@@ -37,14 +37,14 @@ export class ClassLimitService {
     }
 
     const plan = await this.subscriptionPlanRepository.findById(
-      subscription.planId
+      subscription.planId,
     );
 
     if (!plan) {
       throw new DomainError(
         ErrorCode.PLAN_NOT_FOUND,
         "Subscription plan associated with this organization does not exist",
-        { planId: subscription.planId, organizationId }
+        { planId: subscription.planId, organizationId },
       );
     }
 

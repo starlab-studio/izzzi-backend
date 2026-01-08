@@ -1,7 +1,7 @@
-import { IUnitOfWork } from "./unit_of_work.interface";
 import { IGenericRepository } from "./repository.interface";
+import { IUnitOfWork } from "./unit_of_work.interface";
 
-export interface ITransactionalRepository<T> extends IGenericRepository<T> {}
+export type ITransactionalRepository<T> = IGenericRepository<T>;
 
 export abstract class BaseTransactionalRepository<T>
   implements ITransactionalRepository<T>

@@ -26,20 +26,28 @@ export class RolesGuard implements CanActivate {
     private reflector: Reflector,
     @Inject("CACHE_SERVICE") private cacheService: ICacheService,
     @Inject(forwardRef(() => OrganizationFacade))
-    private organizationFacade: OrganizationFacade
+    private organizationFacade: OrganizationFacade,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
-      [context.getHandler(), context.getClass()]
+      [context.getHandler(), context.getClass()],
     );
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<{
+      user?: { userId?: string };
+      params?: { organizationId?: string };
+      query?: { organizationId?: string };
+      body?: { organizationId?: string };
+      headers?: { [key: string]: string | string[] | undefined };
+      organizationId?: string;
+      userRoles?: UserRolesCache;
+    }>();
     const { user } = request;
 
     if (!user?.userId) {
@@ -69,18 +77,18 @@ export class RolesGuard implements CanActivate {
       userRoles.some(
         (userRole) =>
           userRole.organizationId === organizationId &&
-          userRole.role === requiredRole
-      )
+          userRole.role === requiredRole,
+      ),
     );
 
     if (!hasRole) {
       throw new ForbiddenException(
-        `User does not have required role(s): ${requiredRoles.join(", ")}`
+        `User does not have required role(s): ${requiredRoles.join(", ")}`,
       );
     }
     request.organizationId = organizationId;
     request.userRoles = userRoles.filter(
-      (r) => r.organizationId === organizationId
+      (r) => r.organizationId === organizationId,
     );
 
     return true;
@@ -102,7 +110,7 @@ export class RolesGuard implements CanActivate {
       userProfile = await this.organizationFacade.getUserProfile(userId);
       await this.cacheService.set(cacheKey, userProfile, this.CACHE_TTL);
       return userProfile;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException("Failed to retrieve user profile");
     }
   }
@@ -123,26 +131,32 @@ export class RolesGuard implements CanActivate {
       await this.cacheService.set(cacheKey, userRoles, this.CACHE_TTL);
 
       return userRoles;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException("Failed to retrieve user roles");
     }
   }
 
-  private extractOrganizationId(request: any): string | null {
+  private extractOrganizationId(request: {
+    params?: { organizationId?: string };
+    query?: { organizationId?: string };
+    body?: { organizationId?: string };
+    headers?: { [key: string]: string | string[] | undefined };
+  }): string | null {
     if (request.params?.organizationId) {
-      return request.params.organizationId;
+      return String(request.params.organizationId);
     }
 
     if (request.query?.organizationId) {
-      return request.query.organizationId;
+      return String(request.query.organizationId);
     }
 
     if (request.body?.organizationId) {
-      return request.body.organizationId;
+      return String(request.body.organizationId);
     }
 
-    if (request.headers["x-organization-id"]) {
-      return request.headers["x-organization-id"];
+    const orgIdHeader = request.headers?.["x-organization-id"];
+    if (orgIdHeader) {
+      return Array.isArray(orgIdHeader) ? orgIdHeader[0] : String(orgIdHeader);
     }
 
     return null;

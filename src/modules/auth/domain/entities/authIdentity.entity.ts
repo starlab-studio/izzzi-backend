@@ -13,7 +13,7 @@ export class AuthIdentityEntity {
     data: Pick<
       IAuthIdentity,
       "provider" | "providerUserId" | "username" | "password"
-    >
+    >,
   ): AuthIdentityEntity {
     return new AuthIdentityEntity({
       id: randomUUID(),
@@ -39,6 +39,10 @@ export class AuthIdentityEntity {
 
   canChangePassword(provider: AuthIdentityName): boolean {
     return provider === AuthIdentityName.CUSTOM;
+  }
+
+  isGoogleProvider(): boolean {
+    return this.props.provider === AuthIdentityName.GOOGLE;
   }
 
   changePassword(newHashedPassword: string): void {
@@ -100,10 +104,12 @@ export class AuthIdentityEntity {
   }
 
   verifyEmail(email: string): void {
-    if (email.toLowerCase().trim() !== this.props.username?.toLowerCase().trim()) {
+    if (
+      email.toLowerCase().trim() !== this.props.username?.toLowerCase().trim()
+    ) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
-        "Invalid email for email verification"
+        "Invalid email for email verification",
       );
     }
 

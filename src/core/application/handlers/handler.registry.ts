@@ -9,15 +9,15 @@ export class EventHandlerRegistry {
 
   constructor(
     private readonly eventStore: IEventStore,
-    private readonly logger: ILoggerService
+    private readonly logger: ILoggerService,
   ) {}
 
   registerHandler(eventName: string, handler: IEventHandler): void {
     if (!this.handlers.has(eventName)) {
       this.handlers.set(eventName, []);
     }
-    this.eventStore.subscribe(eventName, async (event: IDomainEvent) => {
-      await this.handleEvent(event);
+    this.eventStore.subscribe(eventName, (event: IDomainEvent) => {
+      void this.handleEvent(event);
     });
     this.handlers.get(eventName)!.push(handler);
     this.logger.info(`Registered handler for event: ${eventName}`);
@@ -32,7 +32,7 @@ export class EventHandlerRegistry {
     }
 
     this.logger.info(
-      `Processing event: ${event.name} with ${eventHandlers.length} handler(s)`
+      `Processing event: ${event.name} with ${eventHandlers.length} handler(s)`,
     );
 
     const handlerPromises = eventHandlers.map(async (handler) => {
@@ -47,7 +47,7 @@ export class EventHandlerRegistry {
           `Handler failed for event: ${event.name}`,
           {
             eventName: event.name,
-          }
+          },
         );
       }
     });
@@ -56,8 +56,8 @@ export class EventHandlerRegistry {
   }
 
   listen(): void {
-    this.eventStore.subscribe("*", async (event: IDomainEvent) => {
-      await this.handleEvent(event);
+    this.eventStore.subscribe("*", (event: IDomainEvent) => {
+      void this.handleEvent(event);
     });
   }
 }

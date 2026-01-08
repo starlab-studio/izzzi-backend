@@ -5,7 +5,7 @@ import { SubscriptionActivatedEvent } from "../../../subscription/domain/events/
 export class SubscriptionActivatedEventHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
-    private readonly sendSubscriptionConfirmationEmailUseCase: SendSubscriptionConfirmationEmailUseCase
+    private readonly sendSubscriptionConfirmationEmailUseCase: SendSubscriptionConfirmationEmailUseCase,
   ) {
     super(logger);
   }
@@ -17,7 +17,7 @@ export class SubscriptionActivatedEventHandler extends BaseEventHandler {
         organizationId: event.payload.organizationId,
       });
       this.logger.info(
-        `Subscription confirmation email sent for subscription ${event.payload.subscriptionId}`
+        `Subscription confirmation email sent for subscription ${event.payload.subscriptionId}`,
       );
     } catch (error) {
       const errorMessage =
@@ -25,7 +25,7 @@ export class SubscriptionActivatedEventHandler extends BaseEventHandler {
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
         `Failed to send subscription confirmation email: ${errorMessage}`,
-        errorStack || ""
+        errorStack || "",
       );
       // Ne pas throw pour éviter de bloquer l'event
     }

@@ -29,7 +29,9 @@ export class FaqTabRepository implements IFaqTabRepository {
   async findById(id: string): Promise<FaqTabEntity | null> {
     const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) return null;
-    const ormEntity = await this.ormRepository.findOne({ where: { id: parsedId } });
+    const ormEntity = await this.ormRepository.findOne({
+      where: { id: parsedId },
+    });
     if (!ormEntity) return null;
     return FaqTabEntity.reconstitute(ormEntity);
   }

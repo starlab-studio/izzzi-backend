@@ -58,7 +58,8 @@ import { FaqController } from "./interface/controllers/faq.controller";
       useFactory: (
         faqCategoryRepository: IFaqCategoryRepository,
         faqItemRepository: IFaqItemRepository,
-      ) => new GetFaqContentByTabUseCase(faqCategoryRepository, faqItemRepository),
+      ) =>
+        new GetFaqContentByTabUseCase(faqCategoryRepository, faqItemRepository),
       inject: ["IFaqCategoryRepository", "IFaqItemRepository"],
     },
 

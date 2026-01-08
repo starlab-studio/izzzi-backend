@@ -16,10 +16,10 @@ export class QuizReminderModel implements IQuizReminder {
   @Column({ name: "sent_at", type: "timestamp", nullable: true })
   sentAt: Date | null;
 
-  @Column({ 
-    type: "enum", 
-    enum: ["scheduled", "sending", "sent", "failed", "cancelled"], 
-    default: "scheduled" 
+  @Column({
+    type: "enum",
+    enum: ["scheduled", "sending", "sent", "failed", "cancelled"],
+    default: "scheduled",
   })
   status: "scheduled" | "sending" | "sent" | "failed" | "cancelled";
 
@@ -38,4 +38,3 @@ export class QuizReminderModel implements IQuizReminder {
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

@@ -7,14 +7,14 @@ export class AddPendingQuantityToSubscriptions1766529692000
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      ALTER TABLE "user_subscriptions"
+      ALTER TABLE "subscriptions"
       ADD COLUMN "pending_quantity" integer NULL
     `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      ALTER TABLE "user_subscriptions"
+      ALTER TABLE "subscriptions"
       DROP COLUMN "pending_quantity"
     `);
   }

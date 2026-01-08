@@ -5,6 +5,14 @@ import type {
   IWebhookPaymentIntent,
   IWebhookSubscription,
 } from "../../domain/types/webhook-event.types";
+import type {
+  ExpandedInvoice,
+  ExpandedPaymentIntent,
+} from "../types/stripe-extended.types";
+import {
+  isExpandedSubscription,
+  isExpandedInvoice,
+} from "../types/stripe-extended.types";
 
 export class WebhookEventMapper {
   static toDomainEvent(stripeEvent: Stripe.Event): IWebhookEvent {
@@ -18,7 +26,7 @@ export class WebhookEventMapper {
   }
 
   private static toDomainEventObject(
-    stripeEvent: Stripe.Event
+    stripeEvent: Stripe.Event,
   ): IWebhookInvoice | IWebhookPaymentIntent | IWebhookSubscription {
     const object = stripeEvent.data.object;
 
@@ -42,37 +50,39 @@ export class WebhookEventMapper {
   }
 
   private static toDomainInvoice(
-    stripeInvoice: Stripe.Invoice
+    stripeInvoice: Stripe.Invoice | ExpandedInvoice,
   ): IWebhookInvoice {
+    const subscription = (stripeInvoice as ExpandedInvoice).subscription;
     return {
       id: stripeInvoice.id,
       subscription:
-        typeof stripeInvoice.subscription === "string"
-          ? stripeInvoice.subscription
-          : stripeInvoice.subscription
-            ? { id: stripeInvoice.subscription.id }
+        typeof subscription === "string"
+          ? subscription
+          : isExpandedSubscription(subscription)
+            ? { id: subscription.id }
             : undefined,
       metadata: stripeInvoice.metadata || {},
     };
   }
 
   private static toDomainPaymentIntent(
-    stripePaymentIntent: Stripe.PaymentIntent
+    stripePaymentIntent: Stripe.PaymentIntent | ExpandedPaymentIntent,
   ): IWebhookPaymentIntent {
+    const invoice = (stripePaymentIntent as ExpandedPaymentIntent).invoice;
     return {
       id: stripePaymentIntent.id,
       invoice:
-        typeof stripePaymentIntent.invoice === "string"
-          ? stripePaymentIntent.invoice
-          : stripePaymentIntent.invoice
-            ? { id: stripePaymentIntent.invoice.id }
+        typeof invoice === "string"
+          ? invoice
+          : isExpandedInvoice(invoice)
+            ? { id: invoice.id }
             : undefined,
       metadata: stripePaymentIntent.metadata || {},
     };
   }
 
   private static toDomainSubscription(
-    stripeSubscription: Stripe.Subscription
+    stripeSubscription: Stripe.Subscription,
   ): IWebhookSubscription {
     return {
       id: stripeSubscription.id,

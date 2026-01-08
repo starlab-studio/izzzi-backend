@@ -12,20 +12,24 @@ export interface GetPricingTiersInput {
   billingPeriod: "monthly" | "annual";
 }
 
-export class GetPricingTiersUseCase extends BaseUseCase implements IUseCase<GetPricingTiersInput, PricingTierResponse[]> {
+export class GetPricingTiersUseCase
+  extends BaseUseCase
+  implements IUseCase<GetPricingTiersInput, PricingTierResponse[]>
+{
   constructor(
     readonly logger: ILoggerService,
-    private readonly pricingTierRepository: IPricingTierRepository
+    private readonly pricingTierRepository: IPricingTierRepository,
   ) {
     super(logger);
   }
 
   async execute(input: GetPricingTiersInput): Promise<PricingTierResponse[]> {
     try {
-      const tiers = await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
-        input.planId,
-        input.billingPeriod
-      );
+      const tiers =
+        await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
+          input.planId,
+          input.billingPeriod,
+        );
 
       return tiers.map((tier) => ({
         minClasses: tier.minClasses,

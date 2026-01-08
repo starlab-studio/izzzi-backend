@@ -79,4 +79,3 @@ export class ClassStudentEntity extends BaseEntity {
     return new ClassStudentEntity(data);
   }
 }
-

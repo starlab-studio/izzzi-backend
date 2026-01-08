@@ -15,4 +15,3 @@ export interface IAiAnalysis {
   triggeredEmail: boolean;
   createdAt: Date;
 }
-

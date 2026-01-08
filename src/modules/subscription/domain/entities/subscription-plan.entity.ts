@@ -20,7 +20,7 @@ export class SubscriptionPlanEntity {
       | "variant"
       | "displayOrder"
       | "stripeProductId"
-    >
+    >,
   ): SubscriptionPlanEntity {
     const now = new Date();
     return new SubscriptionPlanEntity({

@@ -6,7 +6,6 @@ import {
   MaxLength,
   Matches,
   IsEmail,
-  IsOptional,
 } from "class-validator";
 
 export class AcceptInvitationDto {

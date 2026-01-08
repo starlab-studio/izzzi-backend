@@ -5,10 +5,7 @@ import {
   DomainError,
   ErrorCode,
 } from "src/core";
-import {
-  GetQuizLinkInput,
-  GetQuizLinkOutput,
-} from "../../domain/types";
+import { GetQuizLinkInput, GetQuizLinkOutput } from "../../domain/types";
 import { IQuizRepository } from "../../domain/repositories/quiz.repository";
 import { ISubjectRepository } from "src/modules/subject/domain/repositories/subject.repository";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
@@ -43,17 +40,23 @@ export class GetQuizLinkUseCase extends BaseUseCase implements IUseCase {
       }
 
       if (subject.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to quiz");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to quiz",
+        );
       }
 
       if (!quiz.publicUrl) {
-        throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Quiz public URL not available");
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "Quiz public URL not available",
+        );
       }
 
       let qrCodeUrl = quiz.qrCodeUrl;
       if (!qrCodeUrl) {
         qrCodeUrl = await QRCodeService.generateQRCodeDataURL(quiz.publicUrl);
-        
+
         quiz.updateUrls(quiz.publicUrl, qrCodeUrl);
         await this.quizRepository.save(quiz);
       }
@@ -69,4 +72,3 @@ export class GetQuizLinkUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

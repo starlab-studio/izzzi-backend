@@ -5,11 +5,11 @@ export interface IInvoiceRepository extends IRepository<InvoiceEntity> {
   findByStripeInvoiceId(stripeInvoiceId: string): Promise<InvoiceEntity | null>;
   findBySubscriptionId(subscriptionId: string): Promise<InvoiceEntity[]>;
   findLatestByOrganizationId(
-    organizationId: string
+    organizationId: string,
   ): Promise<InvoiceEntity | null>;
   findLatestPaidByOrganizationId(
     organizationId: string,
-    since?: Date
+    since?: Date,
   ): Promise<InvoiceEntity | null>;
 }
 

@@ -5,11 +5,7 @@ import {
   DomainError,
   ErrorCode,
 } from "src/core";
-import {
-  ISubject,
-  UpdateSubjectInput,
-  UpdateSubjectOutput,
-} from "../../domain/types";
+import { UpdateSubjectInput, UpdateSubjectOutput } from "../../domain/types";
 import { ISubjectRepository } from "../../domain/repositories/subject.repository";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 
@@ -17,7 +13,7 @@ export class UpdateSubjectUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly subjectRepository: ISubjectRepository,
-    private readonly organizationFacade: OrganizationFacade,
+    private readonly organizationFacade: OrganizationFacade
   ) {
     super(logger);
   }
@@ -26,16 +22,21 @@ export class UpdateSubjectUseCase extends BaseUseCase implements IUseCase {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId,
+        data.organizationId
       );
 
-      const subjectEntity = await this.subjectRepository.findById(data.subjectId);
+      const subjectEntity = await this.subjectRepository.findById(
+        data.subjectId
+      );
       if (!subjectEntity) {
         throw new DomainError(ErrorCode.SUBJECT_NOT_FOUND, "Subject not found");
       }
 
       if (subjectEntity.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to subject");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to subject"
+        );
       }
       const updateData: {
         name?: string;
@@ -55,10 +56,14 @@ export class UpdateSubjectUseCase extends BaseUseCase implements IUseCase {
         updateData.instructorEmail = data.instructorEmail;
       }
       if (data.firstCourseDate !== undefined) {
-        updateData.firstCourseDate = data.firstCourseDate ? new Date(data.firstCourseDate) : null;
+        updateData.firstCourseDate = data.firstCourseDate
+          ? new Date(data.firstCourseDate)
+          : null;
       }
       if (data.lastCourseDate !== undefined) {
-        updateData.lastCourseDate = data.lastCourseDate ? new Date(data.lastCourseDate) : null;
+        updateData.lastCourseDate = data.lastCourseDate
+          ? new Date(data.lastCourseDate)
+          : null;
       }
 
       subjectEntity.update(updateData);
@@ -74,4 +79,3 @@ export class UpdateSubjectUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

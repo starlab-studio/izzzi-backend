@@ -12,9 +12,16 @@ import { SubscriptionModule } from "../subscription/subscription.module";
 import { SyncInvoiceFromStripeUseCase } from "../subscription/application/use-cases/SyncInvoiceFromStripe.use-case";
 import { SyncSubscriptionFromStripeUseCase } from "../subscription/application/use-cases/SyncSubscriptionFromStripe.use-case";
 import { LoggerService, ILoggerService } from "src/core";
+import { SubscriptionRepository } from "../subscription/infrastructure/repositories/subscription.repository";
+import { PricingTierRepository } from "../subscription/infrastructure/repositories/pricing-tier.repository";
+import { InvoiceRepository } from "../subscription/infrastructure/repositories/invoice.repository";
 
 @Module({
-  imports: [ConfigModule, forwardRef(() => CoreModule), forwardRef(() => SubscriptionModule)],
+  imports: [
+    ConfigModule,
+    forwardRef(() => CoreModule),
+    forwardRef(() => SubscriptionModule),
+  ],
   controllers: [StripeWebhookController],
   providers: [
     LoggerService,
@@ -35,19 +42,28 @@ import { LoggerService, ILoggerService } from "src/core";
         logger: ILoggerService,
         syncInvoiceUseCase: SyncInvoiceFromStripeUseCase,
         syncSubscriptionUseCase: SyncSubscriptionFromStripeUseCase,
-        stripeSyncService: IStripeSyncService
+        stripeSyncService: IStripeSyncService,
+        subscriptionRepository: SubscriptionRepository,
+        pricingTierRepository: PricingTierRepository,
+        invoiceRepository: InvoiceRepository,
       ) =>
         new HandleStripeWebhookUseCase(
           logger,
           syncInvoiceUseCase,
           syncSubscriptionUseCase,
-          stripeSyncService
+          stripeSyncService,
+          subscriptionRepository,
+          pricingTierRepository,
+          invoiceRepository,
         ),
       inject: [
         LoggerService,
         SyncInvoiceFromStripeUseCase,
         SyncSubscriptionFromStripeUseCase,
         STRIPE_SYNC_SERVICE,
+        SubscriptionRepository,
+        PricingTierRepository,
+        InvoiceRepository,
       ],
     },
   ],

@@ -7,7 +7,7 @@ import { SignUpSucceedEvent } from "src/modules/auth/domain/events/signUpSucceed
 export class UserCreatedEventHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {
     super(logger);
   }
@@ -15,7 +15,7 @@ export class UserCreatedEventHandler extends BaseEventHandler {
   async handle(event: SignUpSucceedEvent): Promise<void> {
     if (!event.payload.sendVerificationToken) {
       this.logger.info(
-        `Skipping verification email for ${event.payload.email} (sendVerificationToken=false)`
+        `Skipping verification email for ${event.payload.email} (sendVerificationToken=false)`,
       );
       return;
     }

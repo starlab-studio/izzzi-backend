@@ -1,4 +1,4 @@
-import { FileType, MimeType } from '../../domain/value-objects/file-type.vo';
+import { FileType, MimeType } from "../../domain/value-objects/file-type.vo";
 
 export class GenerateUploadUrlCommand {
   constructor(

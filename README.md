@@ -135,34 +135,28 @@ npm install
 
 ### **Environment Variables**
 
-Create a `.env` file at the project root:
+Create a `.env` file at the project root. You can copy `.env.example` as a template:
 
-```env
-# Database
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_NAME=izzzi_db
-DATABASE_USERNAME=postgres
-DATABASE_PASSWORD=your_password
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# AWS Cognito
-AWS_REGION=us-east-1
-AWS_COGNITO_USER_POOL_ID=your_pool_id
-AWS_COGNITO_CLIENT_ID=your_client_id
-
-# Stripe (Payment)
-STRIPE_SECRET_KEY=sk_test_xxx
-STRIPE_PUBLISHABLE_KEY=pk_test_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
-
-# Application
-PORT=3000
-NODE_ENV=development
+```bash
+cp .env.example .env
 ```
+
+Then fill in the required values. See `.env.example` for all available variables.
+
+**Required variables** :
+
+- Database configuration
+- JWT secrets
+- Google OAuth2 credentials (if using Google authentication)
+- Frontend URL
+
+**Optional variables** :
+
+- AWS Cognito (if using Cognito auth provider)
+- Stripe (if using payment features)
+- Brevo API key (for email notifications)
+
+For detailed Google OAuth2 configuration, see [Google OAuth Documentation](./docs/GOOGLE_OAUTH.md).
 
 ---
 
@@ -326,6 +320,7 @@ docker run -p 3000:3000 izzzi-backend
 ### **Technical Documentation**
 
 - [Transactional Architecture](./docs/TRANSACTION_ARCHITECTURE.md) - Complete documentation on transaction management
+- [Google OAuth2](./docs/GOOGLE_OAUTH.md) - Complete documentation on Google OAuth2 authentication
 
 ### **API Documentation**
 
@@ -339,10 +334,19 @@ Once the application is started, Swagger documentation is available at:
 #### **Authentication**
 
 ```
-POST /v1/auth/signUp          # Registration
-POST /v1/auth/signIn          # Login
-POST /v1/auth/refresh         # Refresh token
+POST /v1/auth/signup          # Registration
+POST /v1/auth/signin          # Login
+POST /v1/auth/refresh-token   # Refresh token
+POST /v1/auth/logout          # Logout
+GET  /v1/auth/providers       # Get user's auth providers
+
+# Google OAuth2
+GET  /v1/auth/google/authorize              # Get Google OAuth URL
+GET  /v1/auth/google/callback               # Google OAuth callback
+POST /v1/auth/google/complete-registration  # Complete Google signup
 ```
+
+For Google OAuth2 details, see [Google OAuth Documentation](./docs/GOOGLE_OAUTH.md).
 
 #### **👥 Users**
 

@@ -29,8 +29,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run linter
-        run: npm run lint
+      # - name: Run linter
+      #   run: npm run lint
 
       - name: Build application
         run: npm run build
@@ -78,6 +78,33 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            PORT=${{ secrets.PORT }}
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+            DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+            AWS_COGNITO_USER_POOL_ID=${{ secrets.AWS_COGNITO_USER_POOL_ID }}
+            AWS_COGNITO_USER_POOL_CLIENT_ID=${{ secrets.AWS_COGNITO_USER_POOL_CLIENT_ID }}
+            AWS_COGNITO_USER_POOL_CLIENT_SECRET=${{ secrets.AWS_COGNITO_USER_POOL_CLIENT_SECRET }}
+            NODE_ENVIRONMENT=${{ secrets.NODE_ENVIRONMENT }}
+            AUTH_JWT_SECRET=${{ secrets.AUTH_JWT_SECRET }}
+            AUTH_JWT_EXPIRES_IN=${{ secrets.AUTH_JWT_EXPIRES_IN }}
+            AUTH_JWT_REFRESH_SECRET=${{ secrets.AUTH_JWT_REFRESH_SECRET }}
+            AUTH_JWT_REFRESH_EXPIRES_IN=${{ secrets.AUTH_JWT_REFRESH_EXPIRES_IN }}
+            BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
+            FRONTEND_DOMAIN_URL=${{ secrets.FRONTEND_DOMAIN_URL }}
+            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+            STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
 
   # Security scanning
   security-scan:

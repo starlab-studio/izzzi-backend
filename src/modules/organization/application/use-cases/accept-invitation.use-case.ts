@@ -26,7 +26,7 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
     private readonly invitationRepository: IInvitationRepository,
     private readonly userRepository: IUserRepository,
     private readonly membershipRepository: IMembershipRepository,
-    private readonly unitOfWork: IUnitOfWork
+    private readonly unitOfWork: IUnitOfWork,
   ) {
     super(logger);
   }
@@ -35,7 +35,7 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
     try {
       return await this.unitOfWork.withTransaction(async () => {
         const invitation = await this.invitationRepository.findByToken(
-          data.token
+          data.token,
         );
 
         if (!invitation) {
@@ -43,7 +43,7 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
             ErrorCode.INVALID_OR_EXPIRED_INVITATION,
             "Invalid invitation token",
             undefined,
-            HTTP_STATUS.NOT_FOUND
+            HTTP_STATUS.NOT_FOUND,
           );
         }
 
@@ -54,7 +54,7 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
             ErrorCode.USER_NOT_FOUND,
             "User not found",
             undefined,
-            HTTP_STATUS.NOT_FOUND
+            HTTP_STATUS.NOT_FOUND,
           );
         }
 
@@ -64,25 +64,28 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
               ErrorCode.INVALID_OR_EXPIRED_INVITATION,
               "Invitation has expired",
               undefined,
-              HTTP_STATUS.BAD_REQUEST
+              HTTP_STATUS.BAD_REQUEST,
             );
           }
-          
-          const existingMembership = await this.membershipRepository.findByUserAndOrganization(
-            user.id,
-            invitation.organizationId
-          );
-          
+
+          const existingMembership =
+            await this.membershipRepository.findByUserAndOrganization(
+              user.id,
+              invitation.organizationId,
+            );
+
           if (existingMembership && existingMembership.isActive()) {
-            this.logger.info(`Invitation already accepted for user ${user.id}, membership already active`);
+            this.logger.info(
+              `Invitation already accepted for user ${user.id}, membership already active`,
+            );
             return;
           }
-          
+
           throw new DomainError(
             ErrorCode.INVALID_OR_EXPIRED_INVITATION,
             "Invitation is no longer valid",
             undefined,
-            HTTP_STATUS.BAD_REQUEST
+            HTTP_STATUS.BAD_REQUEST,
           );
         }
 
@@ -91,20 +94,23 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
             ErrorCode.INVALID_OR_EXPIRED_INVITATION,
             "Invitation email does not match user email",
             undefined,
-            HTTP_STATUS.FORBIDDEN
+            HTTP_STATUS.FORBIDDEN,
           );
         }
 
         if (user.isDeleted()) {
           user.activate();
           await this.userRepository.save(user);
-          this.logger.info(`Reactivated deleted user ${user.id} via invitation`);
+          this.logger.info(
+            `Reactivated deleted user ${user.id} via invitation`,
+          );
         }
 
-        const existingMembership = await this.membershipRepository.findByUserAndOrganization(
-          user.id,
-          invitation.organizationId
-        );
+        const existingMembership =
+          await this.membershipRepository.findByUserAndOrganization(
+            user.id,
+            invitation.organizationId,
+          );
 
         if (existingMembership) {
           if (existingMembership.isActive()) {
@@ -112,10 +118,12 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
             await this.invitationRepository.save(invitation);
             return;
           }
-          
+
           existingMembership.reactivate(invitation.role);
           await this.membershipRepository.save(existingMembership);
-          this.logger.info(`Reactivated membership ${existingMembership.id} for user ${user.id}`);
+          this.logger.info(
+            `Reactivated membership ${existingMembership.id} for user ${user.id}`,
+          );
         } else {
           const membership = MembershipEntity.create({
             userId: user.id,
@@ -135,7 +143,7 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
             userId: user.id,
             organizationId: invitation.organizationId,
             email: invitation.email,
-          })
+          }),
         );
       });
     } catch (error) {
@@ -143,5 +151,5 @@ export class AcceptInvitationUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

@@ -33,7 +33,7 @@ export class Email {
     if (email.length > 320) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
-        "Email must not exceed 320 characters"
+        "Email must not exceed 320 characters",
       );
     }
 
@@ -42,28 +42,28 @@ export class Email {
     if (localPart.length > 64) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
-        "Local part of email must not exceed 64 characters"
+        "Local part of email must not exceed 64 characters",
       );
     }
 
     if (domain.length > 255) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
-        "Domain part of email must not exceed 255 characters"
+        "Domain part of email must not exceed 255 characters",
       );
     }
 
     if (email.includes("..")) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
-        "Email cannot contain consecutive dots"
+        "Email cannot contain consecutive dots",
       );
     }
 
     if (localPart.startsWith(".") || localPart.endsWith(".")) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
-        "Local part cannot start or end with a dot"
+        "Local part cannot start or end with a dot",
       );
     }
   }

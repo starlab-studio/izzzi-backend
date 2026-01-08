@@ -11,7 +11,7 @@ export type ChangePasswordData = {
 export class ChangePasswordUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly authProvider: IAuthStrategy
+    private readonly authProvider: IAuthStrategy,
   ) {
     super(logger);
   }
@@ -24,5 +24,5 @@ export class ChangePasswordUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

@@ -12,7 +12,7 @@ import { IUserRepository } from "../../../organization/domain/repositories/user.
 export class UpdateAvatarUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
   ) {
     super(logger);
   }
@@ -35,4 +35,3 @@ export class UpdateAvatarUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

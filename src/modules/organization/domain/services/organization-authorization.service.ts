@@ -30,7 +30,7 @@ export class OrganizationAuthorizationService {
     if (!hasAccess) {
       throw new DomainError(
         ErrorCode.ORGANIZATION_ACCESS_DENIED,
-        "You do not have access to this organization"
+        "You do not have access to this organization",
       );
     }
   }
@@ -41,7 +41,7 @@ export class OrganizationAuthorizationService {
     if (!canManage) {
       throw new DomainError(
         ErrorCode.INVALID_ROLE_FOR_MEMBERSHIP,
-        "You do not have permission to manage this organization"
+        "You do not have permission to manage this organization",
       );
     }
   }

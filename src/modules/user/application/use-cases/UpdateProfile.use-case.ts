@@ -24,7 +24,7 @@ export class UpdateProfileUseCase extends BaseUseCase implements IUseCase {
     private readonly authIdentityRepository: IAuthIdentityRepository,
     private readonly authIdentityUniquenessService: AuthIdentityUniquenessService,
     private readonly organizationRepository: IOrganizationRepository,
-    private readonly organizationFacade: OrganizationFacade
+    private readonly organizationFacade: OrganizationFacade,
   ) {
     super(logger);
   }
@@ -55,17 +55,19 @@ export class UpdateProfileUseCase extends BaseUseCase implements IUseCase {
           await this.userRepository.save(user);
         }
 
-        if (data.email !== undefined && data.email.trim().toLowerCase() !== user.email.toLowerCase()) {
+        if (
+          data.email !== undefined &&
+          data.email.trim().toLowerCase() !== user.email.toLowerCase()
+        ) {
           const newEmail = Email.create(data.email.trim());
           const oldEmail = user.email;
 
           await this.authIdentityUniquenessService.ensureEmailIsUnique(
-            newEmail.value
+            newEmail.value,
           );
 
-          const authIdentity = await this.authIdentityRepository.findByUsername(
-            oldEmail
-          );
+          const authIdentity =
+            await this.authIdentityRepository.findByUsername(oldEmail);
 
           if (authIdentity) {
             authIdentity.updateUsername(newEmail.value);
@@ -81,9 +83,10 @@ export class UpdateProfileUseCase extends BaseUseCase implements IUseCase {
           data.organizationName !== undefined &&
           data.organizationName.trim() !== ""
         ) {
-          const userWithMemberships = await this.userRepository.findByIdWithActiveMemberships(
-            data.userId
-          );
+          const userWithMemberships =
+            await this.userRepository.findByIdWithActiveMemberships(
+              data.userId,
+            );
 
           if (!userWithMemberships) {
             throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
@@ -92,35 +95,35 @@ export class UpdateProfileUseCase extends BaseUseCase implements IUseCase {
           if (
             !userWithMemberships.hasRoleInOrganization(
               data.organizationId,
-              UserRole.ADMIN
+              UserRole.ADMIN,
             )
           ) {
             throw new DomainError(
               ErrorCode.INVALID_ROLE_FOR_MEMBERSHIP,
-              "Only admins can update organization name"
+              "Only admins can update organization name",
             );
           }
 
           const organization = await this.organizationRepository.findById(
-            data.organizationId
+            data.organizationId,
           );
 
           if (!organization) {
             throw new DomainError(
               ErrorCode.ORGANIZATION_NOT_FOUND,
-              "Organization not found"
+              "Organization not found",
             );
           }
 
           if (organization.name !== data.organizationName.trim()) {
             const existingOrg = await this.organizationRepository.findByName(
-              data.organizationName.trim()
+              data.organizationName.trim(),
             );
 
             if (existingOrg && existingOrg.id !== data.organizationId) {
               throw new DomainError(
                 ErrorCode.ORGANIZATION_ALREADY_EXIST,
-                "Organization name already exists"
+                "Organization name already exists",
               );
             }
 
@@ -138,4 +141,3 @@ export class UpdateProfileUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

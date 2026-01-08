@@ -18,7 +18,7 @@ export class AddUserToOrganizationUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly memberShipRepository: IMembershipRepository
+    private readonly memberShipRepository: IMembershipRepository,
   ) {
     super(logger);
   }
@@ -33,13 +33,13 @@ export class AddUserToOrganizationUseCase
       const existingMembership =
         await this.memberShipRepository.findByUserAndOrganization(
           data.userId,
-          data.organizationId
+          data.organizationId,
         );
 
       if (existingMembership) {
         throw new DomainError(
           ErrorCode.USER_ORGANIZATION_ALREADY_EXISTS,
-          "User is already associated with this organization"
+          "User is already associated with this organization",
         );
       }
 
@@ -48,7 +48,7 @@ export class AddUserToOrganizationUseCase
       if (!ormMembership) {
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Something went wrong during creation. Please try again later."
+          "Something went wrong during creation. Please try again later.",
         );
       }
       return ormMembership.toPersistence();
@@ -57,5 +57,6 @@ export class AddUserToOrganizationUseCase
     }
   }
 
-  async withCompensation(input: IMembership): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: IMembership): Promise<void> {}
 }

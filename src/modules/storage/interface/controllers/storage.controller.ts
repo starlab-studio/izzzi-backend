@@ -1,19 +1,36 @@
-import { Controller, Post, Delete, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { AuthGuard } from 'src/core/interfaces/guards/auth.guard';
-import { GenerateUploadUrlUseCase } from '../../application/use-cases/generate-upload-url.use-case';
-import { GenerateDownloadUrlUseCase } from '../../application/use-cases/generate-download-url.use-case';
-import { DeleteFileUseCase } from '../../application/use-cases/delete-file.use-case';
-import { GenerateUploadUrlCommand } from '../../application/dto/generate-upload-url.dto';
-import { GenerateDownloadUrlCommand } from '../../application/dto/generate-download-url.dto';
-import { DeleteFileCommand } from '../../application/dto/delete-file.dto';
-import { UploadRequestDto } from '../dto/upload-request.dto';
-import { UploadResponseDto } from '../dto/upload-response.dto';
-import { DownloadRequestDto, DownloadResponseDto } from '../dto/download-request.dto';
-import { DeleteRequestDto, DeleteResponseDto } from '../dto/delete-request.dto';
+import {
+  Controller,
+  Post,
+  Delete,
+  Body,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+} from "@nestjs/swagger";
+import { AuthGuard } from "src/core/interfaces/guards/auth.guard";
+import { GenerateUploadUrlUseCase } from "../../application/use-cases/generate-upload-url.use-case";
+import { GenerateDownloadUrlUseCase } from "../../application/use-cases/generate-download-url.use-case";
+import { DeleteFileUseCase } from "../../application/use-cases/delete-file.use-case";
+import { GenerateUploadUrlCommand } from "../../application/dto/generate-upload-url.dto";
+import { GenerateDownloadUrlCommand } from "../../application/dto/generate-download-url.dto";
+import { DeleteFileCommand } from "../../application/dto/delete-file.dto";
+import { UploadRequestDto } from "../dto/upload-request.dto";
+import { UploadResponseDto } from "../dto/upload-response.dto";
+import {
+  DownloadRequestDto,
+  DownloadResponseDto,
+} from "../dto/download-request.dto";
+import { DeleteRequestDto, DeleteResponseDto } from "../dto/delete-request.dto";
 
-@ApiTags('Storage')
-@Controller('v1/storage')
+@ApiTags("Storage")
+@Controller("v1/storage")
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class StorageController {
@@ -23,7 +40,7 @@ export class StorageController {
     private readonly deleteFileUseCase: DeleteFileUseCase,
   ) {}
 
-  @Post('presigned-upload')
+  @Post("presigned-upload")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Générer une URL présignée pour l'upload d'un fichier",
@@ -41,22 +58,25 @@ export class StorageController {
   @ApiBody({ type: UploadRequestDto })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'URL présignée générée avec succès',
+    description: "URL présignée générée avec succès",
     type: UploadResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Requête invalide (type de fichier non autorisé, taille excessive, etc.)',
+    description:
+      "Requête invalide (type de fichier non autorisé, taille excessive, etc.)",
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
-    description: 'Non authentifié',
+    description: "Non authentifié",
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     description: "Erreur serveur lors de la génération de l'URL",
   })
-  async generatePresignedUploadUrl(@Body() dto: UploadRequestDto): Promise<UploadResponseDto> {
+  async generatePresignedUploadUrl(
+    @Body() dto: UploadRequestDto,
+  ): Promise<UploadResponseDto> {
     const command = new GenerateUploadUrlCommand(
       dto.fileName,
       dto.mimeType,
@@ -76,7 +96,7 @@ export class StorageController {
     };
   }
 
-  @Post('presigned-download')
+  @Post("presigned-download")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Générer une URL présignée pour le téléchargement d'un fichier",
@@ -93,7 +113,7 @@ export class StorageController {
   @ApiBody({ type: DownloadRequestDto })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'URL présignée générée avec succès',
+    description: "URL présignée générée avec succès",
     type: DownloadResponseDto,
   })
   @ApiResponse({
@@ -102,11 +122,11 @@ export class StorageController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'Fichier non trouvé',
+    description: "Fichier non trouvé",
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
-    description: 'Non authentifié',
+    description: "Non authentifié",
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -126,10 +146,10 @@ export class StorageController {
     };
   }
 
-  @Delete('file')
+  @Delete("file")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Supprimer un fichier de S3',
+    summary: "Supprimer un fichier de S3",
     description: `
       Supprime définitivement un fichier du bucket S3.
       Cette action est irréversible.
@@ -141,20 +161,20 @@ export class StorageController {
   @ApiBody({ type: DeleteRequestDto })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Fichier supprimé avec succès',
+    description: "Fichier supprimé avec succès",
     type: DeleteResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'Fichier non trouvé',
+    description: "Fichier non trouvé",
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
-    description: 'Non authentifié',
+    description: "Non authentifié",
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: 'Erreur serveur lors de la suppression',
+    description: "Erreur serveur lors de la suppression",
   })
   async deleteFile(@Body() dto: DeleteRequestDto): Promise<DeleteResponseDto> {
     const command = new DeleteFileCommand(dto.fileKey);

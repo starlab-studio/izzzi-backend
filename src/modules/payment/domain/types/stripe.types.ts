@@ -57,6 +57,12 @@ export interface StripeInvoice {
         payment_method?: string | StripePaymentMethod | null;
       }
     | null;
+
+  lines?: {
+    data: Array<{
+      metadata?: Record<string, string>;
+    }>;
+  };
 }
 
 export interface StripePaymentMethod {

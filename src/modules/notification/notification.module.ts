@@ -25,8 +25,21 @@ import { OrganizationModule } from "../organization/organization.module";
 import { ClassLimitReachedEventHandler } from "./application/handlers/class-limit-reached.handler";
 import { SubscriptionUpgradedEventHandler } from "./application/handlers/subscription-upgraded.handler";
 import { TrialEndingSoonEventHandler } from "./application/handlers/trial-ending-soon.handler";
+import { ReportGeneratedEventHandler } from "./application/handlers/report-generated.handler";
+import { AlertGeneratedEventHandler } from "./application/handlers/alert-generated.handler";
+import { SubjectCreatedEventHandler } from "./application/handlers/subject-created.handler";
+import { CreatePushNotificationUseCase } from "./application/use-cases/create-push-notification.use-case";
+import { GetNotificationsUseCase } from "./application/use-cases/get-notifications.use-case";
+import { MarkNotificationReadUseCase } from "./application/use-cases/mark-notification-read.use-case";
+import { MarkAllNotificationsReadUseCase } from "./application/use-cases/mark-all-notifications-read.use-case";
+import { NotificationController } from "./interface/controllers/notification.controller";
 import { IMembershipRepository } from "../organization/domain/repositories/membership.repository";
 import { IUserRepository } from "../organization/domain/repositories/user.repository";
+import { SubjectModule } from "../subject/subject.module";
+import { ISubjectRepository } from "../subject/domain/repositories/subject.repository";
+import { NotificationGateway } from "./infrastructure/gateways/notification.gateway";
+import { PushProvider } from "./infrastructure/providers/push.provider";
+import { INotificationGateway } from "./application/gateways/notification-gateway.interface";
 
 @Module({
   imports: [
@@ -35,6 +48,7 @@ import { IUserRepository } from "../organization/domain/repositories/user.reposi
     forwardRef(() => CoreModule),
     forwardRef(() => SubscriptionModule),
     forwardRef(() => OrganizationModule),
+    forwardRef(() => SubjectModule),
   ],
   providers: [
     LoggerService,
@@ -45,6 +59,16 @@ import { IUserRepository } from "../organization/domain/repositories/user.reposi
       useFactory: (configService: ConfigService) =>
         EmailProvider.getInstance(configService),
       inject: [ConfigService],
+    },
+    NotificationGateway,
+    {
+      provide: "NOTIFICATION_GATEWAY",
+      useExisting: NotificationGateway,
+    },
+    {
+      provide: PushProvider,
+      useFactory: (gateway: INotificationGateway) => new PushProvider(gateway),
+      inject: ["NOTIFICATION_GATEWAY"],
     },
     {
       provide: CreateEmailNotificationUseCase,
@@ -164,8 +188,108 @@ import { IUserRepository } from "../organization/domain/repositories/user.reposi
         new TrialEndingSoonEventHandler(logger, createEmailNotificationUseCase),
       inject: [LoggerService, CreateEmailNotificationUseCase],
     },
+    {
+      provide: CreatePushNotificationUseCase,
+      useFactory: (
+        notificationDomainService: NotificationDomainService,
+        notificationRepository: INotificationRespository
+      ) =>
+        new CreatePushNotificationUseCase(
+          notificationDomainService,
+          notificationRepository
+        ),
+      inject: [NotificationDomainService, NotificationRepository],
+    },
+    {
+      provide: ReportGeneratedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        createPushNotificationUseCase: CreatePushNotificationUseCase,
+        membershipRepository: IMembershipRepository,
+        userRepository: IUserRepository
+      ) =>
+        new ReportGeneratedEventHandler(
+          logger,
+          createEmailNotificationUseCase,
+          createPushNotificationUseCase,
+          membershipRepository,
+          userRepository
+        ),
+      inject: [
+        LoggerService,
+        CreateEmailNotificationUseCase,
+        CreatePushNotificationUseCase,
+        "MEMBERSHIP_REPOSITORY",
+        "USER_REPOSITORY",
+      ],
+    },
+    {
+      provide: AlertGeneratedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
+        createPushNotificationUseCase: CreatePushNotificationUseCase,
+        membershipRepository: IMembershipRepository,
+        userRepository: IUserRepository
+      ) =>
+        new AlertGeneratedEventHandler(
+          logger,
+          createEmailNotificationUseCase,
+          createPushNotificationUseCase,
+          membershipRepository,
+          userRepository
+        ),
+      inject: [
+        LoggerService,
+        CreateEmailNotificationUseCase,
+        CreatePushNotificationUseCase,
+        "MEMBERSHIP_REPOSITORY",
+        "USER_REPOSITORY",
+      ],
+    },
+    {
+      provide: SubjectCreatedEventHandler,
+      useFactory: (
+        logger: ILoggerService,
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+      ) =>
+        new SubjectCreatedEventHandler(logger, createEmailNotificationUseCase),
+      inject: [LoggerService, CreateEmailNotificationUseCase],
+    },
+    {
+      provide: GetNotificationsUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        notificationRepository: INotificationRespository,
+        subjectRepository: ISubjectRepository
+      ) =>
+        new GetNotificationsUseCase(
+          logger,
+          notificationRepository,
+          subjectRepository
+        ),
+      inject: [LoggerService, NotificationRepository, "SUBJECT_REPOSITORY"],
+    },
+    {
+      provide: MarkNotificationReadUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        notificationRepository: INotificationRespository
+      ) => new MarkNotificationReadUseCase(logger, notificationRepository),
+      inject: [LoggerService, NotificationRepository],
+    },
+    {
+      provide: MarkAllNotificationsReadUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        notificationRepository: INotificationRespository
+      ) => new MarkAllNotificationsReadUseCase(logger, notificationRepository),
+      inject: [LoggerService, NotificationRepository],
+    },
   ],
-  exports: [CreateEmailNotificationUseCase],
+  controllers: [NotificationController],
+  exports: [CreateEmailNotificationUseCase, CreatePushNotificationUseCase],
 })
 export class NotificationModule {
   constructor(
@@ -173,19 +297,27 @@ export class NotificationModule {
     private readonly userCreatedEventHandler: UserCreatedEventHandler,
     private readonly invitationSentEventHandler: InvitationSentEventHandler,
     private readonly emailNotificationProvider: EmailProvider,
+    private readonly pushProvider: PushProvider,
     private readonly classCreatedEventHandler: ClassCreatedEventHandler,
     private readonly invitationAcceptedEventHandler: InvitationAcceptedEventHandler,
     private readonly classArchivedEventHandler: ClassArchivedEventHandler,
     private readonly subscriptionActivatedEventHandler: SubscriptionActivatedEventHandler,
     private readonly classLimitReachedEventHandler: ClassLimitReachedEventHandler,
     private readonly subscriptionUpgradedEventHandler: SubscriptionUpgradedEventHandler,
-    private readonly trialEndingSoonEventHandler: TrialEndingSoonEventHandler
+    private readonly trialEndingSoonEventHandler: TrialEndingSoonEventHandler,
+    private readonly reportGeneratedEventHandler: ReportGeneratedEventHandler,
+    private readonly alertGeneratedEventHandler: AlertGeneratedEventHandler,
+    private readonly subjectCreatedEventHandler: SubjectCreatedEventHandler
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     NotificationProviderFactory.register(
       NotificationMode.EMAIL,
       this.emailNotificationProvider
+    );
+    NotificationProviderFactory.register(
+      NotificationMode.PUSH,
+      this.pushProvider
     );
 
     this.eventHandlerRegistry.registerHandler(
@@ -231,6 +363,21 @@ export class NotificationModule {
     this.eventHandlerRegistry.registerHandler(
       "subscription.trial.ending.soon",
       this.trialEndingSoonEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "report.generated",
+      this.reportGeneratedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "alert.generated",
+      this.alertGeneratedEventHandler
+    );
+
+    this.eventHandlerRegistry.registerHandler(
+      "subject.created",
+      this.subjectCreatedEventHandler
     );
   }
 }

@@ -105,7 +105,9 @@ export class UserRepository
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     const normalizedEmail = email.trim().toLowerCase();
-    const ormEntity = await this.directRepository.findOne({ where: { email: normalizedEmail } });
+    const ormEntity = await this.directRepository.findOne({
+      where: { email: normalizedEmail },
+    });
     return this.toEntity(ormEntity, []);
   }
 
@@ -132,8 +134,11 @@ export class UserRepository
       updatedAt: data.updatedAt,
     });
     // Exclude memberships from reconstitute to avoid type mismatch
-    const { memberships, ...userWithoutMemberships } = saved;
-    return UserEntity.reconstitute({ ...userWithoutMemberships, memberships: [] });
+    const { memberships: _memberships, ...userWithoutMemberships } = saved;
+    return UserEntity.reconstitute({
+      ...userWithoutMemberships,
+      memberships: [],
+    });
   }
 
   async delete(id: string): Promise<void> {

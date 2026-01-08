@@ -8,7 +8,7 @@ import { ISubscriptionRepository } from "../../domain/repositories/subscription.
 export class SubscriptionRepository implements ISubscriptionRepository {
   constructor(
     @InjectRepository(UserSubscriptionModel)
-    private ormRepository: Repository<IUserSubscription>
+    private ormRepository: Repository<IUserSubscription>,
   ) {}
 
   async findById(id: string): Promise<SubscriptionEntity | null> {
@@ -22,7 +22,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
       order: { createdAt: "DESC" },
     });
     return ormEntities.map((ormEntity) =>
-      SubscriptionEntity.reconstitute(ormEntity)
+      SubscriptionEntity.reconstitute(ormEntity),
     );
   }
 
@@ -36,7 +36,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
   }
 
   async findByOrganizationId(
-    organizationId: string
+    organizationId: string,
   ): Promise<SubscriptionEntity | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { organizationId },
@@ -46,8 +46,20 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     return SubscriptionEntity.reconstitute(ormEntity);
   }
 
+  async findAllByOrganizationId(
+    organizationId: string,
+  ): Promise<SubscriptionEntity[]> {
+    const ormEntities = await this.ormRepository.find({
+      where: { organizationId },
+      order: { createdAt: "DESC" },
+    });
+    return ormEntities.map((ormEntity) =>
+      SubscriptionEntity.reconstitute(ormEntity),
+    );
+  }
+
   async findByStripeSubscriptionId(
-    stripeSubId: string
+    stripeSubId: string,
   ): Promise<SubscriptionEntity | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { stripeSubscriptionId: stripeSubId },
@@ -57,7 +69,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
   }
 
   async findActiveByOrganizationId(
-    organizationId: string
+    organizationId: string,
   ): Promise<SubscriptionEntity | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: [
@@ -76,7 +88,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
       order: { createdAt: "DESC" },
     });
     return ormEntities.map((ormEntity) =>
-      SubscriptionEntity.reconstitute(ormEntity)
+      SubscriptionEntity.reconstitute(ormEntity),
     );
   }
 
@@ -91,7 +103,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
       .getMany();
 
     return ormEntities.map((ormEntity) =>
-      SubscriptionEntity.reconstitute(ormEntity)
+      SubscriptionEntity.reconstitute(ormEntity),
     );
   }
 
@@ -120,7 +132,25 @@ export class SubscriptionRepository implements ISubscriptionRepository {
       .getMany();
 
     return ormEntities.map((ormEntity) =>
-      SubscriptionEntity.reconstitute(ormEntity)
+      SubscriptionEntity.reconstitute(ormEntity),
+    );
+  }
+
+  async findExpiredWithStripeId(
+    beforeDate: Date,
+  ): Promise<SubscriptionEntity[]> {
+    const ormEntities = await this.ormRepository
+      .createQueryBuilder("subscription")
+      .where("subscription.current_period_end <= :beforeDate", { beforeDate })
+      .andWhere("subscription.stripe_subscription_id IS NOT NULL")
+      .andWhere("subscription.status IN (:...statuses)", {
+        statuses: ["active", "past_due", "trial", "cancelled"],
+      })
+      .orderBy("subscription.current_period_end", "ASC")
+      .getMany();
+
+    return ormEntities.map((ormEntity) =>
+      SubscriptionEntity.reconstitute(ormEntity),
     );
   }
 

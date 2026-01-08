@@ -16,13 +16,13 @@ export class ApplyPendingQuantityUseCase
 {
   constructor(
     logger: ILoggerService,
-    private readonly subscriptionRepository: ISubscriptionRepository
+    private readonly subscriptionRepository: ISubscriptionRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    input: ApplyPendingQuantityInput
+    input: ApplyPendingQuantityInput,
   ): Promise<ApplyPendingQuantityOutput> {
     const now = new Date();
 
@@ -32,7 +32,7 @@ export class ApplyPendingQuantityUseCase
     if (input.organizationId) {
       const subscription =
         await this.subscriptionRepository.findByOrganizationId(
-          input.organizationId
+          input.organizationId,
         );
       subscriptions = subscription ? [subscription] : [];
     } else {
@@ -44,7 +44,7 @@ export class ApplyPendingQuantityUseCase
         sub !== null &&
         sub.pendingQuantity !== null &&
         sub.currentPeriodEnd &&
-        sub.currentPeriodEnd <= now
+        sub.currentPeriodEnd <= now,
     ) as SubscriptionEntity[];
 
     let appliedCount = 0;
@@ -59,7 +59,7 @@ export class ApplyPendingQuantityUseCase
       appliedCount++;
 
       this.logger.info(
-        `Applied pending quantity ${pendingQuantity} to subscription ${subscription.id} for organization ${subscription.organizationId}. Previous quantity: ${previousQuantity}, new quantity: ${subscription.quantity}`
+        `Applied pending quantity ${pendingQuantity} to subscription ${subscription.id} for organization ${subscription.organizationId}. Previous quantity: ${previousQuantity}, new quantity: ${subscription.quantity}`,
       );
     }
 

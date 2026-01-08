@@ -37,18 +37,18 @@ export class GetFeedbackBySubjectUseCase
     private readonly responseVisibilityService: ResponseVisibilityService,
     private readonly subscriptionFeatureService: SubscriptionFeatureService,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: GetFeedbackBySubjectInput
+    data: GetFeedbackBySubjectInput,
   ): Promise<GetFeedbackBySubjectOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       const subject = await this.subjectRepository.findById(data.subjectId);
@@ -59,7 +59,7 @@ export class GetFeedbackBySubjectUseCase
       if (subject.toPersistence().organizationId !== data.organizationId) {
         throw new DomainError(
           ErrorCode.UNAUTHORIZED_ACCESS,
-          "Unauthorized access to subject"
+          "Unauthorized access to subject",
         );
       }
 
@@ -71,13 +71,13 @@ export class GetFeedbackBySubjectUseCase
       if (quiz.toPersistence().subjectId !== data.subjectId) {
         throw new DomainError(
           ErrorCode.UNAUTHORIZED_ACCESS,
-          "Quiz does not belong to subject"
+          "Quiz does not belong to subject",
         );
       }
 
       const subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          data.organizationId
+          data.organizationId,
         );
       const plan = subscription
         ? await this.subscriptionPlanRepository.findById(subscription.planId)
@@ -85,25 +85,25 @@ export class GetFeedbackBySubjectUseCase
 
       const allResponses = await this.responseRepository.findByQuiz(quiz.id);
       const responseEntities = allResponses.map((r) =>
-        ResponseEntity.reconstitute(r)
+        ResponseEntity.reconstitute(r),
       );
 
       const visibleResponses =
         this.responseVisibilityService.getVisibleResponses(
           responseEntities,
           subscription,
-          plan
+          plan,
         );
 
       const visibilityStats =
         this.responseVisibilityService.calculateVisibilityStats(
           responseEntities,
           subscription,
-          plan
+          plan,
         );
 
       const template = await this.quizTemplateRepository.findById(
-        quiz.toPersistence().templateId
+        quiz.toPersistence().templateId,
       );
       if (!template) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Template not found");
@@ -114,12 +114,12 @@ export class GetFeedbackBySubjectUseCase
       const feedbackResponses: FeedbackResponse[] = visibleResponses.map(
         (response) => {
           const responseAnswers = allAnswers.filter(
-            (a) => a.responseId === response.id
+            (a) => a.responseId === response.id,
           );
 
           const answers = responseAnswers.map((answer) => {
             const question = template.questionsList.find(
-              (q) => q.id === answer.questionId
+              (q) => q.id === answer.questionId,
             );
 
             return {
@@ -138,7 +138,7 @@ export class GetFeedbackBySubjectUseCase
             submittedAt: response.submittedAt.toISOString(),
             answers,
           };
-        }
+        },
       );
 
       return {

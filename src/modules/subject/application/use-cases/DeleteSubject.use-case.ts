@@ -32,19 +32,29 @@ export class DeleteSubjectUseCase extends BaseUseCase implements IUseCase {
         data.organizationId,
       );
 
-      const subjectEntity = await this.subjectRepository.findById(data.subjectId);
+      const subjectEntity = await this.subjectRepository.findById(
+        data.subjectId,
+      );
       if (!subjectEntity) {
         throw new DomainError(ErrorCode.SUBJECT_NOT_FOUND, "Subject not found");
       }
 
       if (subjectEntity.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to subject");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to subject",
+        );
       }
 
       // Supprime toutes les assignations de cette matière avant de supprimer la matière
-      const assignments = await this.subjectAssignmentRepository.findBySubject(data.subjectId);
+      const assignments = await this.subjectAssignmentRepository.findBySubject(
+        data.subjectId,
+      );
       for (const assignment of assignments) {
-        await this.subjectAssignmentRepository.remove(assignment.subjectId, assignment.classId);
+        await this.subjectAssignmentRepository.remove(
+          assignment.subjectId,
+          assignment.classId,
+        );
       }
 
       await this.subjectRepository.delete(data.subjectId);
@@ -55,4 +65,3 @@ export class DeleteSubjectUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

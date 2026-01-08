@@ -5,7 +5,7 @@ export class PresignedUrlEntity {
     public readonly createdAt: Date = new Date(),
   ) {
     if (expiresIn <= 0) {
-      throw new Error('Expiration time must be greater than 0');
+      throw new Error("Expiration time must be greater than 0");
     }
   }
 

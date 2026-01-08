@@ -11,7 +11,7 @@ import { INotificationRespository } from "../../domain/repositories/notification
 export class NotificationRepository implements INotificationRespository {
   constructor(
     @InjectRepository(NotificationModel)
-    private ormRepository: Repository<NotificationModel>
+    private ormRepository: Repository<NotificationModel>,
   ) {}
 
   async findById(id: string): Promise<INotification | null> {
@@ -25,9 +25,20 @@ export class NotificationRepository implements INotificationRespository {
 
   async update(
     id: string,
-    entity: Partial<INotification>
+    entity: Partial<INotification>,
   ): Promise<INotification> {
     await this.ormRepository.update(id, entity);
     return (await this.findById(id)) as INotification;
+  }
+
+  async findByTarget(userId: string, mode?: string): Promise<INotification[]> {
+    const where: any = { target: userId };
+    if (mode) {
+      where.mode = mode;
+    }
+    return await this.ormRepository.find({
+      where,
+      order: { createdAt: "DESC" },
+    });
   }
 }

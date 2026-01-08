@@ -16,7 +16,8 @@ export type StripeSubscriptionStatus =
   | "past_due"
   | "canceled"
   | "unpaid"
-  | "incomplete";
+  | "incomplete"
+  | "incomplete_expired";
 
 export class SubscriptionEntity {
   private props: IUserSubscription;
@@ -282,7 +283,7 @@ export class SubscriptionEntity {
 
     if (this.props.status !== "trial" && this.props.status !== "pending") {
       throw new Error(
-        `Cannot activate subscription with status: ${this.props.status}`
+        `Cannot activate subscription with status: ${this.props.status}`,
       );
     }
 
@@ -318,7 +319,7 @@ export class SubscriptionEntity {
 
     if (this.props.status !== "pending") {
       throw new Error(
-        `Cannot mark subscription as failed with status: ${this.props.status}`
+        `Cannot mark subscription as failed with status: ${this.props.status}`,
       );
     }
 
@@ -418,6 +419,7 @@ export class SubscriptionEntity {
       canceled: "cancelled",
       unpaid: "expired",
       incomplete: "trial",
+      incomplete_expired: "failed",
     };
 
     const mappedStatus = statusMap[data.status];

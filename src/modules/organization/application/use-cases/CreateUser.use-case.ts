@@ -17,7 +17,7 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly eventStore: EventStore,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
   ) {
     super(logger);
   }
@@ -28,7 +28,7 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
       if (existingUser)
         throw new DomainError(
           ErrorCode.USER_ALREADY_EXISTS,
-          "User already exist"
+          "User already exist",
         );
 
       const user = UserEntity.create({ ...data });
@@ -36,7 +36,7 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
       if (!ormUser)
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Something went wrong during creation. Please try again later."
+          "Something went wrong during creation. Please try again later.",
         );
       return ormUser;
     } catch (error) {
@@ -44,21 +44,22 @@ export class CreateUserUseCase extends BaseUseCase implements IUseCase {
         new UserFailedEvent({
           username: data.email,
           authIdentityId: data.authIdentityId,
-        })
+        }),
       );
       this.handleError(error);
     }
   }
 
-  async withCompensation(data: {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async withCompensation(_data: {
     username: string;
     authIdentityId: string;
   }): Promise<void> {
     this.eventStore.publish(
       new UserFailedEvent({
-        username: data.username,
-        authIdentityId: data.authIdentityId,
-      })
+        username: _data.username,
+        authIdentityId: _data.authIdentityId,
+      }),
     );
   }
 }

@@ -5,7 +5,6 @@ import type {
   StripeSubscriptionStatus,
   StripeInvoice,
   StripePaymentMethod,
-  StripeEvent,
   StripeProrationBehavior,
   StripePrice,
 } from "../types/stripe.types";
@@ -42,6 +41,7 @@ export interface IStripeSyncService {
     newPriceId?: string,
     options?: {
       prorationBehavior?: StripeProrationBehavior;
+      billingCycleAnchor?: "now" | "unchanged";
     }
   ): Promise<StripeSubscription>;
 

@@ -63,4 +63,3 @@ export class AnswerEntity extends BaseEntity {
     return { ...this.props };
   }
 }
-

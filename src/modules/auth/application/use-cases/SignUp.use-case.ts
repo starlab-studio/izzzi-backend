@@ -10,7 +10,7 @@ import {
 export class SignUpUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly authProvider: IAuthStrategy
+    private readonly authProvider: IAuthStrategy,
   ) {
     super(logger);
   }

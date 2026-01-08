@@ -18,6 +18,7 @@ describe("UpdateSubscriptionQuantityUseCase", () => {
   let userRepository: jest.Mocked<IUserRepository>;
   let stripeSyncService: jest.Mocked<IStripeSyncService>;
   let eventStore: jest.Mocked<IEventStore>;
+  let classRepository: any;
   let logger: jest.Mocked<ILoggerService>;
 
   const mockUser = {
@@ -77,6 +78,10 @@ describe("UpdateSubscriptionQuantityUseCase", () => {
       publish: jest.fn(),
     };
 
+    const mockClassRepo = {
+      countByOrganization: jest.fn().mockResolvedValue(0),
+    };
+
     const mockLogger = {
       log: jest.fn(),
       error: jest.fn(),
@@ -91,6 +96,7 @@ describe("UpdateSubscriptionQuantityUseCase", () => {
     userRepository = mockUserRepo as any;
     stripeSyncService = mockStripeSync as any;
     eventStore = mockEventStore as any;
+    classRepository = mockClassRepo;
     logger = mockLogger as any;
     useCase = new UpdateSubscriptionQuantityUseCase(
       logger,
@@ -99,7 +105,8 @@ describe("UpdateSubscriptionQuantityUseCase", () => {
       pricingTierRepository,
       userRepository,
       stripeSyncService,
-      eventStore
+      eventStore,
+      classRepository
     );
   });
 

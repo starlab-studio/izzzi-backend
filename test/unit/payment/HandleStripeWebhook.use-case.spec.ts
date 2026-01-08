@@ -11,6 +11,9 @@ describe("HandleStripeWebhookUseCase", () => {
   let syncInvoiceUseCase: jest.Mocked<SyncInvoiceFromStripeUseCase>;
   let syncSubscriptionUseCase: jest.Mocked<SyncSubscriptionFromStripeUseCase>;
   let stripeSyncService: jest.Mocked<IStripeSyncService>;
+  let subscriptionRepository: any;
+  let pricingTierRepository: any;
+  let invoiceRepository: any;
   let logger: jest.Mocked<ILoggerService>;
 
   beforeEach(async () => {
@@ -25,6 +28,20 @@ describe("HandleStripeWebhookUseCase", () => {
     const mockStripeSync = {
       getInvoice: jest.fn(),
       getSubscription: jest.fn(),
+      updateSubscriptionQuantity: jest.fn(),
+    };
+
+    const mockSubscriptionRepo = {
+      findById: jest.fn(),
+      save: jest.fn(),
+    };
+
+    const mockPricingTierRepo = {
+      findByPlanIdAndBillingPeriod: jest.fn(),
+    };
+
+    const mockInvoiceRepo = {
+      findByStripeInvoiceId: jest.fn(),
     };
 
     const mockLogger = {
@@ -38,12 +55,18 @@ describe("HandleStripeWebhookUseCase", () => {
     syncInvoiceUseCase = mockSyncInvoice as any;
     syncSubscriptionUseCase = mockSyncSubscription as any;
     stripeSyncService = mockStripeSync as any;
+    subscriptionRepository = mockSubscriptionRepo;
+    pricingTierRepository = mockPricingTierRepo;
+    invoiceRepository = mockInvoiceRepo;
     logger = mockLogger as any;
     useCase = new HandleStripeWebhookUseCase(
       logger,
       syncInvoiceUseCase,
       syncSubscriptionUseCase,
-      stripeSyncService
+      stripeSyncService,
+      subscriptionRepository,
+      pricingTierRepository,
+      invoiceRepository
     );
   });
 

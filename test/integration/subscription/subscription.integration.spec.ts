@@ -232,10 +232,10 @@ describe("Subscription Integration", () => {
       clientSecret: null,
       status: "active",
     });
-    jest.spyOn(stripeSyncService, "updateSubscriptionQuantity").mockResolvedValue({
-      id: "sub_update_123",
-      quantity: 10,
-    } as any);
+    jest.spyOn(stripeSyncService, "createPaymentIntent").mockResolvedValue({
+      paymentIntentId: "pi_upgrade_123",
+      clientSecret: "secret_upgrade_123",
+    });
 
     const createResult = await createSubscriptionUseCase.execute({
       userId: savedUser.id,
@@ -269,12 +269,14 @@ describe("Subscription Integration", () => {
 
     expect(result.newQuantity).toBe(10);
     expect(result.isUpgrade).toBe(true);
-    expect(stripeSyncService.updateSubscriptionQuantity).toHaveBeenCalled();
+    expect(result.requiresPayment).toBe(true);
+    expect(result.stripeClientSecret).toBe("secret_upgrade_123");
+    expect(stripeSyncService.createPaymentIntent).toHaveBeenCalled();
 
     const updatedSubscription = await subscriptionRepository.findById(subscription.id);
     expect(updatedSubscription).toBeDefined();
     if (updatedSubscription) {
-      expect(updatedSubscription.quantity).toBe(10);
+      expect(updatedSubscription.quantity).toBe(5);
     }
   });
 

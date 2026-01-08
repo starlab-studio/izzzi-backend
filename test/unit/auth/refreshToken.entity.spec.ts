@@ -29,6 +29,7 @@ describe("RefreshToken", () => {
         "token-hash",
         "user-123",
         expiresAt,
+        undefined,
         "device-info",
         "192.168.1.1"
       );
@@ -151,10 +152,11 @@ describe("RefreshToken", () => {
         "token-hash",
         "user-123",
         expiresAt,
-        "device-info"
+        undefined,
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/91.0.4472.124"
       );
 
-      expect(token.matchesDevice("device-info")).toBe(true);
+      expect(token.matchesDevice("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/92.0.4515.159")).toBe(true);
     });
 
     it("should return false when device does not match", () => {
@@ -165,10 +167,11 @@ describe("RefreshToken", () => {
         "token-hash",
         "user-123",
         expiresAt,
-        "device-info"
+        undefined,
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/91.0.4472.124"
       );
 
-      expect(token.matchesDevice("other-device")).toBe(false);
+      expect(token.matchesDevice("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Firefox/89.0")).toBe(false);
     });
 
     it("should return true when no device info stored", () => {
@@ -255,6 +258,7 @@ describe("RefreshToken", () => {
         "token-hash",
         "user-123",
         expiresAt,
+        undefined,
         "device-info",
         "192.168.1.1"
       );

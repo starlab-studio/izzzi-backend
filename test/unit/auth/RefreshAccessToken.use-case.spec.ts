@@ -2,10 +2,12 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { RefreshAccessTokenUseCase } from "src/modules/auth/application/use-cases/RefreshAccessToken.use-case";
 import { IAuthStrategy, RefreshTokenData, SignInResponse } from "src/modules/auth/domain/types";
 import { ILoggerService, DomainError, ErrorCode } from "src/core";
+import { RefreshToken } from "src/modules/auth/domain/entities/refreshToken.entity";
 
 describe("RefreshAccessTokenUseCase", () => {
   let useCase: RefreshAccessTokenUseCase;
   let authProvider: jest.Mocked<IAuthStrategy>;
+  let refreshTokenRepository: any;
   let logger: jest.Mocked<ILoggerService>;
 
   beforeEach(() => {
@@ -22,6 +24,12 @@ describe("RefreshAccessTokenUseCase", () => {
       deleteIdentity: jest.fn(),
     };
 
+    const mockRefreshTokenRepo = {
+      findByTokenHash: jest.fn(),
+      delete: jest.fn(),
+      save: jest.fn(),
+    };
+
     const mockLogger = {
       log: jest.fn(),
       error: jest.fn(),
@@ -31,8 +39,9 @@ describe("RefreshAccessTokenUseCase", () => {
     };
 
     authProvider = mockAuthProvider as any;
+    refreshTokenRepository = mockRefreshTokenRepo;
     logger = mockLogger as any;
-    useCase = new RefreshAccessTokenUseCase(logger, authProvider);
+    useCase = new RefreshAccessTokenUseCase(logger, [authProvider], refreshTokenRepository);
   });
 
   it("should refresh access token successfully", async () => {
@@ -45,6 +54,17 @@ describe("RefreshAccessTokenUseCase", () => {
       refreshToken: "new-refresh-token",
     };
 
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    const mockToken = RefreshToken.create(
+      "token-hash",
+      "user-123",
+      expiresAt,
+      "CUSTOM"
+    );
+
+    refreshTokenRepository.findByTokenHash.mockResolvedValue(mockToken);
     authProvider.refreshToken.mockResolvedValue(expectedResponse);
 
     const result = await useCase.execute(data);
@@ -58,9 +78,7 @@ describe("RefreshAccessTokenUseCase", () => {
       refreshToken: "invalid-token",
     };
 
-    authProvider.refreshToken.mockRejectedValue(
-      new DomainError(ErrorCode.INVALID_TOKEN, "Invalid refresh token")
-    );
+    refreshTokenRepository.findByTokenHash.mockResolvedValue(null);
 
     await expect(useCase.execute(data)).rejects.toThrow(DomainError);
   });
@@ -70,9 +88,17 @@ describe("RefreshAccessTokenUseCase", () => {
       refreshToken: "expired-token",
     };
 
-    authProvider.refreshToken.mockRejectedValue(
-      new DomainError(ErrorCode.TOKEN_EXPIRED, "Refresh token expired")
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() - 1);
+
+    const mockExpiredToken = RefreshToken.create(
+      "token-hash",
+      "user-123",
+      expiresAt,
+      "CUSTOM"
     );
+
+    refreshTokenRepository.findByTokenHash.mockResolvedValue(mockExpiredToken);
 
     await expect(useCase.execute(data)).rejects.toThrow(DomainError);
   });
@@ -82,6 +108,17 @@ describe("RefreshAccessTokenUseCase", () => {
       refreshToken: "refresh-token-123",
     };
 
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    const mockToken = RefreshToken.create(
+      "token-hash",
+      "user-123",
+      expiresAt,
+      "CUSTOM"
+    );
+
+    refreshTokenRepository.findByTokenHash.mockResolvedValue(mockToken);
     authProvider.refreshToken.mockRejectedValue(new Error("Unexpected error"));
 
     await expect(useCase.execute(data)).rejects.toThrow();

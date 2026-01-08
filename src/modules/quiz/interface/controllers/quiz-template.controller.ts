@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Param, Body, UseGuards, Req } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
   ApiParam,
+  ApiBody,
 } from "@nestjs/swagger";
 import {
   BaseController,
@@ -16,6 +17,7 @@ import {
   type JWTPayload,
 } from "src/core";
 import { QuizFacade } from "../../application/facades/quiz.facade";
+import { CreateQuizTemplatePairDto } from "../dto/quiz.dto";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard)
@@ -89,6 +91,43 @@ export class QuizTemplateController extends BaseController {
       templateId,
       organizationId,
       userId: user.userId,
+    });
+
+    return this.success(result);
+  }
+
+  @Post("pairs")
+  @ApiOperation({
+    summary: "Créer une paire de templates de questionnaires",
+    description: "Crée une nouvelle paire de templates (pendant le cours et après le cours). \
+    Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @ApiParam({
+    name: "organizationId",
+    description: "ID de l'organisation",
+    example: "d405cc32-58ac-42a0-9c2d-e9e81398bc73",
+  })
+  @ApiBody({ type: CreateQuizTemplatePairDto })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 201,
+    description: "Paire de templates créée avec succès",
+  })
+  @ApiResponse({ status: 400, description: "Données invalides" })
+  @ApiResponse({ status: 401, description: "Authentification requise" })
+  @ApiResponse({ status: 403, description: "Accès interdit" })
+  async createTemplatePair(
+    @Param("organizationId") organizationId: string,
+    @Body() dto: CreateQuizTemplatePairDto,
+    @CurrentUser() user: JWTPayload,
+  ) {
+    const result = await this.quizFacade.createQuizTemplatePair({
+      name: dto.name,
+      description: dto.description,
+      organizationId,
+      userId: user.userId,
+      duringCourseTemplate: dto.duringCourseTemplate,
+      afterCourseTemplate: dto.afterCourseTemplate,
     });
 
     return this.success(result);

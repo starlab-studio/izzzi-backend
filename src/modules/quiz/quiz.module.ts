@@ -39,6 +39,7 @@ import { IStudentQuizTokenRepository } from "./domain/repositories/student-quiz-
 import { GetQuizTemplatePairsUseCase } from "./application/use-cases/GetQuizTemplatePairs.use-case";
 import { GetQuizTemplateByIdUseCase } from "./application/use-cases/GetQuizTemplateById.use-case";
 import { CreateQuizTemplateUseCase } from "./application/use-cases/CreateQuizTemplate.use-case";
+import { CreateQuizTemplatePairUseCase } from "./application/use-cases/CreateQuizTemplatePair.use-case";
 import { AssignQuizPairToSubjectUseCase } from "./application/use-cases/AssignQuizPairToSubject.use-case";
 import { ReassignQuizPairToSubjectUseCase } from "./application/use-cases/ReassignQuizPairToSubject.use-case";
 import { GetQuizzesBySubjectUseCase } from "./application/use-cases/GetQuizzesBySubject.use-case";
@@ -248,6 +249,29 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           organizationFacade
         ),
       inject: [LoggerService, "QUIZ_TEMPLATE_REPOSITORY", OrganizationFacade],
+    },
+    {
+      provide: CreateQuizTemplatePairUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        unitOfWork: IUnitOfWork,
+        quizTemplateRepository: IQuizTemplateRepository,
+        quizTemplatePairRepository: IQuizTemplatePairRepository,
+        organizationFacade: OrganizationFacade
+      ) =>
+        new CreateQuizTemplatePairUseCase(
+          logger,
+          quizTemplateRepository,
+          quizTemplatePairRepository,
+          organizationFacade
+        ),
+      inject: [
+        LoggerService,
+        TypeOrmUnitOfWork,
+        "QUIZ_TEMPLATE_REPOSITORY",
+        "QUIZ_TEMPLATE_PAIR_REPOSITORY",
+        OrganizationFacade,
+      ],
     },
     {
       provide: AssignQuizPairToSubjectUseCase,
@@ -632,6 +656,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         getQuizTemplatePairsUseCase: GetQuizTemplatePairsUseCase,
         getQuizTemplateByIdUseCase: GetQuizTemplateByIdUseCase,
         createQuizTemplateUseCase: CreateQuizTemplateUseCase,
+        createQuizTemplatePairUseCase: CreateQuizTemplatePairUseCase,
         assignQuizPairToSubjectUseCase: AssignQuizPairToSubjectUseCase,
         reassignQuizPairToSubjectUseCase: ReassignQuizPairToSubjectUseCase,
         getQuizzesBySubjectUseCase: GetQuizzesBySubjectUseCase,
@@ -649,6 +674,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           getQuizTemplatePairsUseCase,
           getQuizTemplateByIdUseCase,
           createQuizTemplateUseCase,
+          createQuizTemplatePairUseCase,
           assignQuizPairToSubjectUseCase,
           reassignQuizPairToSubjectUseCase,
           getQuizzesBySubjectUseCase,
@@ -666,6 +692,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         GetQuizTemplatePairsUseCase,
         GetQuizTemplateByIdUseCase,
         CreateQuizTemplateUseCase,
+        CreateQuizTemplatePairUseCase,
         AssignQuizPairToSubjectUseCase,
         ReassignQuizPairToSubjectUseCase,
         GetQuizzesBySubjectUseCase,

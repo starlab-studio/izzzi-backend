@@ -13,7 +13,7 @@ export class EventStore implements IEventStore {
 
   async publish(event: IDomainEvent) {
     this.events.push(event);
-    this.eventQueue.add(event.name, event, {
+    void this.eventQueue.add(event.name, event, {
       attempts: 3,
       backoff: { type: "exponential", delay: 2000 },
       removeOnComplete: true,

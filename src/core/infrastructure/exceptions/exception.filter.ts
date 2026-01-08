@@ -67,10 +67,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     const status = HttpStatus.INTERNAL_SERVER_ERROR;
-    this.logger.error(
-      `HTTP 500 ${request.method} ${request.url}`,
-      (exception as any)?.stack
-    );
+    const errorStack =
+      exception instanceof Error
+        ? exception.stack
+        : typeof exception === "object" &&
+            exception !== null &&
+            "stack" in exception
+          ? String(exception.stack)
+          : undefined;
+    this.logger.error(`HTTP 500 ${request.method} ${request.url}`, errorStack);
     return response.status(status).json({
       success: false,
       statusCode: status,

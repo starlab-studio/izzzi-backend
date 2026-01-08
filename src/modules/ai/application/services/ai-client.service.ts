@@ -98,12 +98,16 @@ export class AiClientService {
 
       if (error.response) {
         // Erreur HTTP de l'API
+        const statusCode =
+          typeof error.response.status === "number"
+            ? error.response.status
+            : HttpStatus.INTERNAL_SERVER_ERROR;
         throw new HttpException(
           {
             message: "AI service error",
             details: error.response.data,
           },
-          error.response.status || HttpStatus.INTERNAL_SERVER_ERROR
+          statusCode
         );
       } else if (error.request) {
         // Pas de réponse (service indisponible)
@@ -173,12 +177,16 @@ export class AiClientService {
       );
 
       if (error.response) {
+        const statusCode =
+          typeof error.response.status === "number"
+            ? error.response.status
+            : HttpStatus.INTERNAL_SERVER_ERROR;
         throw new HttpException(
           {
             message: "AI service error",
             details: error.response.data,
           },
-          error.response.status || HttpStatus.INTERNAL_SERVER_ERROR
+          statusCode
         );
       } else if (error.request) {
         throw new HttpException(

@@ -32,7 +32,7 @@ import { OrganizationModule } from "src/modules/organization/organization.module
       name: "event",
     }),
     CacheModule.registerAsync({
-      useFactory: async () => {
+      useFactory: () => {
         return {
           stores: [
             new Keyv({

@@ -17,7 +17,10 @@ export class UserFailedHandler extends BaseEventHandler {
     try {
       await this.signUpUseCase.withCompensation(event.payload);
     } catch (error) {
-      this.logEventHandlingError(event, error);
+      this.logEventHandlingError(
+        event,
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   }
 

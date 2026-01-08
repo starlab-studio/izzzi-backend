@@ -91,12 +91,21 @@ export class AiClientService {
       );
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       this.logger.error(
-        `Error fetching feedback summary from AI service: ${error.message}`
+        `Error fetching feedback summary from AI service: ${errorMessage}`
       );
 
-      if (error.response) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response
+      ) {
         // Erreur HTTP de l'API
         const statusCode =
           typeof error.response.status === "number"
@@ -105,11 +114,11 @@ export class AiClientService {
         throw new HttpException(
           {
             message: "AI service error",
-            details: error.response.data,
+            details: "data" in error.response ? error.response.data : undefined,
           },
           statusCode
         );
-      } else if (error.request) {
+      } else if (error && typeof error === "object" && "request" in error) {
         // Pas de réponse (service indisponible)
         throw new HttpException(
           {
@@ -123,7 +132,7 @@ export class AiClientService {
         throw new HttpException(
           {
             message: "AI service configuration error",
-            details: error.message,
+            details: errorMessage,
           },
           HttpStatus.INTERNAL_SERVER_ERROR
         );
@@ -171,12 +180,21 @@ export class AiClientService {
       );
 
       return { alerts: mappedAlerts };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       this.logger.error(
-        `Error fetching feedback alerts from AI service: ${error.message}`
+        `Error fetching feedback alerts from AI service: ${errorMessage}`
       );
 
-      if (error.response) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response
+      ) {
         const statusCode =
           typeof error.response.status === "number"
             ? error.response.status
@@ -184,11 +202,11 @@ export class AiClientService {
         throw new HttpException(
           {
             message: "AI service error",
-            details: error.response.data,
+            details: "data" in error.response ? error.response.data : undefined,
           },
           statusCode
         );
-      } else if (error.request) {
+      } else if (error && typeof error === "object" && "request" in error) {
         throw new HttpException(
           {
             message: "AI service unavailable",
@@ -200,7 +218,7 @@ export class AiClientService {
         throw new HttpException(
           {
             message: "AI service configuration error",
-            details: error.message,
+            details: errorMessage,
           },
           HttpStatus.INTERNAL_SERVER_ERROR
         );

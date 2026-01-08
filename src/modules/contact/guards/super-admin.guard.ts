@@ -17,14 +17,18 @@ export class SuperAdminGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<{
+      user?: { userId?: string };
+    }>();
     const { user } = request;
 
     if (!user?.userId) {
       throw new ForbiddenException("User not authenticated");
     }
 
-    const userProfile = await this.organizationFacade.getUserProfile(user.userId);
+    const userProfile = await this.organizationFacade.getUserProfile(
+      user.userId
+    );
 
     if (userProfile.role !== GlobalRole.SUPER_ADMIN) {
       throw new ForbiddenException("Access denied - Super Admin required");
@@ -33,4 +37,3 @@ export class SuperAdminGuard implements CanActivate {
     return true;
   }
 }
-

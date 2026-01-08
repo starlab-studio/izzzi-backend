@@ -57,10 +57,11 @@ export class SendReminderBySubjectUseCase
           totalReminded += result.remindedCount;
           totalNewStudents += result.newStudentsSentCount;
           totalAlreadyResponded += result.alreadyRespondedCount;
-        } catch (error: any) {
-          const errorMessage = error?.message || "Unknown error";
+        } catch (error: unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
           errors.push(`Erreur pour le quiz ${quiz.id}: ${errorMessage}`);
-          this.logger.error(`Error reminding quiz ${quiz.id}:`, error);
+          this.logger.error(`Error reminding quiz ${quiz.id}:`, errorMessage);
         }
       }
 

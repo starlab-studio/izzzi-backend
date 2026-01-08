@@ -107,8 +107,15 @@ export class GoogleAuthController extends BaseController {
         });
         res.redirect(`${frontendUrl}/auth/complete-registration?${params}`);
       }
-    } catch (err: any) {
-      const errorMessage = err.code || err.message || "GOOGLE_AUTH_FAILED";
+    } catch (err: unknown) {
+      let errorMessage = "GOOGLE_AUTH_FAILED";
+      if (err && typeof err === "object") {
+        if ("code" in err && typeof err.code === "string") {
+          errorMessage = err.code;
+        } else if ("message" in err && typeof err.message === "string") {
+          errorMessage = err.message;
+        }
+      }
       res.redirect(
         `${frontendUrl}/auth/error?error=${encodeURIComponent(errorMessage)}`
       );

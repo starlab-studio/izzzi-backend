@@ -16,8 +16,8 @@ export class EventHandlerRegistry {
     if (!this.handlers.has(eventName)) {
       this.handlers.set(eventName, []);
     }
-    this.eventStore.subscribe(eventName, async (event: IDomainEvent) => {
-      await this.handleEvent(event);
+    this.eventStore.subscribe(eventName, (event: IDomainEvent) => {
+      void this.handleEvent(event);
     });
     this.handlers.get(eventName)!.push(handler);
     this.logger.info(`Registered handler for event: ${eventName}`);
@@ -56,8 +56,8 @@ export class EventHandlerRegistry {
   }
 
   listen(): void {
-    this.eventStore.subscribe("*", async (event: IDomainEvent) => {
-      await this.handleEvent(event);
+    this.eventStore.subscribe("*", (event: IDomainEvent) => {
+      void this.handleEvent(event);
     });
   }
 }

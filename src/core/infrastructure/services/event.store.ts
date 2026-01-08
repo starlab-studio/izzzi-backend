@@ -11,7 +11,7 @@ export class EventStore implements IEventStore {
 
   constructor(@InjectQueue("event") private readonly eventQueue: Queue) {}
 
-  async publish(event: IDomainEvent) {
+  publish(event: IDomainEvent): void {
     this.events.push(event);
     void this.eventQueue.add(event.name, event, {
       attempts: 3,

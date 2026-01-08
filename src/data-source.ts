@@ -1,17 +1,21 @@
 import { DataSource } from "typeorm";
-import configGlobal from "./core/infrastructure/config.global";
+import AppConfig from "./core/interfaces/config.global";
 
-const config = configGlobal();
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
+const appConfig = AppConfig();
 
 export const AppDataSource = new DataSource({
   type: "postgres",
-  host: config.database.host,
-  port: config.database.port,
-  database: config.database.dbname,
-  username: config.database.username,
-  password: config.database.password,
+  host: appConfig.database.host,
+  port: appConfig.database.port,
+  database: appConfig.database.dbname,
+  username: appConfig.database.username,
+  password: appConfig.database.password,
   synchronize: false,
-  entities: ["src/**/*.entity.ts"],
-  migrations: ["src/migrations/*.ts"],
+  entities: ["dist/**/*.model.js"],
+  migrations: ["dist/migrations/*.js"],
   migrationsTableName: "custom_migration_table",
 });

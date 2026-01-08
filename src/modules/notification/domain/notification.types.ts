@@ -1,0 +1,83 @@
+export enum NotificationStatus {
+  PENDING = "pending",
+  FAILED = "failed",
+  DELIVERED = "delivered",
+  SCHEDULED = "scheduled",
+  PROCESSING = "processing",
+}
+
+export enum NotificationMode {
+  SMS = "sms",
+  EMAIL = "email",
+  PUSH = "push",
+}
+
+export interface INotification {
+  id: string;
+  sender: string;
+  mode: NotificationMode;
+  name?: string;
+  target: string;
+  subject?: string;
+  template?: string;
+  message?: string;
+  status: NotificationStatus;
+  retryCount: number;
+  deliveredAt?: Date;
+  isRead: boolean;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type ICreateNotification = Omit<
+  INotification,
+  "id" | "status" | "retryCount" | "createdAt" | "updatedAt" | "isRead"
+> & {
+  isRead?: boolean;
+};
+
+export interface INotificationAttempt {
+  id: string;
+  notificationId: string;
+  attemptNumber: number;
+  status: NotificationStatus;
+  errorMessage?: string;
+  responseCode?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface INotificationQueue {
+  id: string;
+  notificationId: string;
+  priority: "low" | "normal" | "high";
+  scheduledFor?: Date;
+  nextRetryAt?: Date;
+  maxRetries: number;
+  currentAttempt: number;
+  status: NotificationStatus;
+  lastError?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IEmailLog {
+  readonly id: string;
+  type:
+    | "registration_confirmation"
+    | "password_reset"
+    | "class_created"
+    | "class_archived"
+    | "quiz_reminder"
+    | "ai_alert";
+  recipientEmail: string;
+  recipientUserId: string | null;
+  subject: string;
+  status: "pending" | "sent" | "failed" | "bounced";
+  providerMessageId: string | null;
+  errorMessage: string | null;
+  metadata: Record<string, any> | null;
+  sentAt: Date | null;
+  createdAt: Date;
+}

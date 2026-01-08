@@ -12,9 +12,9 @@ export class QuizTemplateQuestionModel implements IQuizTemplateQuestion {
   @Column({ type: "text" })
   text: string;
 
-  @Column({ 
-    type: "enum", 
-    enum: ["stars", "radio", "checkbox", "textarea"] 
+  @Column({
+    type: "enum",
+    enum: ["stars", "radio", "checkbox", "textarea"],
   })
   type: "stars" | "radio" | "checkbox" | "textarea";
 
@@ -31,14 +31,13 @@ export class QuizTemplateQuestionModel implements IQuizTemplateQuestion {
   @Column({ name: "order_index", type: "integer", default: 0 })
   orderIndex: number;
 
-  @Column({ 
-    type: "enum", 
+  @Column({
+    type: "enum",
     enum: ["global", "course", "instructor"],
-    default: "course"
+    default: "course",
   })
   category: "global" | "course" | "instructor";
 
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

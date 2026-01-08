@@ -126,12 +126,12 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       useFactory: (
         logger: ILoggerService,
         subscriptionPlanRepository: ISubscriptionPlanRepository,
-        planFeatureRepository: IPlanFeatureRepository
+        planFeatureRepository: IPlanFeatureRepository,
       ) =>
         new GetPricingPlansUseCase(
           logger,
           subscriptionPlanRepository,
-          planFeatureRepository
+          planFeatureRepository,
         ),
       inject: [
         LoggerService,
@@ -143,7 +143,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       provide: GetPricingTiersUseCase,
       useFactory: (
         logger: ILoggerService,
-        pricingTierRepository: IPricingTierRepository
+        pricingTierRepository: IPricingTierRepository,
       ) => new GetPricingTiersUseCase(logger, pricingTierRepository),
       inject: [LoggerService, PricingTierRepository],
     },
@@ -152,12 +152,12 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       useFactory: (
         logger: ILoggerService,
         subscriptionPlanRepository: ISubscriptionPlanRepository,
-        pricingTierRepository: IPricingTierRepository
+        pricingTierRepository: IPricingTierRepository,
       ) =>
         new CalculateSubscriptionPriceUseCase(
           logger,
           subscriptionPlanRepository,
-          pricingTierRepository
+          pricingTierRepository,
         ),
       inject: [
         LoggerService,
@@ -174,7 +174,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         subscriptionRepository: ISubscriptionRepository,
         userRepository: IUserRepository,
         paymentService: IPaymentService,
-        stripeSyncService: IStripeSyncService
+        stripeSyncService: IStripeSyncService,
       ) =>
         new CreateSubscriptionUseCase(
           logger,
@@ -183,7 +183,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
           subscriptionRepository,
           userRepository,
           paymentService,
-          stripeSyncService
+          stripeSyncService,
         ),
       inject: [
         LoggerService,
@@ -205,7 +205,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         userRepository: IUserRepository,
         stripeSyncService: IStripeSyncService,
         eventStore: IEventStore,
-        classRepository: IClassRepository
+        classRepository: IClassRepository,
       ) =>
         new UpdateSubscriptionQuantityUseCase(
           logger,
@@ -215,7 +215,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
           userRepository,
           stripeSyncService,
           eventStore,
-          classRepository
+          classRepository,
         ),
       inject: [
         LoggerService,
@@ -233,12 +233,12 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       useFactory: (
         logger: ILoggerService,
         subscriptionRepository: ISubscriptionRepository,
-        userRepository: IUserRepository
+        userRepository: IUserRepository,
       ) =>
         new CancelSubscriptionUseCase(
           logger,
           subscriptionRepository,
-          userRepository
+          userRepository,
         ),
       inject: [LoggerService, SubscriptionRepository, UserRepository],
     },
@@ -251,7 +251,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         pricingTierRepository: IPricingTierRepository,
         planFeatureRepository: IPlanFeatureRepository,
         userRepository: IUserRepository,
-        classRepository: IClassRepository
+        classRepository: IClassRepository,
       ) =>
         new GetSubscriptionUseCase(
           logger,
@@ -260,7 +260,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
           pricingTierRepository,
           planFeatureRepository,
           userRepository,
-          classRepository
+          classRepository,
         ),
       inject: [
         LoggerService,
@@ -278,13 +278,13 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         logger: ILoggerService,
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         pricingTierRepository: IPricingTierRepository,
-        stripeSyncService: IStripeSyncService
+        stripeSyncService: IStripeSyncService,
       ) =>
         new SyncPlansWithStripeUseCase(
           logger,
           subscriptionPlanRepository,
           pricingTierRepository,
-          stripeSyncService
+          stripeSyncService,
         ),
       inject: [
         LoggerService,
@@ -300,14 +300,14 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         subscriptionRepository: ISubscriptionRepository,
         invoiceRepository: IInvoiceRepository,
         stripeSyncService: IStripeSyncService,
-        organizationAuthorizationService: OrganizationAuthorizationService
+        organizationAuthorizationService: OrganizationAuthorizationService,
       ) =>
         new GetPaymentConfirmationUseCase(
           logger,
           subscriptionRepository,
           invoiceRepository,
           stripeSyncService,
-          organizationAuthorizationService
+          organizationAuthorizationService,
         ),
       inject: [
         LoggerService,
@@ -325,7 +325,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         subscriptionRepository: ISubscriptionRepository,
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         stripeSyncService: IStripeSyncService,
-        eventStore: IEventStore
+        eventStore: IEventStore,
       ) =>
         new SyncInvoiceFromStripeUseCase(
           logger,
@@ -333,7 +333,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
           subscriptionRepository,
           subscriptionPlanRepository,
           stripeSyncService,
-          eventStore
+          eventStore,
         ),
       inject: [
         LoggerService,
@@ -348,7 +348,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       provide: SyncSubscriptionFromStripeUseCase,
       useFactory: (
         logger: ILoggerService,
-        subscriptionRepository: ISubscriptionRepository
+        subscriptionRepository: ISubscriptionRepository,
       ) =>
         new SyncSubscriptionFromStripeUseCase(logger, subscriptionRepository),
       inject: [LoggerService, SubscriptionRepository],
@@ -357,7 +357,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       provide: ApplyPendingQuantityUseCase,
       useFactory: (
         logger: ILoggerService,
-        subscriptionRepository: ISubscriptionRepository
+        subscriptionRepository: ISubscriptionRepository,
       ) => new ApplyPendingQuantityUseCase(logger, subscriptionRepository),
       inject: [LoggerService, SubscriptionRepository],
     },
@@ -367,13 +367,13 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         logger: ILoggerService,
         subscriptionRepository: ISubscriptionRepository,
         stripeSyncService: IStripeSyncService,
-        organizationAuthorizationService: OrganizationAuthorizationService
+        organizationAuthorizationService: OrganizationAuthorizationService,
       ) =>
         new GetBillingPortalLinkUseCase(
           logger,
           subscriptionRepository,
           stripeSyncService,
-          organizationAuthorizationService
+          organizationAuthorizationService,
         ),
       inject: [
         LoggerService,
@@ -386,7 +386,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       provide: CheckBillingAccessUseCase,
       useFactory: (
         logger: ILoggerService,
-        subscriptionRepository: ISubscriptionRepository
+        subscriptionRepository: ISubscriptionRepository,
       ) => new CheckBillingAccessUseCase(logger, subscriptionRepository),
       inject: [LoggerService, SubscriptionRepository],
     },
@@ -397,14 +397,14 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         subscriptionRepository: ISubscriptionRepository,
         userRepository: IUserRepository,
         createEmailNotificationUseCase: CreateEmailNotificationUseCase,
-        getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase
+        getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase,
       ) =>
         new SendSubscriptionConfirmationEmailUseCase(
           logger,
           subscriptionRepository,
           userRepository,
           createEmailNotificationUseCase,
-          getBillingPortalLinkUseCase
+          getBillingPortalLinkUseCase,
         ),
       inject: [
         LoggerService,
@@ -427,7 +427,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase,
         getPaymentConfirmationUseCase: GetPaymentConfirmationUseCase,
         getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase,
-        checkBillingAccessUseCase: CheckBillingAccessUseCase
+        checkBillingAccessUseCase: CheckBillingAccessUseCase,
       ) =>
         new SubscriptionFacade(
           getPricingPlansUseCase,
@@ -440,7 +440,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
           syncPlansWithStripeUseCase,
           getPaymentConfirmationUseCase,
           getBillingPortalLinkUseCase,
-          checkBillingAccessUseCase
+          checkBillingAccessUseCase,
         ),
       inject: [
         GetPricingPlansUseCase,
@@ -464,7 +464,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         subscriptionPlanRepository: ISubscriptionPlanRepository,
         membershipRepository: IMembershipRepository,
         userRepository: IUserRepository,
-        eventStore: IEventStore
+        eventStore: IEventStore,
       ) =>
         new TrialEndingCheckerService(
           logger,
@@ -472,7 +472,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
           subscriptionPlanRepository,
           membershipRepository,
           userRepository,
-          eventStore
+          eventStore,
         ),
       inject: [
         LoggerService,
@@ -489,13 +489,13 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
         logger: ILoggerService,
         subscriptionRepository: ISubscriptionRepository,
         stripeSyncService: IStripeSyncService,
-        syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase
+        syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase,
       ) =>
         new SubscriptionExpirationCheckerService(
           logger,
           subscriptionRepository,
           stripeSyncService,
-          syncSubscriptionFromStripeUseCase
+          syncSubscriptionFromStripeUseCase,
         ),
       inject: [
         LoggerService,
@@ -508,7 +508,7 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       provide: StripePlansSyncService,
       useFactory: (
         logger: ILoggerService,
-        syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase
+        syncPlansWithStripeUseCase: SyncPlansWithStripeUseCase,
       ) => new StripePlansSyncService(logger, syncPlansWithStripeUseCase),
       inject: [LoggerService, SyncPlansWithStripeUseCase],
     },
@@ -516,11 +516,11 @@ import { SubscriptionFeatureService } from "./domain/services/subscription-featu
       provide: SubscriptionFeatureService,
       useFactory: (
         subscriptionRepository: ISubscriptionRepository,
-        subscriptionPlanRepository: ISubscriptionPlanRepository
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
       ) =>
         new SubscriptionFeatureService(
           subscriptionRepository,
-          subscriptionPlanRepository
+          subscriptionPlanRepository,
         ),
       inject: [SUBSCRIPTION_REPOSITORY, SUBSCRIPTION_PLAN_REPOSITORY],
     },

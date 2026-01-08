@@ -12,7 +12,7 @@ export class AnswerModel implements IAnswer {
   responseId: string;
 
   @Column({ name: "question_id", type: "uuid" })
-  questionId: string; 
+  questionId: string;
 
   @Column({ name: "value_stars", type: "integer", nullable: true })
   valueStars: number | null;
@@ -29,4 +29,3 @@ export class AnswerModel implements IAnswer {
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

@@ -87,4 +87,3 @@ export class UpdateAvatarDto {
   })
   avatarUrl: string;
 }
-

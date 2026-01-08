@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AddInstructorFieldsToSubjects1766015561000 implements MigrationInterface {
+export class AddInstructorFieldsToSubjects1766015561000
+  implements MigrationInterface
+{
   name = "AddInstructorFieldsToSubjects1766015561000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -30,10 +32,17 @@ export class AddInstructorFieldsToSubjects1766015561000 implements MigrationInte
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "subjects" DROP COLUMN IF EXISTS "last_course_date"`);
-    await queryRunner.query(`ALTER TABLE "subjects" DROP COLUMN IF EXISTS "first_course_date"`);
-    await queryRunner.query(`ALTER TABLE "subjects" DROP COLUMN IF EXISTS "instructor_email"`);
-    await queryRunner.query(`ALTER TABLE "subjects" DROP COLUMN IF EXISTS "instructor_name"`);
+    await queryRunner.query(
+      `ALTER TABLE "subjects" DROP COLUMN IF EXISTS "last_course_date"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "subjects" DROP COLUMN IF EXISTS "first_course_date"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "subjects" DROP COLUMN IF EXISTS "instructor_email"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "subjects" DROP COLUMN IF EXISTS "instructor_name"`,
+    );
   }
 }
-

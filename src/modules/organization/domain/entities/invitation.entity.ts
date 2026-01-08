@@ -39,7 +39,7 @@ export class InvitationEntity {
     if (!this.isValid())
       throw new DomainError(
         ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-        "Cannot accept invalid or expired invitation"
+        "Cannot accept invalid or expired invitation",
       );
 
     this.props = {
@@ -54,7 +54,7 @@ export class InvitationEntity {
     if (this.props.status !== InvitationStatus.PENDING)
       throw new DomainError(
         ErrorCode.CANNOT_REVOKE_INVITATION,
-        "Can only revoke pending invitations"
+        "Can only revoke pending invitations",
       );
 
     this.props = {

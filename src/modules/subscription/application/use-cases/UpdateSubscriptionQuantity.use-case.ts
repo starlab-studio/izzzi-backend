@@ -57,7 +57,7 @@ export class UpdateSubscriptionQuantityUseCase
     private readonly userRepository: IUserRepository,
     private readonly stripeSyncService: IStripeSyncService,
     private readonly eventStore: IEventStore,
-    private readonly classRepository: IClassRepository
+    private readonly classRepository: IClassRepository,
   ) {
     super(logger);
   }
@@ -70,7 +70,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "INVALID_CLASS_COUNT",
           "Number of classes must be between 1 and 20",
-          { newQuantity }
+          { newQuantity },
         );
       }
 
@@ -84,7 +84,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "INSUFFICIENT_PERMISSIONS",
           "You must be an administrator of this organization to modify the subscription",
-          { userId, organizationId }
+          { userId, organizationId },
         );
       }
 
@@ -94,7 +94,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
           "Subscription not found",
-          { subscriptionId }
+          { subscriptionId },
         );
       }
 
@@ -102,7 +102,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "SUBSCRIPTION_ORGANIZATION_MISMATCH",
           "Subscription does not belong to this organisation",
-          { subscriptionId, organizationId }
+          { subscriptionId, organizationId },
         );
       }
 
@@ -110,7 +110,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_ACTIVE",
           "Only active subscription can be update",
-          { subscriptionId, status: subscription.status }
+          { subscriptionId, status: subscription.status },
         );
       }
 
@@ -118,7 +118,7 @@ export class UpdateSubscriptionQuantityUseCase
         throw new DomainError(
           "QUANTITY_UNCHANGED",
           "New quantity is identical to current quantity",
-          { quantity: newQuantity }
+          { quantity: newQuantity },
         );
       }
 
@@ -129,7 +129,7 @@ export class UpdateSubscriptionQuantityUseCase
       // que la nouvelle quantité demandée (ex: 10 classes créées, downgrade vers 9 interdit).
       if (!isUpgrade) {
         const classesUsed = await this.classRepository.countByOrganization(
-          subscription.organizationId
+          subscription.organizationId,
         );
 
         if (classesUsed > newQuantity) {
@@ -140,19 +140,19 @@ export class UpdateSubscriptionQuantityUseCase
               classesUsed,
               requestedQuantity: newQuantity,
               currentQuantity: subscription.quantity,
-            }
+            },
           );
         }
       }
 
       const plan = await this.subscriptionPlanRepository.findById(
-        subscription.planId
+        subscription.planId,
       );
       if (!plan) {
         throw new DomainError(
           "PLAN_NOT_FOUND",
           "Subscription plan does not exist",
-          { planId: subscription.planId }
+          { planId: subscription.planId },
         );
       }
 
@@ -165,7 +165,7 @@ export class UpdateSubscriptionQuantityUseCase
         const tiers =
           await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
             subscription.planId,
-            subscription.billingPeriod
+            subscription.billingPeriod,
           );
 
         if (tiers.length === 0) {
@@ -175,16 +175,17 @@ export class UpdateSubscriptionQuantityUseCase
             {
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
-            }
+            },
           );
         }
 
         previousTier = tiers.find(
           (t) =>
-            previousQuantity >= t.minClasses && previousQuantity <= t.maxClasses
+            previousQuantity >= t.minClasses &&
+            previousQuantity <= t.maxClasses,
         );
         newTier = tiers.find(
-          (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+          (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses,
         );
 
         if (!previousTier) {
@@ -195,7 +196,7 @@ export class UpdateSubscriptionQuantityUseCase
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
               quantity: previousQuantity,
-            }
+            },
           );
         }
 
@@ -207,7 +208,7 @@ export class UpdateSubscriptionQuantityUseCase
               planId: subscription.planId,
               billingPeriod: subscription.billingPeriod,
               quantity: newQuantity,
-            }
+            },
           );
         }
 
@@ -238,7 +239,7 @@ export class UpdateSubscriptionQuantityUseCase
             // We need to multiply by months remaining to get the prorated amount
             const monthsRemaining = this.calculateMonthsRemaining(
               effectiveDate,
-              periodEnd
+              periodEnd,
             );
 
             // Calculate the prorated amount: monthly difference * months remaining
@@ -257,7 +258,7 @@ export class UpdateSubscriptionQuantityUseCase
             if (totalDaysInPeriod > 0 && daysRemaining > 0) {
               const prorationRatio = daysRemaining / totalDaysInPeriod;
               amountDueCents = Math.round(
-                priceDifferenceCents * prorationRatio
+                priceDifferenceCents * prorationRatio,
               );
               requiresPayment = amountDueCents > 0;
             } else {
@@ -281,10 +282,10 @@ export class UpdateSubscriptionQuantityUseCase
           const tiers =
             await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
               subscription.planId,
-              subscription.billingPeriod
+              subscription.billingPeriod,
             );
           const newTier = tiers.find(
-            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses,
           );
 
           if (!newTier?.stripePriceId) {
@@ -295,7 +296,7 @@ export class UpdateSubscriptionQuantityUseCase
                 tierId: newTier?.id,
                 planId: subscription.planId,
                 billingPeriod: subscription.billingPeriod,
-              }
+              },
             );
           }
 
@@ -329,7 +330,7 @@ export class UpdateSubscriptionQuantityUseCase
               newTier.stripePriceId,
               {
                 prorationBehavior: "none",
-              }
+              },
             );
 
             subscription.updateQuantity(newQuantity, true);
@@ -366,10 +367,10 @@ export class UpdateSubscriptionQuantityUseCase
           const tiers =
             await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
               subscription.planId,
-              subscription.billingPeriod
+              subscription.billingPeriod,
             );
           const newTier = tiers.find(
-            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses
+            (t) => newQuantity >= t.minClasses && newQuantity <= t.maxClasses,
           );
 
           if (!newTier?.stripePriceId) {
@@ -380,7 +381,7 @@ export class UpdateSubscriptionQuantityUseCase
                 tierId: newTier?.id,
                 planId: subscription.planId,
                 billingPeriod: subscription.billingPeriod,
-              }
+              },
             );
           }
 
@@ -390,7 +391,7 @@ export class UpdateSubscriptionQuantityUseCase
             newTier.stripePriceId,
             {
               prorationBehavior: "none",
-            }
+            },
           );
         }
 
@@ -415,7 +416,7 @@ export class UpdateSubscriptionQuantityUseCase
               newQuantity,
               previousPriceCents,
               newPriceCents,
-            })
+            }),
           );
         }
       }

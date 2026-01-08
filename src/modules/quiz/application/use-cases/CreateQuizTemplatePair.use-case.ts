@@ -46,7 +46,10 @@ export interface CreateQuizTemplatePairOutput {
 }
 
 @Injectable()
-export class CreateQuizTemplatePairUseCase extends BaseUseCase implements IUseCase {
+export class CreateQuizTemplatePairUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly templateRepository: IQuizTemplateRepository,
@@ -56,7 +59,9 @@ export class CreateQuizTemplatePairUseCase extends BaseUseCase implements IUseCa
     super(logger);
   }
 
-  async execute(data: CreateQuizTemplatePairInput): Promise<CreateQuizTemplatePairOutput> {
+  async execute(
+    data: CreateQuizTemplatePairInput,
+  ): Promise<CreateQuizTemplatePairOutput> {
     try {
       // Validate user belongs to organization
       await this.organizationFacade.validateUserBelongsToOrganization(
@@ -109,8 +114,10 @@ export class CreateQuizTemplatePairUseCase extends BaseUseCase implements IUseCa
       afterTemplate.setQuestions(afterQuestions);
 
       // Save templates with their questions
-      const savedDuringTemplate = await this.templateRepository.create(duringTemplate);
-      const savedAfterTemplate = await this.templateRepository.create(afterTemplate);
+      const savedDuringTemplate =
+        await this.templateRepository.create(duringTemplate);
+      const savedAfterTemplate =
+        await this.templateRepository.create(afterTemplate);
 
       // Create template pair
       const pairId = randomUUID();
@@ -141,4 +148,3 @@ export class CreateQuizTemplatePairUseCase extends BaseUseCase implements IUseCa
 
   async withCompensation(): Promise<void> {}
 }
-

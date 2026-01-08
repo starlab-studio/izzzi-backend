@@ -39,4 +39,3 @@ import { NotificationModule } from "../notification/notification.module";
   exports: [ContactFacade, SuperAdminGuard, "IContactRequestRepository"],
 })
 export class ContactModule {}
-

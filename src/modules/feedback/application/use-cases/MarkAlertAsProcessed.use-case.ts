@@ -27,40 +27,40 @@ export class MarkAlertAsProcessedUseCase
   constructor(
     readonly logger: ILoggerService,
     private readonly feedbackAlertRepository: IFeedbackAlertRepository,
-    private readonly organizationFacade: OrganizationFacade
+    private readonly organizationFacade: OrganizationFacade,
   ) {
     super(logger);
   }
 
   async execute(
-    data: MarkAlertAsProcessedInput
+    data: MarkAlertAsProcessedInput,
   ): Promise<MarkAlertAsProcessedOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       this.logger.info(
-        `Marking alert ${data.alertId} as ${data.processed ? "processed" : "unprocessed"} for subject ${data.subjectId}`
+        `Marking alert ${data.alertId} as ${data.processed ? "processed" : "unprocessed"} for subject ${data.subjectId}`,
       );
 
       const alertEntity = await this.feedbackAlertRepository.findByAlertId(
         data.alertId,
-        data.subjectId
+        data.subjectId,
       );
 
       if (!alertEntity) {
         throw new DomainError(
           ErrorCode.UNEXPECTED_ERROR,
-          `Alert ${data.alertId} not found for subject ${data.subjectId}`
+          `Alert ${data.alertId} not found for subject ${data.subjectId}`,
         );
       }
 
       if (alertEntity.organizationId !== data.organizationId) {
         throw new DomainError(
           ErrorCode.UNAUTHORIZED_ACCESS,
-          "Unauthorized access to alert"
+          "Unauthorized access to alert",
         );
       }
 

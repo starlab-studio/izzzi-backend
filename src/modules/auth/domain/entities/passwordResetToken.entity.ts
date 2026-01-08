@@ -13,7 +13,7 @@ export class PasswordResetToken {
     tokenHash: string,
     userId: string,
     email: string,
-    expiresAt: Date
+    expiresAt: Date,
   ): PasswordResetToken {
     const now = new Date();
 

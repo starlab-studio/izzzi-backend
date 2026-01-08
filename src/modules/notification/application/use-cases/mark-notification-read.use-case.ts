@@ -18,21 +18,21 @@ export class MarkNotificationReadUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly notificationRepository: INotificationRespository
+    private readonly notificationRepository: INotificationRespository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: MarkNotificationReadInput
+    data: MarkNotificationReadInput,
   ): Promise<MarkNotificationReadOutput> {
     try {
       this.logger.info(
-        `Marking notification ${data.notificationId} as ${data.isRead ? "read" : "unread"} for user ${data.userId}`
+        `Marking notification ${data.notificationId} as ${data.isRead ? "read" : "unread"} for user ${data.userId}`,
       );
 
       const notification = await this.notificationRepository.findById(
-        data.notificationId
+        data.notificationId,
       );
 
       if (!notification) {
@@ -48,7 +48,7 @@ export class MarkNotificationReadUseCase
       });
 
       this.logger.info(
-        `Notification ${data.notificationId} marked as ${data.isRead ? "read" : "unread"}`
+        `Notification ${data.notificationId} marked as ${data.isRead ? "read" : "unread"}`,
       );
 
       return {
@@ -61,5 +61,6 @@ export class MarkNotificationReadUseCase
     }
   }
 
-  async withCompensation(input: MarkNotificationReadInput): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: MarkNotificationReadInput): Promise<void> {}
 }

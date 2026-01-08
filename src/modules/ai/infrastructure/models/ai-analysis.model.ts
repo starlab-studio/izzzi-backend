@@ -20,21 +20,27 @@ export class AiAnalysisModel implements IAiAnalysis {
   @Column({ name: "summary_text", type: "text" })
   summaryText: string;
 
-  @Column({ name: "global_score", type: "decimal", precision: 3, scale: 2, nullable: true })
+  @Column({
+    name: "global_score",
+    type: "decimal",
+    precision: 3,
+    scale: 2,
+    nullable: true,
+  })
   globalScore: number | null; // 0.00 - 5.00
 
-  @Column({ 
-    type: "enum", 
-    enum: ["positive", "negative", "neutral", "mixed"], 
-    nullable: true 
+  @Column({
+    type: "enum",
+    enum: ["positive", "negative", "neutral", "mixed"],
+    nullable: true,
   })
   sentiment: "positive" | "negative" | "neutral" | "mixed" | null;
 
-  @Column({ 
-    name: "alert_type", 
-    type: "enum", 
-    enum: ["none", "positive", "negative"], 
-    default: "none" 
+  @Column({
+    name: "alert_type",
+    type: "enum",
+    enum: ["none", "positive", "negative"],
+    default: "none",
   })
   alertType: "none" | "positive" | "negative";
 
@@ -47,7 +53,13 @@ export class AiAnalysisModel implements IAiAnalysis {
   @Column({ name: "recommendations", type: "jsonb", nullable: true })
   recommendations: string[] | null;
 
-  @Column({ name: "confidence", type: "decimal", precision: 3, scale: 2, nullable: true })
+  @Column({
+    name: "confidence",
+    type: "decimal",
+    precision: 3,
+    scale: 2,
+    nullable: true,
+  })
   confidence: number | null; // 0.00 - 1.00
 
   @Column({ name: "tokens_used", type: "integer", nullable: true })
@@ -59,4 +71,3 @@ export class AiAnalysisModel implements IAiAnalysis {
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

@@ -5,10 +5,7 @@ import {
   DomainError,
   ErrorCode,
 } from "src/core";
-import {
-  GetQuizByIdInput,
-  GetQuizByIdOutput,
-} from "../../domain/types";
+import { GetQuizByIdInput, GetQuizByIdOutput } from "../../domain/types";
 import { IQuizRepository } from "../../domain/repositories/quiz.repository";
 import { IQuizTemplateRepository } from "../../domain/repositories/quiz-template.repository";
 import { ISubjectRepository } from "src/modules/subject/domain/repositories/subject.repository";
@@ -47,21 +44,33 @@ export class GetQuizByIdUseCase extends BaseUseCase implements IUseCase {
       }
 
       if (subject.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to quiz");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to quiz",
+        );
       }
 
-      const assignments = await this.subjectAssignmentRepository.findBySubject(subject.id);
+      const assignments = await this.subjectAssignmentRepository.findBySubject(
+        subject.id,
+      );
       const activeAssignment = assignments.find((a) => a.isActive);
       if (!activeAssignment) {
-        throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject is not assigned to any class");
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "Subject is not assigned to any class",
+        );
       }
 
-      const classEntity = await this.classRepository.findById(activeAssignment.classId);
+      const classEntity = await this.classRepository.findById(
+        activeAssignment.classId,
+      );
       if (!classEntity) {
         throw new DomainError(ErrorCode.CLASS_NOT_FOUND, "Class not found");
       }
 
-      const template = await this.quizTemplateRepository.findById(quiz.templateId);
+      const template = await this.quizTemplateRepository.findById(
+        quiz.templateId,
+      );
       if (!template) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Template not found");
       }
@@ -94,4 +103,3 @@ export class GetQuizByIdUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

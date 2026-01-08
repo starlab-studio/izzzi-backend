@@ -12,19 +12,19 @@ export class GetSubjectAlertsUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly feedbackAlertRepository: IFeedbackAlertRepository
+    private readonly feedbackAlertRepository: IFeedbackAlertRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: GetFeedbackAlertsInput
+    data: GetFeedbackAlertsInput,
   ): Promise<GetFeedbackAlertsOutput> {
     try {
       this.logger.info(`Getting alerts for subject ${data.subjectId}`);
 
       const alertEntities = await this.feedbackAlertRepository.findBySubjectId(
-        data.subjectId
+        data.subjectId,
       );
 
       const alerts: FeedbackAlert[] = alertEntities.map((alert) => ({

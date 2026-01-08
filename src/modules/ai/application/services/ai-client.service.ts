@@ -47,7 +47,7 @@ export class AiClientService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly loggerService: ILoggerService
+    private readonly loggerService: ILoggerService,
   ) {
     this.baseUrl =
       this.configService.get<string>("aiService.url") ||
@@ -71,11 +71,11 @@ export class AiClientService {
   async getFeedbackSummary(
     subjectId: string,
     periodDays: number = 30,
-    jwtToken: string
+    jwtToken: string,
   ): Promise<FeedbackSummaryResponse> {
     try {
       this.logger.debug(
-        `Fetching feedback summary for subject ${subjectId} from AI service`
+        `Fetching feedback summary for subject ${subjectId} from AI service`,
       );
 
       const response = await this.axiosInstance.get<FeedbackSummaryResponse>(
@@ -87,7 +87,7 @@ export class AiClientService {
           headers: {
             Authorization: `Bearer ${jwtToken}`,
           },
-        }
+        },
       );
 
       return response.data;
@@ -95,7 +95,7 @@ export class AiClientService {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       this.logger.error(
-        `Error fetching feedback summary from AI service: ${errorMessage}`
+        `Error fetching feedback summary from AI service: ${errorMessage}`,
       );
 
       if (
@@ -116,7 +116,7 @@ export class AiClientService {
             message: "AI service error",
             details: "data" in error.response ? error.response.data : undefined,
           },
-          statusCode
+          statusCode,
         );
       } else if (error && typeof error === "object" && "request" in error) {
         // Pas de réponse (service indisponible)
@@ -125,7 +125,7 @@ export class AiClientService {
             message: "AI service unavailable",
             details: "The AI analysis service is not responding",
           },
-          HttpStatus.SERVICE_UNAVAILABLE
+          HttpStatus.SERVICE_UNAVAILABLE,
         );
       } else {
         // Erreur de configuration
@@ -134,7 +134,7 @@ export class AiClientService {
             message: "AI service configuration error",
             details: errorMessage,
           },
-          HttpStatus.INTERNAL_SERVER_ERROR
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
     }
@@ -146,11 +146,11 @@ export class AiClientService {
   async getFeedbackAlerts(
     subjectId: string,
     periodDays: number = 30,
-    jwtToken: string
+    jwtToken: string,
   ): Promise<FeedbackAlertsResponse> {
     try {
       this.logger.debug(
-        `Fetching feedback alerts for subject ${subjectId} from AI service`
+        `Fetching feedback alerts for subject ${subjectId} from AI service`,
       );
 
       const response = await this.axiosInstance.get<FeedbackAlertsResponseRaw>(
@@ -162,7 +162,7 @@ export class AiClientService {
           headers: {
             Authorization: `Bearer ${jwtToken}`,
           },
-        }
+        },
       );
 
       // Mapper les alertes au format attendu par le frontend
@@ -176,7 +176,7 @@ export class AiClientService {
           content: alert.content,
           timestamp: alert.timestamp,
           isProcessed: false, // Par défaut, non traité
-        })
+        }),
       );
 
       return { alerts: mappedAlerts };
@@ -184,7 +184,7 @@ export class AiClientService {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       this.logger.error(
-        `Error fetching feedback alerts from AI service: ${errorMessage}`
+        `Error fetching feedback alerts from AI service: ${errorMessage}`,
       );
 
       if (
@@ -204,7 +204,7 @@ export class AiClientService {
             message: "AI service error",
             details: "data" in error.response ? error.response.data : undefined,
           },
-          statusCode
+          statusCode,
         );
       } else if (error && typeof error === "object" && "request" in error) {
         throw new HttpException(
@@ -212,7 +212,7 @@ export class AiClientService {
             message: "AI service unavailable",
             details: "The AI analysis service is not responding",
           },
-          HttpStatus.SERVICE_UNAVAILABLE
+          HttpStatus.SERVICE_UNAVAILABLE,
         );
       } else {
         throw new HttpException(
@@ -220,7 +220,7 @@ export class AiClientService {
             message: "AI service configuration error",
             details: errorMessage,
           },
-          HttpStatus.INTERNAL_SERVER_ERROR
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
     }

@@ -11,11 +11,13 @@ export interface UpdateContactRequestInput {
 export class UpdateContactRequestUseCase {
   constructor(
     @Inject("IContactRequestRepository")
-    private readonly contactRequestRepository: IContactRequestRepository
+    private readonly contactRequestRepository: IContactRequestRepository,
   ) {}
 
   async execute(input: UpdateContactRequestInput): Promise<IContactRequest> {
-    const contactRequest = await this.contactRequestRepository.findById(input.id);
+    const contactRequest = await this.contactRequestRepository.findById(
+      input.id,
+    );
 
     if (!contactRequest) {
       throw new NotFoundException("Contact request not found");
@@ -27,4 +29,3 @@ export class UpdateContactRequestUseCase {
     return contactRequest.toPersistence();
   }
 }
-

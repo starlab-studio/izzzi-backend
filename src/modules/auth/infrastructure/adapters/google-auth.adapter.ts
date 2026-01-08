@@ -40,68 +40,74 @@ export class GoogleAuthAdapter implements IAuthStrategy {
     private readonly authIdentityRepository: IAuthIdentityRepository,
     private readonly refreshTokenRepository: IRefreshTokenRepository,
     private readonly organizationFacade: OrganizationFacade,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {
     const callbackUrl = this.configService.get<string>("google.callbackUrl");
     console.log(
       "[GoogleAuthAdapter] Initializing with callback URL:",
-      callbackUrl
+      callbackUrl,
     );
 
     this.oauthClient = new OAuth2Client(
       this.configService.get<string>("google.clientId"),
       this.configService.get<string>("google.clientSecret"),
-      callbackUrl
+      callbackUrl,
     );
   }
 
-  // IAuthStrategy methods - Not supported for Google
-  async signUp(data: SignUpData): Promise<SignUpResponse> {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async signUp(_data: SignUpData): Promise<SignUpResponse> {
     throw new DomainError(
       ErrorCode.METHOD_NOT_SUPPORTED,
-      "Use Google OAuth flow instead of signUp"
+      "Use Google OAuth flow instead of signUp",
     );
   }
 
-  async signIn(data: {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async signIn(_data: {
     email: string;
     password: string;
   }): Promise<SignInResponse> {
     throw new DomainError(
       ErrorCode.METHOD_NOT_SUPPORTED,
-      "Use Google OAuth flow instead of signIn"
+      "Use Google OAuth flow instead of signIn",
     );
   }
 
-  async confirmSignUp(data: { token: string }): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async confirmSignUp(_data: { token: string }): Promise<boolean> {
     throw new DomainError(
       ErrorCode.METHOD_NOT_SUPPORTED,
-      "Not supported for Google accounts"
+      "Not supported for Google accounts",
     );
   }
 
-  async resendConfirmationCode(data: { email: string }): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async resendConfirmationCode(_data: { email: string }): Promise<void> {
     throw new DomainError(
       ErrorCode.METHOD_NOT_SUPPORTED,
-      "Not supported for Google accounts"
+      "Not supported for Google accounts",
     );
   }
 
-  async forgotPassword(data: ForgotPasswordData): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async forgotPassword(_data: ForgotPasswordData): Promise<void> {
     throw new DomainError(
       ErrorCode.PASSWORD_OPERATIONS_NOT_ALLOWED_FOR_GOOGLE,
-      "Password operations are not allowed for Google accounts"
+      "Password operations are not allowed for Google accounts",
     );
   }
 
-  async confirmForgotPassword(data: ResetPasswordData): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async confirmForgotPassword(_data: ResetPasswordData): Promise<void> {
     throw new DomainError(
       ErrorCode.PASSWORD_OPERATIONS_NOT_ALLOWED_FOR_GOOGLE,
-      "Password operations are not allowed for Google accounts"
+      "Password operations are not allowed for Google accounts",
     );
   }
 
-  async changePassword(data: {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async changePassword(_data: {
     userId: string;
     username: string;
     oldPassword: string;
@@ -109,7 +115,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
   }): Promise<void> {
     throw new DomainError(
       ErrorCode.PASSWORD_OPERATIONS_NOT_ALLOWED_FOR_GOOGLE,
-      "Password operations are not allowed for Google accounts"
+      "Password operations are not allowed for Google accounts",
     );
   }
 
@@ -122,21 +128,21 @@ export class GoogleAuthAdapter implements IAuthStrategy {
     if (!refreshTokenEntity) {
       throw new DomainError(
         ErrorCode.INVALID_REFRESH_TOKEN,
-        "Invalid refresh token"
+        "Invalid refresh token",
       );
     }
 
     if (!refreshTokenEntity.isValid()) {
       throw new DomainError(
         ErrorCode.REFRESH_TOKEN_EXPIRED_OR_REVOKED,
-        "Refresh token is expired or revoked"
+        "Refresh token is expired or revoked",
       );
     }
 
     if (data.deviceInfo && !refreshTokenEntity.matchesDevice(data.deviceInfo)) {
       throw new DomainError(
         ErrorCode.DEVICE_MISMATCH,
-        "Device mismatch detected"
+        "Device mismatch detected",
       );
     }
 
@@ -144,7 +150,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
     await this.refreshTokenRepository.save(refreshTokenEntity);
 
     const userDetails = await this.organizationFacade.getUserProfile(
-      refreshTokenEntity.userId
+      refreshTokenEntity.userId,
     );
 
     if (userDetails.status === UserStatus.DELETED) {
@@ -152,14 +158,14 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       await this.refreshTokenRepository.save(refreshTokenEntity);
       throw new DomainError(
         ErrorCode.USER_ACCOUNT_DELETED,
-        "This account has been deleted. Please contact support if you believe this is an error."
+        "This account has been deleted. Please contact support if you believe this is an error.",
       );
     }
 
     if (userDetails.status === UserStatus.SUSPENDED) {
       throw new DomainError(
         ErrorCode.USER_ACCOUNT_DISABLED,
-        "This account has been suspended. Please contact support for more information."
+        "This account has been suspended. Please contact support for more information.",
       );
     }
 
@@ -168,7 +174,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       await this.refreshTokenRepository.save(refreshTokenEntity);
       throw new DomainError(
         ErrorCode.NO_MEMBERSHIPS_FOUND,
-        "This account has no active organization memberships. Please contact support."
+        "This account has no active organization memberships. Please contact support.",
       );
     }
 
@@ -205,7 +211,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       expiresAt,
       AuthIdentityName.GOOGLE,
       data.deviceInfo || refreshTokenEntity.deviceInfo,
-      data.ipAddress || refreshTokenEntity.ipAddress
+      data.ipAddress || refreshTokenEntity.ipAddress,
     );
 
     await this.refreshTokenRepository.save(newRefreshTokenEntity);
@@ -231,7 +237,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
     const redirectUri = urlObj.searchParams.get("redirect_uri");
     console.log(
       "[GoogleAuthAdapter] Generated authorization URL with redirect_uri:",
-      redirectUri
+      redirectUri,
     );
 
     return authUrl;
@@ -240,7 +246,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
   async handleCallback(
     code: string,
     deviceInfo?: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<GoogleAuthResult> {
     try {
       // Exchange code for tokens
@@ -248,7 +254,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       if (!tokens.access_token) {
         throw new DomainError(
           ErrorCode.GOOGLE_AUTH_FAILED,
-          "Failed to get access token from Google"
+          "Failed to get access token from Google",
         );
       }
 
@@ -259,7 +265,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       if (!userInfo.verified_email) {
         throw new DomainError(
           ErrorCode.GOOGLE_AUTH_FAILED,
-          "Google email is not verified"
+          "Google email is not verified",
         );
       }
 
@@ -267,7 +273,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       const existingGoogleIdentity =
         await this.authIdentityRepository.findByProviderAndProviderUserId(
           AuthIdentityName.GOOGLE,
-          userInfo.id
+          userInfo.id,
         );
 
       if (existingGoogleIdentity) {
@@ -277,13 +283,13 @@ export class GoogleAuthAdapter implements IAuthStrategy {
           return await this.generateTokensForUser(
             existingGoogleIdentity.userId,
             deviceInfo,
-            ipAddress
+            ipAddress,
           );
         } else {
           // Not linked yet - link it (shouldn't happen in normal flow)
           throw new DomainError(
             ErrorCode.UNEXPECTED_ERROR,
-            "Google identity exists but is not linked to a user"
+            "Google identity exists but is not linked to a user",
           );
         }
       }
@@ -297,7 +303,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
         if (existingCustomIdentity.provider !== AuthIdentityName.CUSTOM) {
           throw new DomainError(
             ErrorCode.EMAIL_ALREADY_EXISTS,
-            "An account with this email already exists with a different provider"
+            "An account with this email already exists with a different provider",
           );
         }
 
@@ -308,7 +314,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
         ) {
           throw new DomainError(
             ErrorCode.EMAIL_ALREADY_EXISTS,
-            "Email mismatch during account linking"
+            "Email mismatch during account linking",
           );
         }
 
@@ -328,7 +334,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
         });
 
         const savedGoogleIdentity = await this.authIdentityRepository.create(
-          googleIdentityWithVerified
+          googleIdentityWithVerified,
         );
 
         if (existingCustomIdentity.userId) {
@@ -339,12 +345,12 @@ export class GoogleAuthAdapter implements IAuthStrategy {
           return await this.generateTokensForUser(
             existingCustomIdentity.userId,
             deviceInfo,
-            ipAddress
+            ipAddress,
           );
         } else {
           throw new DomainError(
             ErrorCode.UNEXPECTED_ERROR,
-            "Custom identity exists but is not linked to a user"
+            "Custom identity exists but is not linked to a user",
           );
         }
       }
@@ -368,7 +374,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       }
       throw new DomainError(
         ErrorCode.GOOGLE_AUTH_FAILED,
-        `Google authentication failed: ${error instanceof Error ? error.message : String(error)}`
+        `Google authentication failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -377,7 +383,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
     pendingToken: string,
     companyName: string,
     deviceInfo?: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<SignInResponse> {
     // Verify pending token
     const payload = await this.verifyPendingToken(pendingToken);
@@ -386,13 +392,13 @@ export class GoogleAuthAdapter implements IAuthStrategy {
     const existingIdentity =
       await this.authIdentityRepository.findByProviderAndProviderUserId(
         AuthIdentityName.GOOGLE,
-        payload.googleId
+        payload.googleId,
       );
 
     if (existingIdentity) {
       throw new DomainError(
         ErrorCode.EMAIL_ALREADY_EXISTS,
-        "An account with this Google ID already exists"
+        "An account with this Google ID already exists",
       );
     }
 
@@ -413,7 +419,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
     });
 
     const savedGoogleIdentity = await this.authIdentityRepository.create(
-      googleIdentityWithVerified
+      googleIdentityWithVerified,
     );
 
     // Create user and organization
@@ -440,14 +446,22 @@ export class GoogleAuthAdapter implements IAuthStrategy {
   private async getUserInfo(accessToken: string): Promise<GoogleUserInfo> {
     try {
       const response = await fetch(
-        `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`
+        `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`,
       );
 
       if (!response.ok) {
         throw new Error(`Failed to fetch user info: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        id: string;
+        email: string;
+        name: string;
+        given_name: string;
+        family_name: string;
+        picture: string;
+        verified_email: boolean;
+      };
       return {
         id: data.id,
         email: data.email,
@@ -460,7 +474,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
     } catch (error) {
       throw new DomainError(
         ErrorCode.GOOGLE_AUTH_FAILED,
-        `Failed to get user info from Google: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to get user info from Google: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -482,20 +496,20 @@ export class GoogleAuthAdapter implements IAuthStrategy {
   }
 
   private async verifyPendingToken(
-    token: string
+    token: string,
   ): Promise<PendingTokenPayload> {
     try {
       const payload = await this.jwtService.verifyAsync<PendingTokenPayload>(
         token,
         {
           secret: this.configService.get<string>("auth.jwt.secret"),
-        }
+        },
       );
 
       if (payload.type !== "google_pending_registration") {
         throw new DomainError(
           ErrorCode.INVALID_PENDING_TOKEN,
-          "Invalid token type"
+          "Invalid token type",
         );
       }
 
@@ -506,7 +520,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       }
       throw new DomainError(
         ErrorCode.INVALID_PENDING_TOKEN,
-        "Invalid or expired pending token"
+        "Invalid or expired pending token",
       );
     }
   }
@@ -514,28 +528,28 @@ export class GoogleAuthAdapter implements IAuthStrategy {
   private async generateSignInResponse(
     userId: string,
     deviceInfo?: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<SignInResponse> {
     const userDetails = await this.organizationFacade.getUserProfile(userId);
 
     if (userDetails.status === UserStatus.DELETED) {
       throw new DomainError(
         ErrorCode.USER_ACCOUNT_DELETED,
-        "This account has been deleted. Please contact support if you believe this is an error."
+        "This account has been deleted. Please contact support if you believe this is an error.",
       );
     }
 
     if (userDetails.status === UserStatus.SUSPENDED) {
       throw new DomainError(
         ErrorCode.USER_ACCOUNT_DISABLED,
-        "This account has been suspended. Please contact support for more information."
+        "This account has been suspended. Please contact support for more information.",
       );
     }
 
     if (!userDetails.memberships || userDetails.memberships.length === 0) {
       throw new DomainError(
         ErrorCode.NO_MEMBERSHIPS_FOUND,
-        "This account has no active organization memberships. Please contact support."
+        "This account has no active organization memberships. Please contact support.",
       );
     }
 
@@ -569,7 +583,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       expiresAt,
       AuthIdentityName.GOOGLE,
       deviceInfo,
-      ipAddress
+      ipAddress,
     );
 
     await this.refreshTokenRepository.save(refreshTokenEntity);
@@ -583,35 +597,35 @@ export class GoogleAuthAdapter implements IAuthStrategy {
   private async generateTokensForUser(
     userId: string,
     deviceInfo?: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<GoogleAuthResult> {
     const userDetails = await this.organizationFacade.getUserProfile(userId);
 
     if (userDetails.status === UserStatus.DELETED) {
       throw new DomainError(
         ErrorCode.USER_ACCOUNT_DELETED,
-        "This account has been deleted. Please contact support if you believe this is an error."
+        "This account has been deleted. Please contact support if you believe this is an error.",
       );
     }
 
     if (userDetails.status === UserStatus.SUSPENDED) {
       throw new DomainError(
         ErrorCode.USER_ACCOUNT_DISABLED,
-        "This account has been suspended. Please contact support for more information."
+        "This account has been suspended. Please contact support for more information.",
       );
     }
 
     if (!userDetails.memberships || userDetails.memberships.length === 0) {
       throw new DomainError(
         ErrorCode.NO_MEMBERSHIPS_FOUND,
-        "This account has no active organization memberships. Please contact support."
+        "This account has no active organization memberships. Please contact support.",
       );
     }
 
     const signInResponse = await this.generateSignInResponse(
       userId,
       deviceInfo,
-      ipAddress
+      ipAddress,
     );
 
     return {
@@ -623,7 +637,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
 
   private async sendWelcomeEmail(
     email: string,
-    firstName?: string
+    firstName?: string,
   ): Promise<void> {
     try {
       const frontendUrl =
@@ -656,7 +670,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
         await this.refreshTokenRepository.findActiveByUserId(userId);
 
       const sortedTokens = tokens.sort(
-        (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
       );
 
       const tokensToRevoke = sortedTokens.slice(0, count - maxTokens + 1);

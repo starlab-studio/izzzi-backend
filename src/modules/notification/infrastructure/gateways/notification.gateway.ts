@@ -36,7 +36,7 @@ export class NotificationGateway
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     @Inject("SUBJECT_REPOSITORY")
-    private readonly subjectRepository: ISubjectRepository
+    private readonly subjectRepository: ISubjectRepository,
   ) {}
 
   async handleConnection(@ConnectedSocket() client: Socket) {
@@ -64,7 +64,7 @@ export class NotificationGateway
       }
       this.userSockets.get(userId)!.add(client.id);
 
-      client.join(`user:${userId}`);
+      void client.join(`user:${userId}`);
 
       this.logger.log(`User ${userId} connected (socket: ${client.id})`);
     } catch (error) {
@@ -73,7 +73,7 @@ export class NotificationGateway
     }
   }
 
-  async handleDisconnect(@ConnectedSocket() client: Socket) {
+  handleDisconnect(@ConnectedSocket() client: Socket) {
     for (const [userId, socketIds] of this.userSockets.entries()) {
       if (socketIds.has(client.id)) {
         socketIds.delete(client.id);
@@ -90,7 +90,7 @@ export class NotificationGateway
     const socketIds = this.userSockets.get(userId);
     if (!socketIds || socketIds.size === 0) {
       this.logger.debug(
-        `User ${userId} is not connected, notification will be retrieved on next fetch`
+        `User ${userId} is not connected, notification will be retrieved on next fetch`,
       );
       return;
     }
@@ -99,7 +99,7 @@ export class NotificationGateway
       await this.transformNotification(notification);
     if (!transformedNotification) {
       this.logger.warn(
-        `Failed to transform notification ${notification.id}, skipping emission`
+        `Failed to transform notification ${notification.id}, skipping emission`,
       );
       return;
     }
@@ -111,7 +111,7 @@ export class NotificationGateway
   }
 
   private async transformNotification(
-    notification: INotification
+    notification: INotification,
   ): Promise<NotificationOutput | null> {
     try {
       const metadata = notification.metadata || {};
@@ -120,7 +120,7 @@ export class NotificationGateway
 
       if (!subjectId) {
         this.logger.warn(
-          `Notification ${notification.id} missing subjectId metadata`
+          `Notification ${notification.id} missing subjectId metadata`,
         );
         return null;
       }
@@ -128,7 +128,7 @@ export class NotificationGateway
       const subject = await this.subjectRepository.findById(subjectId);
       if (!subject) {
         this.logger.warn(
-          `Subject ${subjectId} not found for notification ${notification.id}`
+          `Subject ${subjectId} not found for notification ${notification.id}`,
         );
         return null;
       }
@@ -150,7 +150,7 @@ export class NotificationGateway
       this.logger.error(
         `Error transforming notification ${notification.id}: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
       return null;
     }

@@ -16,26 +16,26 @@ export class CheckBillingAccessUseCase
 {
   constructor(
     logger: ILoggerService,
-    private readonly subscriptionRepository: ISubscriptionRepository
+    private readonly subscriptionRepository: ISubscriptionRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    input: CheckBillingAccessInput
+    input: CheckBillingAccessInput,
   ): Promise<CheckBillingAccessOutput> {
     const { organizationId } = input;
 
     try {
       let subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          organizationId
+          organizationId,
         );
 
       if (!subscription) {
         subscription =
           await this.subscriptionRepository.findByOrganizationId(
-            organizationId
+            organizationId,
           );
       }
 

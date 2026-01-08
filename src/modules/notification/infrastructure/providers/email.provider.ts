@@ -11,15 +11,17 @@ export class EmailProvider implements INotificationProvider {
 
   constructor(private readonly configService: ConfigService) {
     this.client = new SibApiV3Sdk.TransactionalEmailsApi();
-    const apiKey = this.configService.get("nofitication.email_provider.key");
+    const apiKey = this.configService.get<string>(
+      "nofitication.email_provider.key",
+    );
     if (!apiKey)
       throw new ApplicationError(
         ErrorCode.INVALID_BREVO_API_KEY,
-        "Brevo API KEY not found!"
+        "Brevo API KEY not found!",
       );
     this.client.setApiKey(
       SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
-      apiKey
+      apiKey,
     );
   }
 

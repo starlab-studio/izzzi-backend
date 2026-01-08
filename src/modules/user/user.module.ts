@@ -1,9 +1,14 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
-import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ConfigService } from "@nestjs/config";
 import { Repository } from "typeorm";
 
-import { LoggerService, ILoggerService, IUnitOfWork, TypeOrmUnitOfWork } from "src/core";
+import {
+  LoggerService,
+  ILoggerService,
+  IUnitOfWork,
+  TypeOrmUnitOfWork,
+} from "src/core";
 import { CoreModule } from "src/core/core.module";
 import { OrganizationModule } from "../organization/organization.module";
 import { AuthModule } from "../auth/auth.module";
@@ -18,7 +23,6 @@ import { IAuthIdentityRepository } from "../auth/domain/repositories/authIdentit
 import { AuthIdentityUniquenessService } from "../auth/domain/services/authIdentity-uniqueness.service";
 import { AuthIdentityModel } from "../auth/infrastructure/models/authIdentity.model";
 import { OrganizationFacade } from "../organization/application/facades/organization.facade";
-import { AuthFacade } from "../auth/application/facades/auth.facade";
 import { IAuthStrategy } from "../auth/domain/types";
 import { GetProfileUseCase } from "./application/use-cases/GetProfile.use-case";
 import { MembershipRepository } from "../organization/infrastructure/repositories/membership.repository";
@@ -32,7 +36,12 @@ import { ProfileController } from "./interface/controllers/profile.controller";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserModel, OrganizationModel, AuthIdentityModel, MembershipModel]),
+    TypeOrmModule.forFeature([
+      UserModel,
+      OrganizationModel,
+      AuthIdentityModel,
+      MembershipModel,
+    ]),
     forwardRef(() => CoreModule),
     forwardRef(() => OrganizationModule),
     forwardRef(() => AuthModule),
@@ -79,10 +88,8 @@ import { ProfileController } from "./interface/controllers/profile.controller";
     },
     {
       provide: GetProfileUseCase,
-      useFactory: (
-        logger: ILoggerService,
-        userRepository: IUserRepository
-      ) => new GetProfileUseCase(logger, userRepository),
+      useFactory: (logger: ILoggerService, userRepository: IUserRepository) =>
+        new GetProfileUseCase(logger, userRepository),
       inject: [LoggerService, "USER_REPOSITORY"],
     },
     {
@@ -135,22 +142,20 @@ import { ProfileController } from "./interface/controllers/profile.controller";
           membershipRepository,
           authStrategy
         ),
-        inject: [
-          LoggerService,
-          TypeOrmUnitOfWork,
-          "USER_REPOSITORY",
-          "AUTH_IDENTITY_REPOSITORY",
-          "ORGANIZATION_REPOSITORY",
-          "MEMBERSHIP_REPOSITORY",
-          "AUTH_IDENTITY_PROVIDER",
-        ],
+      inject: [
+        LoggerService,
+        TypeOrmUnitOfWork,
+        "USER_REPOSITORY",
+        "AUTH_IDENTITY_REPOSITORY",
+        "ORGANIZATION_REPOSITORY",
+        "MEMBERSHIP_REPOSITORY",
+        "AUTH_IDENTITY_PROVIDER",
+      ],
     },
     {
       provide: UpdateAvatarUseCase,
-      useFactory: (
-        logger: ILoggerService,
-        userRepository: IUserRepository
-      ) => new UpdateAvatarUseCase(logger, userRepository),
+      useFactory: (logger: ILoggerService, userRepository: IUserRepository) =>
+        new UpdateAvatarUseCase(logger, userRepository),
       inject: [LoggerService, "USER_REPOSITORY"],
     },
     {
@@ -167,10 +172,14 @@ import { ProfileController } from "./interface/controllers/profile.controller";
           deleteAccountUseCase,
           updateAvatarUseCase
         ),
-      inject: [GetProfileUseCase, UpdateProfileUseCase, DeleteAccountUseCase, UpdateAvatarUseCase],
+      inject: [
+        GetProfileUseCase,
+        UpdateProfileUseCase,
+        DeleteAccountUseCase,
+        UpdateAvatarUseCase,
+      ],
     },
   ],
   exports: [UserFacade],
 })
 export class UserModule {}
-

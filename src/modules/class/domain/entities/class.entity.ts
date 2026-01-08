@@ -17,7 +17,7 @@ export class ClassEntity extends BaseEntity {
     numberOfStudents: number,
     studentEmails: string[],
     organizationId: string,
-    userId: string
+    userId: string,
   ): ClassEntity {
     ClassEntity.validateRequiredString(
       name,
@@ -56,7 +56,6 @@ export class ClassEntity extends BaseEntity {
     });
   }
 
-
   private static validateNumberOfStudents(numberOfStudents: number): void {
     if (numberOfStudents === undefined || numberOfStudents === null) {
       throw new DomainError(
@@ -75,7 +74,7 @@ export class ClassEntity extends BaseEntity {
 
   private static validateStudentEmails(
     studentEmails: string[],
-    numberOfStudents: number
+    numberOfStudents: number,
   ): void {
     if (!studentEmails || studentEmails.length === 0) {
       throw new DomainError(
@@ -84,8 +83,10 @@ export class ClassEntity extends BaseEntity {
       );
     }
 
-    const uniqueEmails = new Set(studentEmails.map(email => email.toLowerCase().trim()));
-    
+    const uniqueEmails = new Set(
+      studentEmails.map((email) => email.toLowerCase().trim()),
+    );
+
     if (uniqueEmails.size !== studentEmails.length) {
       throw new DomainError(
         ErrorCode.INVALID_STUDENT_EMAILS,

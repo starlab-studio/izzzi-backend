@@ -1,7 +1,19 @@
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from "@nestjs/swagger";
 import { Controller, Get, Put, Delete, Body, UseGuards } from "@nestjs/common";
 
-import { BaseController, AuthGuard, RolesGuard, Roles, CurrentUser, UserRole } from "src/core";
+import {
+  BaseController,
+  AuthGuard,
+  RolesGuard,
+  Roles,
+  CurrentUser,
+  UserRole,
+} from "src/core";
 import type { JWTPayload } from "src/core";
 import { UserFacade } from "../../application/facades/user.facade";
 import { UpdateProfileDto, UpdateAvatarDto } from "../dto/profile.dto";
@@ -13,7 +25,7 @@ import { ChangePasswordDto } from "../../../auth/interface/dto/auth.dto";
 export class ProfileController extends BaseController {
   constructor(
     private readonly userFacade: UserFacade,
-    private readonly authFacade: AuthFacade
+    private readonly authFacade: AuthFacade,
   ) {
     super();
   }
@@ -23,7 +35,8 @@ export class ProfileController extends BaseController {
   @UseGuards(AuthGuard)
   @ApiOperation({
     summary: "Récupérer le profil de l'utilisateur connecté",
-    description: "Récupère les informations du profil de l'utilisateur authentifié",
+    description:
+      "Récupère les informations du profil de l'utilisateur authentifié",
   })
   @ApiResponse({
     status: 200,
@@ -51,11 +64,15 @@ export class ProfileController extends BaseController {
   })
   @ApiResponse({ status: 400, description: "Données invalides" })
   @ApiResponse({ status: 401, description: "Authentification requise" })
-  @ApiResponse({ status: 403, description: "Accès interdit - Admin requis pour modifier le nom de l'établissement" })
+  @ApiResponse({
+    status: 403,
+    description:
+      "Accès interdit - Admin requis pour modifier le nom de l'établissement",
+  })
   @ApiResponse({ status: 404, description: "Utilisateur non trouvé" })
   async updateProfile(
     @CurrentUser() user: JWTPayload,
-    @Body() dto: UpdateProfileDto
+    @Body() dto: UpdateProfileDto,
   ) {
     const updatedProfile = await this.userFacade.updateProfile({
       userId: user.userId,
@@ -73,7 +90,8 @@ export class ProfileController extends BaseController {
   @UseGuards(AuthGuard)
   @ApiOperation({
     summary: "Mettre à jour l'avatar de l'utilisateur",
-    description: "Met à jour l'URL de l'avatar de l'utilisateur authentifié après upload sur S3.",
+    description:
+      "Met à jour l'URL de l'avatar de l'utilisateur authentifié après upload sur S3.",
   })
   @ApiResponse({
     status: 200,
@@ -84,7 +102,7 @@ export class ProfileController extends BaseController {
   @ApiResponse({ status: 404, description: "Utilisateur non trouvé" })
   async updateAvatar(
     @CurrentUser() user: JWTPayload,
-    @Body() dto: UpdateAvatarDto
+    @Body() dto: UpdateAvatarDto,
   ) {
     const updatedProfile = await this.userFacade.updateAvatar({
       userId: user.userId,
@@ -112,7 +130,7 @@ export class ProfileController extends BaseController {
   })
   async changePassword(
     @CurrentUser() user: JWTPayload,
-    @Body() dto: ChangePasswordDto
+    @Body() dto: ChangePasswordDto,
   ) {
     await this.authFacade.changePassword({
       userId: user.userId,
@@ -147,4 +165,3 @@ export class ProfileController extends BaseController {
     });
   }
 }
-

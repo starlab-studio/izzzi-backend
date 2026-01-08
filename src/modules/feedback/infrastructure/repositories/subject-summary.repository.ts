@@ -13,7 +13,7 @@ export class SubjectSummaryRepository
   constructor(
     @InjectRepository(SubjectSummaryModel)
     private readonly directRepository: Repository<SubjectSummaryModel>,
-    readonly unitOfWork: IUnitOfWork
+    readonly unitOfWork: IUnitOfWork,
   ) {
     super(unitOfWork);
   }
@@ -46,7 +46,7 @@ export class SubjectSummaryRepository
 
   async update(
     id: string,
-    entity: Partial<SubjectSummaryEntity>
+    entity: Partial<SubjectSummaryEntity>,
   ): Promise<SubjectSummaryEntity> {
     const persistence = (entity as SubjectSummaryEntity).toPersistence();
     await this.directRepository.update(id, persistence);
@@ -66,7 +66,7 @@ export class SubjectSummaryRepository
   async findBySubjectIdAndFormType(
     subjectId: string,
     periodDays: number,
-    formType: "during_course" | "after_course"
+    formType: "during_course" | "after_course",
   ): Promise<SubjectSummaryEntity | null> {
     const ormEntity = await this.directRepository.findOne({
       where: { subjectId, periodDays, formType },
@@ -78,7 +78,7 @@ export class SubjectSummaryRepository
   async findBySubjectIdsAndFormType(
     subjectIds: string[],
     periodDays: number,
-    formType: "during_course" | "after_course"
+    formType: "during_course" | "after_course",
   ): Promise<SubjectSummaryEntity[]> {
     if (subjectIds.length === 0) {
       return [];
@@ -90,7 +90,7 @@ export class SubjectSummaryRepository
       .andWhere("summary.form_type = :formType", { formType })
       .getMany();
     return ormEntityList.map((ormEntity) =>
-      SubjectSummaryEntity.reconstitute(this.toDomain(ormEntity))
+      SubjectSummaryEntity.reconstitute(this.toDomain(ormEntity)),
     );
   }
 
@@ -98,7 +98,7 @@ export class SubjectSummaryRepository
     const existing = await this.findBySubjectIdAndFormType(
       entity.subjectId,
       entity.periodDays,
-      entity.formType
+      entity.formType,
     );
 
     if (existing) {
@@ -128,7 +128,7 @@ export class SubjectSummaryRepository
   async findAll(): Promise<SubjectSummaryEntity[]> {
     const ormEntityList = await this.directRepository.find();
     return ormEntityList.map((ormEntity) =>
-      SubjectSummaryEntity.reconstitute(this.toDomain(ormEntity))
+      SubjectSummaryEntity.reconstitute(this.toDomain(ormEntity)),
     );
   }
 

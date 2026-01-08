@@ -45,7 +45,7 @@ import { InvoiceRepository } from "../subscription/infrastructure/repositories/i
         stripeSyncService: IStripeSyncService,
         subscriptionRepository: SubscriptionRepository,
         pricingTierRepository: PricingTierRepository,
-        invoiceRepository: InvoiceRepository
+        invoiceRepository: InvoiceRepository,
       ) =>
         new HandleStripeWebhookUseCase(
           logger,
@@ -54,7 +54,7 @@ import { InvoiceRepository } from "../subscription/infrastructure/repositories/i
           stripeSyncService,
           subscriptionRepository,
           pricingTierRepository,
-          invoiceRepository
+          invoiceRepository,
         ),
       inject: [
         LoggerService,

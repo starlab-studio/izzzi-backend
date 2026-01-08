@@ -1,10 +1,6 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import {
-  type IUnitOfWork,
-  BaseTransactionalRepository,
-  TypeOrmUnitOfWork,
-} from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { IClassStudentRepository } from "../../domain/repositories/class-student.repository";
 import { ClassStudentModel } from "../models/class-student.model";
 import { ClassStudentEntity } from "../../domain/entities/class-student.entity";
@@ -16,7 +12,7 @@ export class ClassStudentRepository
   constructor(
     @InjectRepository(ClassStudentModel)
     private readonly directRepository: Repository<ClassStudentModel>,
-    readonly unitOfWork: IUnitOfWork,
+    readonly unitOfWork: IUnitOfWork
   ) {
     super(unitOfWork);
   }
@@ -49,7 +45,7 @@ export class ClassStudentRepository
 
   async findByClassAndActive(
     classId: string,
-    isActive: boolean,
+    isActive: boolean
   ): Promise<ClassStudentEntity[]> {
     const ormEntities = await this.directRepository.find({
       where: { classId, isActive },
@@ -60,7 +56,7 @@ export class ClassStudentRepository
 
   async findByEmailAndClass(
     email: string,
-    classId: string,
+    classId: string
   ): Promise<ClassStudentEntity | null> {
     const ormEntity = await this.directRepository.findOne({
       where: { email: email.toLowerCase().trim(), classId },
@@ -92,4 +88,3 @@ export class ClassStudentRepository
     return ormEntities.map((orm) => ClassStudentEntity.reconstitute(orm));
   }
 }
-

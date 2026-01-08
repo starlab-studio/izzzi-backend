@@ -18,14 +18,14 @@ export class SendContactReplyEmailUseCase {
   constructor(
     @Inject("IContactRequestRepository")
     private readonly contactRequestRepository: IContactRequestRepository,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {}
 
   async execute(
-    input: SendContactReplyEmailInput
+    input: SendContactReplyEmailInput,
   ): Promise<SendContactReplyEmailOutput> {
     const contactRequest = await this.contactRequestRepository.findById(
-      input.contactRequestId
+      input.contactRequestId,
     );
 
     if (!contactRequest) {
@@ -46,4 +46,3 @@ export class SendContactReplyEmailUseCase {
     return { success: true };
   }
 }
-

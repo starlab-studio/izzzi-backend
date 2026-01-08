@@ -13,7 +13,10 @@ import { IQuizRepository } from "../../domain/repositories/quiz.repository";
 import { IResponseRepository } from "../../domain/repositories/response.repository";
 import { createHash } from "crypto";
 
-export class CheckQuizResponseStatusUseCase extends BaseUseCase implements IUseCase {
+export class CheckQuizResponseStatusUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly quizRepository: IQuizRepository,
@@ -22,7 +25,9 @@ export class CheckQuizResponseStatusUseCase extends BaseUseCase implements IUseC
     super(logger);
   }
 
-  async execute(data: CheckQuizResponseStatusInput): Promise<CheckQuizResponseStatusOutput> {
+  async execute(
+    data: CheckQuizResponseStatusInput,
+  ): Promise<CheckQuizResponseStatusOutput> {
     try {
       // Get quiz
       const quiz = await this.quizRepository.findById(data.quizId);
@@ -32,11 +37,17 @@ export class CheckQuizResponseStatusUseCase extends BaseUseCase implements IUseC
 
       // Generate fingerprint to check if already responded
       const fingerprintData = `${data.quizId}-${data.ipAddress || ""}-${data.userAgent || ""}`;
-      const fingerprint = createHash("sha256").update(fingerprintData).digest("hex");
+      const fingerprint = createHash("sha256")
+        .update(fingerprintData)
+        .digest("hex");
 
       // Check if response exists with this fingerprint for this specific quiz
-      const existingResponse = await this.responseRepository.findByQuizAndFingerprint(quiz.id, fingerprint);
-      
+      const existingResponse =
+        await this.responseRepository.findByQuizAndFingerprint(
+          quiz.id,
+          fingerprint,
+        );
+
       return {
         hasResponded: !!existingResponse,
         responseId: existingResponse?.id || null,
@@ -48,4 +59,3 @@ export class CheckQuizResponseStatusUseCase extends BaseUseCase implements IUseC
 
   async withCompensation(): Promise<void> {}
 }
-

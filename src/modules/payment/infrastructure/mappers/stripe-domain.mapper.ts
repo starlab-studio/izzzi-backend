@@ -10,7 +10,6 @@ import type {
 import type {
   ExpandedInvoice,
   ExpandedSubscription,
-  ExpandedPaymentIntent,
 } from "../types/stripe-extended.types";
 import {
   isExpandedSubscription,

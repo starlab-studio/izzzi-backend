@@ -30,7 +30,9 @@ export class SubmitQuizResponseUseCase extends BaseUseCase implements IUseCase {
     super(logger);
   }
 
-  async execute(data: SubmitQuizResponseInput): Promise<SubmitQuizResponseOutput> {
+  async execute(
+    data: SubmitQuizResponseInput,
+  ): Promise<SubmitQuizResponseOutput> {
     try {
       // Get quiz
       const quiz = await this.quizRepository.findById(data.quizId);
@@ -44,36 +46,45 @@ export class SubmitQuizResponseUseCase extends BaseUseCase implements IUseCase {
       }
 
       // Get template to validate questions
-      const template = await this.quizTemplateRepository.findById(quiz.templateId);
+      const template = await this.quizTemplateRepository.findById(
+        quiz.templateId,
+      );
       if (!template) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Template not found");
       }
 
       // Validate that all required questions are answered
       const requiredQuestions = template.questionsList.filter(
-        (q) => q.validationRules?.required
+        (q) => q.validationRules?.required,
       );
-      const answeredQuestionIds = new Set(data.responses.map((r) => r.questionId));
-      
+      const answeredQuestionIds = new Set(
+        data.responses.map((r) => r.questionId),
+      );
+
       for (const question of requiredQuestions) {
         if (!answeredQuestionIds.has(question.id)) {
           throw new DomainError(
             ErrorCode.UNEXPECTED_ERROR,
-            `Required question ${question.id} is not answered`
+            `Required question ${question.id} is not answered`,
           );
         }
       }
 
       // Generate fingerprint to prevent duplicate submissions
       const fingerprintData = `${data.quizId}-${data.ipAddress || ""}-${data.userAgent || ""}`;
-      const fingerprint = createHash("sha256").update(fingerprintData).digest("hex");
+      const fingerprint = createHash("sha256")
+        .update(fingerprintData)
+        .digest("hex");
 
       // Check for duplicate submission using fingerprint for this specific quiz
-      const duplicate = await this.responseRepository.findByQuizAndFingerprint(quiz.id, fingerprint);
+      const duplicate = await this.responseRepository.findByQuizAndFingerprint(
+        quiz.id,
+        fingerprint,
+      );
       if (duplicate) {
         throw new DomainError(
           ErrorCode.UNEXPECTED_ERROR,
-          "Vous avez déjà répondu à ce formulaire. Merci pour votre participation !"
+          "Vous avez déjà répondu à ce formulaire. Merci pour votre participation !",
         );
       }
 
@@ -91,18 +102,25 @@ export class SubmitQuizResponseUseCase extends BaseUseCase implements IUseCase {
 
       // Create answers
       const answers = data.responses.map((r) => {
-        const question = template.questionsList.find((q) => q.id === r.questionId);
+        const question = template.questionsList.find(
+          (q) => q.id === r.questionId,
+        );
         if (!question) {
-          throw new DomainError(ErrorCode.UNEXPECTED_ERROR, `Question ${r.questionId} not found`);
+          throw new DomainError(
+            ErrorCode.UNEXPECTED_ERROR,
+            `Question ${r.questionId} not found`,
+          );
         }
 
         return AnswerEntity.create({
           responseId: savedResponse.id,
           questionId: r.questionId,
           valueStars: r.valueNumber ?? null,
-          valueRadio: r.valueText && question.type === "radio" ? r.valueText : null,
+          valueRadio:
+            r.valueText && question.type === "radio" ? r.valueText : null,
           valueCheckbox: Array.isArray(r.valueJson) ? r.valueJson : null,
-          valueText: r.valueText && question.type === "textarea" ? r.valueText : null,
+          valueText:
+            r.valueText && question.type === "textarea" ? r.valueText : null,
         });
       });
 
@@ -117,8 +135,14 @@ export class SubmitQuizResponseUseCase extends BaseUseCase implements IUseCase {
 
       // Mark student token as responded if token is provided
       if (data.studentToken) {
-        const studentToken = await this.studentQuizTokenRepository.findByToken(data.studentToken);
-        if (studentToken && studentToken.quizId === data.quizId && !studentToken.hasResponded) {
+        const studentToken = await this.studentQuizTokenRepository.findByToken(
+          data.studentToken,
+        );
+        if (
+          studentToken &&
+          studentToken.quizId === data.quizId &&
+          !studentToken.hasResponded
+        ) {
           studentToken.markAsResponded();
           await this.studentQuizTokenRepository.save(studentToken);
         }
@@ -136,4 +160,3 @@ export class SubmitQuizResponseUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

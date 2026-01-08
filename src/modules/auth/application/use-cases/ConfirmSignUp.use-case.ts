@@ -6,7 +6,7 @@ import { IAuthStrategy } from "../../domain/types";
 export class ConfirmSignUpUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly authProvider: IAuthStrategy
+    private readonly authProvider: IAuthStrategy,
   ) {
     super(logger);
   }
@@ -20,7 +20,8 @@ export class ConfirmSignUpUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: ConfirmSignUpData): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: ConfirmSignUpData): Promise<void> {
     // TODO : implement compensation logic
   }
 }

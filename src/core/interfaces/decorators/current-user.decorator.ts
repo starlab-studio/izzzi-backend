@@ -7,5 +7,5 @@ export const CurrentUser = createParamDecorator(
       .switchToHttp()
       .getRequest<Request & { user?: unknown }>();
     return request.user;
-  }
+  },
 );

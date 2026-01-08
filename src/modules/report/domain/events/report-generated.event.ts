@@ -8,8 +8,7 @@ export interface ReportGeneratedPayload {
   generatedAt: string;
 }
 
-export interface IReportGeneratedEvent
-  extends IDomainEvent<ReportGeneratedPayload> {}
+export type IReportGeneratedEvent = IDomainEvent<ReportGeneratedPayload>;
 
 export class ReportGeneratedEvent implements IReportGeneratedEvent {
   readonly name: string = "report.generated";

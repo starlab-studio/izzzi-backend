@@ -43,7 +43,7 @@ export type ExpandedInvoiceLineItem = Stripe.InvoiceLineItem & {
  * Helper type guards
  */
 export function isExpandedSubscription(
-  subscription: string | ExpandedSubscription | null | undefined
+  subscription: string | ExpandedSubscription | null | undefined,
 ): subscription is ExpandedSubscription {
   return (
     subscription !== null &&
@@ -54,7 +54,7 @@ export function isExpandedSubscription(
 }
 
 export function isExpandedPaymentIntent(
-  paymentIntent: string | ExpandedPaymentIntent | null | undefined
+  paymentIntent: string | ExpandedPaymentIntent | null | undefined,
 ): paymentIntent is ExpandedPaymentIntent {
   return (
     paymentIntent !== null &&
@@ -65,7 +65,7 @@ export function isExpandedPaymentIntent(
 }
 
 export function isExpandedInvoice(
-  invoice: string | Stripe.Invoice | null | undefined
+  invoice: string | Stripe.Invoice | null | undefined,
 ): invoice is Stripe.Invoice {
   return (
     invoice !== null &&

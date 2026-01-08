@@ -55,7 +55,8 @@ export class RefreshTokenGuard implements CanActivate {
   }
 
   private extractTokenFromCookie(request: Request): string | undefined {
-    return request.cookies?.["refresh_token"];
+    const cookies = request.cookies as { refresh_token?: string } | undefined;
+    return cookies?.["refresh_token"];
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

@@ -1,8 +1,4 @@
-import {
-  IUseCase,
-  BaseUseCase,
-  ILoggerService,
-} from "src/core";
+import { IUseCase, BaseUseCase, ILoggerService } from "src/core";
 
 import {
   BulkCreateSubjectsInput,
@@ -19,7 +15,9 @@ export class BulkCreateSubjectsUseCase extends BaseUseCase implements IUseCase {
     super(logger);
   }
 
-  async execute(input: BulkCreateSubjectsInput): Promise<BulkCreateSubjectsOutput> {
+  async execute(
+    input: BulkCreateSubjectsInput,
+  ): Promise<BulkCreateSubjectsOutput> {
     try {
       const results: BulkCreateSubjectsOutput = {
         success: true,
@@ -49,12 +47,15 @@ export class BulkCreateSubjectsUseCase extends BaseUseCase implements IUseCase {
           results.subjects.push(result.subject);
           results.createdCount++;
         } catch (error: any) {
-          const errorMessage = error?.message || error?.errors?.[0]?.message || "Unknown error";
+          const errorMessage =
+            error?.message || error?.errors?.[0]?.message || "Unknown error";
           results.errors.push({
             row: rowNumber,
             error: errorMessage,
           });
-          this.logger.warn(`Error creating subject at row ${rowNumber}: ${errorMessage}`);
+          this.logger.warn(
+            `Error creating subject at row ${rowNumber}: ${errorMessage}`,
+          );
         }
       }
 

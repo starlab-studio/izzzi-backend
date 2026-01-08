@@ -1,9 +1,6 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import {
-  type IUnitOfWork,
-  BaseTransactionalRepository,
-} from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { AnswerModel } from "../models/answer.model";
 import { IAnswerRepository } from "../../domain/repositories/answer.repository";
 import { AnswerEntity } from "../../domain/entities/answer.entity";
@@ -70,4 +67,3 @@ export class AnswerRepository
     await this.directRepository.delete(id);
   }
 }
-

@@ -42,4 +42,3 @@ export class QuizTemplatePairEntity extends BaseEntity {
     return { ...this.props };
   }
 }
-

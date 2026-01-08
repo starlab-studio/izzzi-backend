@@ -31,13 +31,13 @@ export class SendSubscriptionConfirmationEmailUseCase
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly userRepository: IUserRepository,
     private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
-    private readonly getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase
+    private readonly getBillingPortalLinkUseCase: GetBillingPortalLinkUseCase,
   ) {
     super(logger);
   }
 
   async execute(
-    input: SendSubscriptionConfirmationEmailInput
+    input: SendSubscriptionConfirmationEmailInput,
   ): Promise<SendSubscriptionConfirmationEmailOutput> {
     const { subscriptionId, organizationId } = input;
 
@@ -50,7 +50,7 @@ export class SendSubscriptionConfirmationEmailUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
           "Subscription not found",
-          { subscriptionId }
+          { subscriptionId },
         );
       }
 
@@ -74,14 +74,14 @@ export class SendSubscriptionConfirmationEmailUseCase
 
       const templatePath = path.join(
         __dirname,
-        "../../../../templates/subscription-confirmation.html"
+        "../../../../templates/subscription-confirmation.html",
       );
 
       if (!fs.existsSync(templatePath)) {
         throw new DomainError(
           "TEMPLATE_NOT_FOUND",
           "Email template not found",
-          { templatePath }
+          { templatePath },
         );
       }
 
@@ -100,7 +100,7 @@ export class SendSubscriptionConfirmationEmailUseCase
       });
 
       this.logger.info(
-        `Subscription confirmation email sent to ${user.email} for subscription ${subscriptionId}`
+        `Subscription confirmation email sent to ${user.email} for subscription ${subscriptionId}`,
       );
 
       return {

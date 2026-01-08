@@ -13,7 +13,7 @@ export class AuthIdentityEntity {
     data: Pick<
       IAuthIdentity,
       "provider" | "providerUserId" | "username" | "password"
-    >
+    >,
   ): AuthIdentityEntity {
     return new AuthIdentityEntity({
       id: randomUUID(),
@@ -109,7 +109,7 @@ export class AuthIdentityEntity {
     ) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL,
-        "Invalid email for email verification"
+        "Invalid email for email verification",
       );
     }
 

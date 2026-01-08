@@ -29,7 +29,7 @@ export class EventStore implements IEventStore {
         async (job) => {
           handler(job.data as IDomainEvent);
         },
-        { connection }
+        { connection },
       );
     }
   }

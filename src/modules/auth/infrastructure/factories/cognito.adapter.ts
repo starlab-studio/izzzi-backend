@@ -13,13 +13,8 @@ import {
   NotAuthorizedException,
   UserNotConfirmedException,
   UserNotFoundException,
-  ConfirmSignUpCommand,
-  ResendConfirmationCodeCommand,
-  CodeMismatchException,
-  ExpiredCodeException,
   ForgotPasswordCommand,
-  ConfirmForgotPasswordCommand,
-  ChangePasswordCommand,
+  ResendConfirmationCodeCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import {
@@ -49,13 +44,24 @@ export class CognitoAdapter implements IAuthStrategy {
     private readonly configService: ConfigService,
     private readonly authIdentityRepository: IAuthIdentityRepository,
     private readonly logger: ILoggerService,
-    private readonly verificationTokenRepository: IVerificationTokenRepository
+    private readonly verificationTokenRepository: IVerificationTokenRepository,
   ) {
-    const aws = this.configService.get("aws");
+    const aws = this.configService.get<{
+      cognito: {
+        clientId: string;
+        userPoolId: string;
+        clientSecret: string;
+      };
+      region: string;
+      credentials: {
+        accessKeyId: string;
+        secretAccessKey: string;
+      };
+    }>("aws");
     if (!aws)
       throw new ApplicationError(
         ErrorCode.AWS_CONFIGURATIONS_ARE_MISSING,
-        "AWS configuration missing"
+        "AWS configuration missing",
       );
 
     this.clientId = aws.cognito.clientId;
@@ -86,7 +92,7 @@ export class CognitoAdapter implements IAuthStrategy {
       if (!response.UserSub) {
         throw new ApplicationError(
           ErrorCode.AWS_COGNITO_SIGNUP_FAILED,
-          "AWS Cognito failed to create user."
+          "AWS Cognito failed to create user.",
         );
       }
 
@@ -99,7 +105,8 @@ export class CognitoAdapter implements IAuthStrategy {
       const ormAuthIdentity =
         await this.authIdentityRepository.create(authIdentity);
 
-      const { password, ...userData } = data;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _password, ...userData } = data;
 
       return {
         ...userData,
@@ -111,7 +118,7 @@ export class CognitoAdapter implements IAuthStrategy {
       if (error instanceof UsernameExistsException) {
         throw new DomainError(
           ErrorCode.USER_ALREADY_EXISTS,
-          "User already exists"
+          "User already exists",
         );
       }
       throw error;
@@ -138,7 +145,7 @@ export class CognitoAdapter implements IAuthStrategy {
       if (!response.AuthenticationResult) {
         throw new ApplicationError(
           ErrorCode.AWS_COGNITO_ERROR,
-          "AWS Cognito authentication failed"
+          "AWS Cognito authentication failed",
         );
       }
 
@@ -147,7 +154,7 @@ export class CognitoAdapter implements IAuthStrategy {
       if (!AccessToken || !RefreshToken) {
         throw new ApplicationError(
           ErrorCode.AWS_COGNITO_ERROR,
-          "Missing tokens in Cognito response"
+          "Missing tokens in Cognito response",
         );
       }
 
@@ -159,14 +166,14 @@ export class CognitoAdapter implements IAuthStrategy {
       if (error instanceof NotAuthorizedException) {
         throw new DomainError(
           ErrorCode.INVALID_CREDENTIALS,
-          "Invalid email or password"
+          "Invalid email or password",
         );
       }
 
       if (error instanceof UserNotConfirmedException) {
         throw new DomainError(
           ErrorCode.USER_ACCOUNT_PENDING,
-          "User account is not confirmed. Please verify your email"
+          "User account is not confirmed. Please verify your email",
         );
       }
 
@@ -178,7 +185,8 @@ export class CognitoAdapter implements IAuthStrategy {
     }
   }
 
-  async confirmSignUp(data: ConfirmSignUpData): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async confirmSignUp(_data: ConfirmSignUpData): Promise<boolean> {
     // const command = new ConfirmSignUpCommand({
     //   ClientId: this.clientId,
     //   Username: data.email,
@@ -230,7 +238,7 @@ export class CognitoAdapter implements IAuthStrategy {
     } catch (error) {
       this.logger.error(
         `Failed to resend confirmation code for ${data.email}`,
-        error instanceof Error ? (error.stack ?? "") : String(error)
+        error instanceof Error ? (error.stack ?? "") : String(error),
       );
       throw error;
     }
@@ -248,13 +256,14 @@ export class CognitoAdapter implements IAuthStrategy {
     } catch (error) {
       this.logger.error(
         `Failed to initiate password reset for ${data.email}`,
-        error instanceof Error ? (error.stack ?? "") : String(error)
+        error instanceof Error ? (error.stack ?? "") : String(error),
       );
       throw error;
     }
   }
 
-  async confirmForgotPassword(data: {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async confirmForgotPassword(_data: {
     token: string;
     newPassword: string;
   }): Promise<void> {
@@ -263,7 +272,8 @@ export class CognitoAdapter implements IAuthStrategy {
     throw new Error("Cognito password reset not yet implemented");
   }
 
-  async changePassword(data: {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async changePassword(_data: {
     userId: string;
     username: string;
     oldPassword: string;
@@ -273,7 +283,7 @@ export class CognitoAdapter implements IAuthStrategy {
     // This is a limitation - we might need to pass it separately
     // For now, this will need to be handled differently
     throw new Error(
-      "Cognito password change requires access token - not yet implemented with new signature"
+      "Cognito password change requires access token - not yet implemented with new signature",
     );
     // const command = new ChangePasswordCommand({
     //   AccessToken: data.accessToken,
@@ -295,7 +305,8 @@ export class CognitoAdapter implements IAuthStrategy {
     // }
   }
 
-  async refreshToken(data: RefreshTokenData): Promise<SignInResponse> {
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
+  async refreshToken(_data: RefreshTokenData): Promise<SignInResponse> {
     return { accessToken: "", refreshToken: "" };
   }
 
@@ -310,7 +321,7 @@ export class CognitoAdapter implements IAuthStrategy {
     } catch (error) {
       this.logger.error(
         `Failed to delete Cognito user: ${username}`,
-        error instanceof Error ? (error.stack ?? "") : String(error)
+        error instanceof Error ? (error.stack ?? "") : String(error),
       );
     }
   }

@@ -18,7 +18,7 @@ export class ClassRepository
   constructor(
     @InjectRepository(ClassModel)
     private readonly directRepository: Repository<ClassModel>,
-    readonly unitOfWork: IUnitOfWork
+    readonly unitOfWork: IUnitOfWork,
   ) {
     super(unitOfWork);
   }
@@ -49,7 +49,7 @@ export class ClassRepository
   async findByNameAndOrganization(
     // Renommé
     name: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<ClassEntity | null> {
     const result = await this.directRepository.findOne({
       where: { name, organizationId },
@@ -73,7 +73,7 @@ export class ClassRepository
 
   async findByOrganizationAndStatus(
     organizationId: string,
-    status: "active" | "archived"
+    status: "active" | "archived",
   ): Promise<ClassEntity[]> {
     const results = await this.directRepository.find({
       where: { organizationId, status },

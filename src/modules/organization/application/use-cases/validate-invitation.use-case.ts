@@ -27,17 +27,17 @@ export class ValidateInvitationUseCase extends BaseUseCase implements IUseCase {
     private readonly invitationRepository: IInvitationRepository,
     private readonly userRepository: IUserRepository,
     private readonly membershipRepository: IMembershipRepository,
-    private readonly unitOfWork: IUnitOfWork
+    private readonly unitOfWork: IUnitOfWork,
   ) {
     super(logger);
   }
 
   async execute(
-    data: ValidateInvitationData
+    data: ValidateInvitationData,
   ): Promise<ValidateInvitationResponse> {
     try {
       const invitation = await this.invitationRepository.findByToken(
-        data.token
+        data.token,
       );
 
       if (!invitation) {
@@ -45,7 +45,7 @@ export class ValidateInvitationUseCase extends BaseUseCase implements IUseCase {
           ErrorCode.INVALID_OR_EXPIRED_INVITATION,
           "Invalid invitation token",
           undefined,
-          HTTP_STATUS.NOT_FOUND
+          HTTP_STATUS.NOT_FOUND,
         );
       }
 
@@ -56,12 +56,12 @@ export class ValidateInvitationUseCase extends BaseUseCase implements IUseCase {
             ? "Invitation has expired"
             : "Invitation is no longer valid",
           undefined,
-          HTTP_STATUS.BAD_REQUEST
+          HTTP_STATUS.BAD_REQUEST,
         );
       }
 
       const existingUser = await this.userRepository.findByEmail(
-        invitation.email
+        invitation.email,
       );
 
       if (!existingUser) {
@@ -74,7 +74,7 @@ export class ValidateInvitationUseCase extends BaseUseCase implements IUseCase {
       const existingMembership =
         await this.membershipRepository.findByUserAndOrganization(
           existingUser.id,
-          invitation.organizationId
+          invitation.organizationId,
         );
 
       const needsReactivation =
@@ -94,7 +94,7 @@ export class ValidateInvitationUseCase extends BaseUseCase implements IUseCase {
               existingMembership.reactivate(invitation.role);
               await this.membershipRepository.save(existingMembership);
               this.logger.info(
-                `Reactivated membership for user ${existingUser.id} in organization ${invitation.organizationId}`
+                `Reactivated membership for user ${existingUser.id} in organization ${invitation.organizationId}`,
               );
             }
           } else {
@@ -106,7 +106,7 @@ export class ValidateInvitationUseCase extends BaseUseCase implements IUseCase {
             });
             await this.membershipRepository.create(membership);
             this.logger.info(
-              `Created new membership for user ${existingUser.id} in organization ${invitation.organizationId}`
+              `Created new membership for user ${existingUser.id} in organization ${invitation.organizationId}`,
             );
           }
 
@@ -124,5 +124,5 @@ export class ValidateInvitationUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

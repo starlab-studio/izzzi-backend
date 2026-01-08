@@ -46,7 +46,7 @@ export class AuthFacade {
     private readonly authStrategy: IAuthStrategy,
     private readonly refreshTokenRepository: IRefreshTokenRepository,
     private readonly authIdentityRepository: IAuthIdentityRepository,
-    private readonly googleAuthAdapter: GoogleAuthAdapter
+    private readonly googleAuthAdapter: GoogleAuthAdapter,
   ) {}
 
   async signUp(data: SignUpData) {
@@ -82,7 +82,7 @@ export class AuthFacade {
   }
 
   async forgotPassword(
-    data: ForgotPasswordData & { ipAddress?: string; userAgent?: string }
+    data: ForgotPasswordData & { ipAddress?: string; userAgent?: string },
   ) {
     try {
       return await this.forgotPasswordUseCase.execute(data);
@@ -118,7 +118,7 @@ export class AuthFacade {
   async generateAccessTokenForUser(userId: string): Promise<string> {
     try {
       return await (this.authStrategy as any).generateAccessTokenForUser(
-        userId
+        userId,
       );
     } catch (error) {
       throw error;

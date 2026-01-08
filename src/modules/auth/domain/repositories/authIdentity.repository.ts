@@ -8,11 +8,11 @@ export interface IAuthIdentityRepository
   findByUsername(username: string): Promise<AuthIdentityEntity | null>;
   findByProviderAndUsername(
     provider: AuthIdentityName,
-    username: string
+    username: string,
   ): Promise<AuthIdentityEntity | null>;
   findByProviderAndProviderUserId(
     provider: AuthIdentityName,
-    providerUserId: string
+    providerUserId: string,
   ): Promise<AuthIdentityEntity | null>;
   findAllByUserId(userId: string): Promise<AuthIdentityEntity[]>;
   deleteByUsername(username: string): Promise<void>;

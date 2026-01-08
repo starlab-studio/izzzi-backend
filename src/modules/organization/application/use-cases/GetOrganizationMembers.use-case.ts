@@ -1,6 +1,5 @@
 import { DomainError, ErrorCode, ILoggerService, UserRole } from "src/core";
 import { IMembershipRepository } from "../../domain/repositories/membership.repository";
-import { IUser } from "../../domain/types";
 
 export interface GetOrganizationMembersData {
   organizationId: string;
@@ -27,14 +26,19 @@ export class GetOrganizationMembersUseCase {
     private readonly membershipRepository: IMembershipRepository
   ) {}
 
-  async execute(data: GetOrganizationMembersData): Promise<OrganizationMember[]> {
-    this.logger.info(`Getting organization members: organizationId=${data.organizationId}`);
+  async execute(
+    data: GetOrganizationMembersData
+  ): Promise<OrganizationMember[]> {
+    this.logger.info(
+      `Getting organization members: organizationId=${data.organizationId}`
+    );
 
     // Verify requester belongs to the organization
-    const requesterMembership = await this.membershipRepository.findByUserAndOrganization(
-      data.requesterId,
-      data.organizationId
-    );
+    const requesterMembership =
+      await this.membershipRepository.findByUserAndOrganization(
+        data.requesterId,
+        data.organizationId
+      );
 
     if (!requesterMembership) {
       throw new DomainError(
@@ -44,9 +48,10 @@ export class GetOrganizationMembersUseCase {
     }
 
     // Get all active members with user details
-    const memberships = await this.membershipRepository.findActiveByOrganization(
-      data.organizationId
-    );
+    const memberships =
+      await this.membershipRepository.findActiveByOrganization(
+        data.organizationId
+      );
 
     return memberships.map((membership) => ({
       id: membership.id,

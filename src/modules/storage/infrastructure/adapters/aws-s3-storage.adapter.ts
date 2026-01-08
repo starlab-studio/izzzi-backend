@@ -1,18 +1,18 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Inject } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { IStorageService } from '../../domain/interfaces/storage.interface';
-import { FileMetadata } from '../../domain/value-objects/file-metadata.vo';
-import { PresignedUrlEntity } from '../../domain/entities/presigned-url.entity';
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { IStorageService } from "../../domain/interfaces/storage.interface";
+import { FileMetadata } from "../../domain/value-objects/file-metadata.vo";
+import { PresignedUrlEntity } from "../../domain/entities/presigned-url.entity";
 
-export const AWS_S3_CLIENT = 'AWS_S3_CLIENT';
+export const AWS_S3_CLIENT = "AWS_S3_CLIENT";
 
 @Injectable()
 export class AwsS3StorageAdapter implements IStorageService {
@@ -23,14 +23,14 @@ export class AwsS3StorageAdapter implements IStorageService {
     @Inject(AWS_S3_CLIENT) private readonly s3Client: S3Client,
     private readonly configService: ConfigService,
   ) {
-    const bucket = this.configService.get<string>('aws.bucket');
-    const region = this.configService.get<string>('aws.region');
+    const bucket = this.configService.get<string>("aws.bucket");
+    const region = this.configService.get<string>("aws.region");
 
     if (!bucket) {
-      throw new Error('AWS S3 bucket is not configured');
+      throw new Error("AWS S3 bucket is not configured");
     }
     if (!region) {
-      throw new Error('AWS region is not configured');
+      throw new Error("AWS region is not configured");
     }
 
     this.bucket = bucket;
@@ -48,15 +48,18 @@ export class AwsS3StorageAdapter implements IStorageService {
       ContentType: metadata.mimeType,
     });
 
-    const url = await getSignedUrl(this.s3Client, command, { 
+    const url = await getSignedUrl(this.s3Client, command, {
       expiresIn,
-      signableHeaders: new Set(['host']),
+      signableHeaders: new Set(["host"]),
     });
 
     return new PresignedUrlEntity(url, expiresIn);
   }
 
-  async generateDownloadUrl(fileKey: string, expiresIn: number): Promise<PresignedUrlEntity> {
+  async generateDownloadUrl(
+    fileKey: string,
+    expiresIn: number,
+  ): Promise<PresignedUrlEntity> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: fileKey,
@@ -77,7 +80,10 @@ export class AwsS3StorageAdapter implements IStorageService {
       await this.s3Client.send(command);
       return true;
     } catch (error) {
-      if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+      if (
+        error.name === "NotFound" ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
         return false;
       }
       throw error;
@@ -94,6 +100,6 @@ export class AwsS3StorageAdapter implements IStorageService {
   }
 
   getPublicUrl(fileKey: string): string {
-    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${fileKey.replace(/^\/+/, '')}`;
+    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${fileKey.replace(/^\/+/, "")}`;
   }
 }

@@ -83,7 +83,7 @@ export class CreateSubjectSummariesTable1766027436198
           },
         ],
       }),
-      true
+      true,
     );
 
     // Add foreign key to subjects table
@@ -95,7 +95,7 @@ export class CreateSubjectSummariesTable1766027436198
         referencedTableName: "subjects",
         onDelete: "CASCADE",
         name: "FK_subject_summaries_subject_id",
-      })
+      }),
     );
 
     // Add foreign key to organizations table
@@ -107,18 +107,18 @@ export class CreateSubjectSummariesTable1766027436198
         referencedTableName: "organizations",
         onDelete: "CASCADE",
         name: "FK_subject_summaries_organization_id",
-      })
+      }),
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropForeignKey(
       "subject_summaries",
-      "FK_subject_summaries_organization_id"
+      "FK_subject_summaries_organization_id",
     );
     await queryRunner.dropForeignKey(
       "subject_summaries",
-      "FK_subject_summaries_subject_id"
+      "FK_subject_summaries_subject_id",
     );
     await queryRunner.dropTable("subject_summaries");
   }

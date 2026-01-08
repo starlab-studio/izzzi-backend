@@ -39,30 +39,30 @@ export class GetFeedbackSubjectsUseCase
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly subjectSummaryRepository: ISubjectSummaryRepository,
-    private readonly feedbackAlertRepository: IFeedbackAlertRepository
+    private readonly feedbackAlertRepository: IFeedbackAlertRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: GetFeedbackSubjectsInput
+    data: GetFeedbackSubjectsInput,
   ): Promise<GetFeedbackSubjectsOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       const subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          data.organizationId
+          data.organizationId,
         );
       const plan = subscription
         ? await this.subscriptionPlanRepository.findById(subscription.planId)
         : null;
 
       const classes = await this.classRepository.findByOrganization(
-        data.organizationId
+        data.organizationId,
       );
 
       const allSubjects: FeedbackSubjectResponse[] = [];
@@ -86,7 +86,7 @@ export class GetFeedbackSubjectsUseCase
 
         for (const assignment of assignmentsToProcess) {
           const subjectEntity = await this.subjectRepository.findById(
-            assignment.subjectId
+            assignment.subjectId,
           );
 
           if (
@@ -99,7 +99,7 @@ export class GetFeedbackSubjectsUseCase
           const subjectData = subjectEntity.toPersistence();
 
           const quizzes = await this.quizRepository.findBySubject(
-            subjectData.id
+            subjectData.id,
           );
 
           let matchesSearch = true;
@@ -124,7 +124,7 @@ export class GetFeedbackSubjectsUseCase
 
           for (const quizType of quizTypes) {
             const quiz = quizzes.find(
-              (q) => q.toPersistence().type === quizType.type
+              (q) => q.toPersistence().type === quizType.type,
             );
 
             if (
@@ -148,16 +148,16 @@ export class GetFeedbackSubjectsUseCase
             }
 
             const allResponses = await this.responseRepository.findByQuiz(
-              quiz.id
+              quiz.id,
             );
             const responseEntities = allResponses.map((r) =>
-              ResponseEntity.reconstitute(r)
+              ResponseEntity.reconstitute(r),
             );
             const visibilityStats =
               this.responseVisibilityService.calculateVisibilityStats(
                 responseEntities,
                 subscription,
-                plan
+                plan,
               );
 
             const hasVisibleRetours = visibilityStats.visible > 0;
@@ -166,16 +166,16 @@ export class GetFeedbackSubjectsUseCase
             let scoreCount = 0;
 
             const template = await this.quizTemplateRepository.findById(
-              quiz.toPersistence().templateId
+              quiz.toPersistence().templateId,
             );
 
             if (template) {
               const allAnswers = await this.answerRepository.findByQuiz(
-                quiz.id
+                quiz.id,
               );
 
               const starQuestions = template.questionsList.filter(
-                (q) => q.type === "stars"
+                (q) => q.type === "stars",
               );
 
               for (const starQuestion of starQuestions) {
@@ -183,7 +183,7 @@ export class GetFeedbackSubjectsUseCase
                   (a) =>
                     a.questionId === starQuestion.id &&
                     a.valueStars !== null &&
-                    a.valueStars !== undefined
+                    a.valueStars !== undefined,
                 );
 
                 for (const answer of starAnswers) {
@@ -220,7 +220,7 @@ export class GetFeedbackSubjectsUseCase
       }
 
       const mapFormTypeToDb = (
-        formTypeId: string | undefined
+        formTypeId: string | undefined,
       ): "during_course" | "after_course" | null => {
         if (formTypeId === "during") return "during_course";
         if (formTypeId === "end") return "after_course";
@@ -235,7 +235,7 @@ export class GetFeedbackSubjectsUseCase
       const allAlerts =
         await this.feedbackAlertRepository.findBySubjectIds(uniqueSubjectIds);
       this.logger.info(
-        `Found ${allAlerts.length} total alerts for ${uniqueSubjectIds.length} subjects`
+        `Found ${allAlerts.length} total alerts for ${uniqueSubjectIds.length} subjects`,
       );
       const alertsBySubjectId = new Map<string, typeof allAlerts>();
       allAlerts.forEach((alert) => {
@@ -243,7 +243,7 @@ export class GetFeedbackSubjectsUseCase
         existing.push(alert);
         alertsBySubjectId.set(alert.subjectId, existing);
         this.logger.info(
-          `Alert ${alert.alertId} for subject ${alert.subjectId} has formType: ${alert.formType}`
+          `Alert ${alert.alertId} for subject ${alert.subjectId} has formType: ${alert.formType}`,
         );
       });
 
@@ -251,13 +251,13 @@ export class GetFeedbackSubjectsUseCase
         await this.subjectSummaryRepository.findBySubjectIdsAndFormType(
           uniqueSubjectIds,
           periodDays,
-          "during_course"
+          "during_course",
         );
       const summariesAfter =
         await this.subjectSummaryRepository.findBySubjectIdsAndFormType(
           uniqueSubjectIds,
           periodDays,
-          "after_course"
+          "after_course",
         );
 
       const summaryMap = new Map<string, (typeof summariesDuring)[0]>();
@@ -279,11 +279,11 @@ export class GetFeedbackSubjectsUseCase
         // Filtrer les alertes par formType
         if (allSubjectAlerts.length > 0) {
           this.logger.info(
-            `Subject ${subject.subjectId} (formType: ${subject.formType?.id} -> ${dbFormType}) has ${allSubjectAlerts.length} alerts before filtering`
+            `Subject ${subject.subjectId} (formType: ${subject.formType?.id} -> ${dbFormType}) has ${allSubjectAlerts.length} alerts before filtering`,
           );
           allSubjectAlerts.forEach((alert) => {
             this.logger.info(
-              `  Alert ${alert.alertId}: formType=${alert.formType}, matches=${alert.formType === dbFormType}`
+              `  Alert ${alert.alertId}: formType=${alert.formType}, matches=${alert.formType === dbFormType}`,
             );
           });
         }
@@ -292,7 +292,7 @@ export class GetFeedbackSubjectsUseCase
         // Si dbFormType n'est pas défini, prendre seulement les alertes sans formType
         const subjectAlerts = dbFormType
           ? allSubjectAlerts.filter(
-              (alert) => alert.formType === dbFormType || !alert.formType // Inclure les alertes sans formType pour compatibilité
+              (alert) => alert.formType === dbFormType || !alert.formType, // Inclure les alertes sans formType pour compatibilité
             )
           : allSubjectAlerts.filter((alert) => !alert.formType); // Si pas de formType spécifié, prendre celles sans formType
 
@@ -305,9 +305,7 @@ export class GetFeedbackSubjectsUseCase
           isProcessed: boolean;
         }> = subjectAlerts.map((alert, index) => ({
           id: alert.alertId,
-          type: (alert.type === "negative" ? "negative" : "positive") as
-            | "negative"
-            | "positive",
+          type: alert.type === "negative" ? "negative" : "positive",
           number: `Alerte ${index + 1}/${subjectAlerts.length}`,
           content: alert.content,
           timestamp: alert.timestamp.toISOString(),

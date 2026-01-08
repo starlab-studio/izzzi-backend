@@ -67,7 +67,8 @@ export class CreateContactRequestDto {
 
   @ApiProperty({
     description: "Message de la demande",
-    example: "Nous aimerions avoir plus d'informations sur votre offre entreprise.",
+    example:
+      "Nous aimerions avoir plus d'informations sur votre offre entreprise.",
   })
   @IsString()
   @IsNotEmpty()
@@ -141,4 +142,3 @@ export class SendContactReplyDto {
   @MaxLength(5000)
   message: string;
 }
-

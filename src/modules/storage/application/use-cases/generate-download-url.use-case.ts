@@ -4,19 +4,26 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
-} from '@nestjs/common';
-import { STORAGE_SERVICE } from '../../domain/interfaces/storage.interface';
-import type { IStorageService } from '../../domain/interfaces/storage.interface';
-import { GenerateDownloadUrlCommand, DownloadUrlResult } from '../dto/generate-download-url.dto';
+} from "@nestjs/common";
+import { STORAGE_SERVICE } from "../../domain/interfaces/storage.interface";
+import type { IStorageService } from "../../domain/interfaces/storage.interface";
+import {
+  GenerateDownloadUrlCommand,
+  DownloadUrlResult,
+} from "../dto/generate-download-url.dto";
 
 @Injectable()
 export class GenerateDownloadUrlUseCase {
   private readonly DEFAULT_DOWNLOAD_EXPIRATION = 900;
   private readonly MAX_DOWNLOAD_EXPIRATION = 604800;
 
-  constructor(@Inject(STORAGE_SERVICE) private readonly storageService: IStorageService) {}
+  constructor(
+    @Inject(STORAGE_SERVICE) private readonly storageService: IStorageService,
+  ) {}
 
-  async execute(command: GenerateDownloadUrlCommand): Promise<DownloadUrlResult> {
+  async execute(
+    command: GenerateDownloadUrlCommand,
+  ): Promise<DownloadUrlResult> {
     try {
       const exists = await this.storageService.fileExists(command.fileKey);
       if (!exists) {
@@ -41,10 +48,15 @@ export class GenerateDownloadUrlUseCase {
         presignedUrl.getExpiresAt().toISOString(),
       );
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
-      throw new InternalServerErrorException(`Failed to generate download URL: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Failed to generate download URL: ${error.message}`,
+      );
     }
   }
 }

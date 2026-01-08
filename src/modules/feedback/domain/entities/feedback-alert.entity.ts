@@ -29,42 +29,42 @@ export class FeedbackAlertEntity extends BaseEntity {
     BaseEntity.validateRequiredString(
       alertId,
       "Alert ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const subjectId = (data.subjectId ?? "").trim();
     BaseEntity.validateRequiredString(
       subjectId,
       "Subject ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const organizationId = (data.organizationId ?? "").trim();
     BaseEntity.validateRequiredString(
       organizationId,
       "Organization ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const title = (data.title ?? "").trim();
     BaseEntity.validateRequiredString(
       title,
       "Title",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const content = (data.content ?? "").trim();
     BaseEntity.validateRequiredString(
       content,
       "Content",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const number = (data.number ?? "").trim();
     BaseEntity.validateRequiredString(
       number,
       "Number",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     return new FeedbackAlertEntity({
@@ -97,7 +97,7 @@ export class FeedbackAlertEntity extends BaseEntity {
     BaseEntity.validateRequiredString(
       userIdTrimmed,
       "User ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     this.props.isProcessed = true;

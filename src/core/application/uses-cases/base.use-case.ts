@@ -21,7 +21,7 @@ export class BaseUseCase {
       if (error.logging) {
         this.logger.error(
           error.errors.map((e) => e.message).join(", "),
-          JSON.stringify(error.errors)
+          JSON.stringify(error.errors),
         );
       }
       throw error;
@@ -38,11 +38,11 @@ export class BaseUseCase {
       "Unexpected error",
       {
         error: errorInfo,
-      }
+      },
     );
     this.logger.error(
       appError.errors.map((e) => e.message).join(", "),
-      JSON.stringify(appError.errors)
+      JSON.stringify(appError.errors),
     );
     throw appError;
   }
@@ -53,7 +53,7 @@ export class BaseUseCase {
 
   protected failure<T>(
     message: string,
-    context?: Record<string, any>
+    context?: Record<string, any>,
   ): Response<T> {
     return { success: false, errors: [{ message, context }] };
   }

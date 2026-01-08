@@ -35,26 +35,26 @@ export class GetPaymentConfirmationUseCase
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly invoiceRepository: IInvoiceRepository,
     private readonly stripeSyncService: IStripeSyncService,
-    private readonly organizationAuthorizationService: OrganizationAuthorizationService
+    private readonly organizationAuthorizationService: OrganizationAuthorizationService,
   ) {
     super(logger);
   }
 
   async execute(
-    input: GetPaymentConfirmationInput
+    input: GetPaymentConfirmationInput,
   ): Promise<GetPaymentConfirmationOutput> {
     const { organizationId, userId } = input;
 
     try {
       let subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          organizationId
+          organizationId,
         );
 
       if (!subscription) {
         subscription =
           await this.subscriptionRepository.findByOrganizationId(
-            organizationId
+            organizationId,
           );
       }
 
@@ -62,13 +62,13 @@ export class GetPaymentConfirmationUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
           "No subscription found for this organization",
-          { organizationId }
+          { organizationId },
         );
       }
 
       await this.organizationAuthorizationService.assertCanAccess(
         userId,
-        organizationId
+        organizationId,
       );
 
       if (
@@ -79,7 +79,7 @@ export class GetPaymentConfirmationUseCase
         throw new DomainError(
           "SUBSCRIPTION_NOT_ACTIVE",
           "Subscription is not active or pending confirmation",
-          { organizationId, status: subscription.status }
+          { organizationId, status: subscription.status },
         );
       }
 
@@ -88,19 +88,19 @@ export class GetPaymentConfirmationUseCase
 
       let invoice = await this.invoiceRepository.findLatestPaidByOrganizationId(
         organizationId,
-        oneDayAgo
+        oneDayAgo,
       );
 
       if (!invoice) {
         invoice =
           await this.invoiceRepository.findLatestByOrganizationId(
-            organizationId
+            organizationId,
           );
       }
 
       if (!invoice && subscription.stripeSubscriptionId) {
         const stripeSubscription = await this.stripeSyncService.getSubscription(
-          subscription.stripeSubscriptionId
+          subscription.stripeSubscriptionId,
         );
 
         if (stripeSubscription?.latest_invoice) {
@@ -117,7 +117,7 @@ export class GetPaymentConfirmationUseCase
               stripeInvoice,
               subscription.userId,
               subscription.organizationId,
-              subscription.id
+              subscription.id,
             );
             invoice = await this.invoiceRepository.save(invoice);
           }
@@ -128,7 +128,7 @@ export class GetPaymentConfirmationUseCase
         throw new DomainError(
           "INVOICE_NOT_FOUND",
           "No invoice found for this subscription",
-          { subscriptionId: subscription.id }
+          { subscriptionId: subscription.id },
         );
       }
 
@@ -137,7 +137,7 @@ export class GetPaymentConfirmationUseCase
 
       try {
         const stripeInvoice = await this.stripeSyncService.getInvoice(
-          invoice.stripeInvoiceId
+          invoice.stripeInvoiceId,
         );
 
         if (stripeInvoice?.metadata?.type === "quantity_update") {
@@ -145,7 +145,7 @@ export class GetPaymentConfirmationUseCase
         } else if (
           Array.isArray(stripeInvoice?.lines?.data) &&
           stripeInvoice.lines.data.some(
-            (line) => line.metadata?.type === "quantity_update"
+            (line) => line.metadata?.type === "quantity_update",
           )
         ) {
           paymentType = "quantity_update";
@@ -156,7 +156,7 @@ export class GetPaymentConfirmationUseCase
             stripeError instanceof Error
               ? stripeError.message
               : String(stripeError)
-          }`
+          }`,
         );
       }
 
@@ -164,7 +164,7 @@ export class GetPaymentConfirmationUseCase
 
       if (subscription.stripeSubscriptionId) {
         const stripeSubscription = await this.stripeSyncService.getSubscription(
-          subscription.stripeSubscriptionId
+          subscription.stripeSubscriptionId,
         );
 
         if (stripeSubscription?.default_payment_method) {
@@ -182,7 +182,7 @@ export class GetPaymentConfirmationUseCase
           }
         } else if (invoice.stripeInvoiceId) {
           const stripeInvoice = await this.stripeSyncService.getInvoice(
-            invoice.stripeInvoiceId
+            invoice.stripeInvoiceId,
           );
 
           if (

@@ -17,7 +17,7 @@ export class RefreshAccessTokenUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly authStrategies: IAuthStrategy[],
-    private readonly refreshTokenRepository: IRefreshTokenRepository
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
   ) {
     super(logger);
   }
@@ -31,7 +31,7 @@ export class RefreshAccessTokenUseCase extends BaseUseCase implements IUseCase {
       if (!refreshTokenEntity) {
         throw new DomainError(
           ErrorCode.INVALID_REFRESH_TOKEN,
-          "Invalid refresh token"
+          "Invalid refresh token",
         );
       }
 
@@ -39,18 +39,18 @@ export class RefreshAccessTokenUseCase extends BaseUseCase implements IUseCase {
         await this.refreshTokenRepository.delete(refreshTokenEntity.id);
         throw new DomainError(
           ErrorCode.REFRESH_TOKEN_EXPIRED_OR_REVOKED,
-          "Refresh token expired"
+          "Refresh token expired",
         );
       }
 
       if (refreshTokenEntity.provider) {
         const adapter = this.authStrategies.find(
-          (s) => s.name === refreshTokenEntity.provider
+          (s) => s.name === refreshTokenEntity.provider,
         );
         if (!adapter) {
           throw new DomainError(
             ErrorCode.INVALID_REFRESH_TOKEN,
-            "Auth provider not available"
+            "Auth provider not available",
           );
         }
         return await adapter.refreshToken(data);
@@ -58,12 +58,12 @@ export class RefreshAccessTokenUseCase extends BaseUseCase implements IUseCase {
 
       throw new DomainError(
         ErrorCode.INVALID_REFRESH_TOKEN,
-        "Refresh token is invalid. Please sign in again."
+        "Refresh token is invalid. Please sign in again.",
       );
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

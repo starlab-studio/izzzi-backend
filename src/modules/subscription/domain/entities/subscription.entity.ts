@@ -283,7 +283,7 @@ export class SubscriptionEntity {
 
     if (this.props.status !== "trial" && this.props.status !== "pending") {
       throw new Error(
-        `Cannot activate subscription with status: ${this.props.status}`
+        `Cannot activate subscription with status: ${this.props.status}`,
       );
     }
 
@@ -319,7 +319,7 @@ export class SubscriptionEntity {
 
     if (this.props.status !== "pending") {
       throw new Error(
-        `Cannot mark subscription as failed with status: ${this.props.status}`
+        `Cannot mark subscription as failed with status: ${this.props.status}`,
       );
     }
 

@@ -16,13 +16,23 @@ export class InvoiceModel implements IInvoice {
   @Column({ name: "subscription_id", type: "uuid", nullable: true })
   subscriptionId: string | null;
 
-  @Column({ name: "stripe_invoice_id", type: "varchar", length: 255, unique: true })
+  @Column({
+    name: "stripe_invoice_id",
+    type: "varchar",
+    length: 255,
+    unique: true,
+  })
   stripeInvoiceId: string;
 
   @Column({ name: "stripe_customer_id", type: "varchar", length: 255 })
   stripeCustomerId: string;
 
-  @Column({ name: "invoice_number", type: "varchar", length: 100, nullable: true })
+  @Column({
+    name: "invoice_number",
+    type: "varchar",
+    length: 100,
+    nullable: true,
+  })
   invoiceNumber: string | null;
 
   @Column({ name: "amount_cents", type: "integer" })
@@ -34,16 +44,21 @@ export class InvoiceModel implements IInvoice {
   @Column({ type: "varchar", length: 3, default: "EUR" })
   currency: string;
 
-  @Column({ 
-    type: "enum", 
-    enum: ["draft", "open", "paid", "void", "uncollectible"] 
+  @Column({
+    type: "enum",
+    enum: ["draft", "open", "paid", "void", "uncollectible"],
   })
   status: "draft" | "open" | "paid" | "void" | "uncollectible";
 
   @Column({ name: "pdf_url", type: "varchar", length: 500, nullable: true })
   pdfUrl: string | null;
 
-  @Column({ name: "hosted_invoice_url", type: "varchar", length: 500, nullable: true })
+  @Column({
+    name: "hosted_invoice_url",
+    type: "varchar",
+    length: 500,
+    nullable: true,
+  })
   hostedInvoiceUrl: string | null;
 
   @Column({ name: "issued_at", type: "timestamp", nullable: true })
@@ -55,4 +70,3 @@ export class InvoiceModel implements IInvoice {
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

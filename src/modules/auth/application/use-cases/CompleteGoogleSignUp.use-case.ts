@@ -8,7 +8,7 @@ export class CompleteGoogleSignUpUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly googleAuthAdapter: GoogleAuthAdapter
+    private readonly googleAuthAdapter: GoogleAuthAdapter,
   ) {
     super(logger);
   }
@@ -24,12 +24,13 @@ export class CompleteGoogleSignUpUseCase
         data.pendingToken,
         data.companyName,
         data.deviceInfo,
-        data.ipAddress
+        data.ipAddress,
       );
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: unknown): Promise<void> {}
 }

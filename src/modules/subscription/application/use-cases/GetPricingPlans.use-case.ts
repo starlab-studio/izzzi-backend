@@ -29,7 +29,7 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
-    private readonly planFeatureRepository: IPlanFeatureRepository
+    private readonly planFeatureRepository: IPlanFeatureRepository,
   ) {
     super(logger);
   }
@@ -41,7 +41,7 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
       const plansWithFeatures = await Promise.all(
         plans.map(async (plan) => {
           const features = await this.planFeatureRepository.findByPlanId(
-            plan.id
+            plan.id,
           );
 
           const mainFeatures = features
@@ -72,10 +72,10 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
 
           if (additionalFeatures.length > 0) {
             const titleFeature = additionalFeatures.find(
-              (f) => f.displayOrder === 1
+              (f) => f.displayOrder === 1,
             );
             const featureItems = additionalFeatures.filter(
-              (f) => f.displayOrder > 1
+              (f) => f.displayOrder > 1,
             );
 
             if (titleFeature && featureItems.length > 0) {
@@ -90,7 +90,7 @@ export class GetPricingPlansUseCase extends BaseUseCase implements IUseCase {
           }
 
           return response;
-        })
+        }),
       );
 
       return plansWithFeatures;

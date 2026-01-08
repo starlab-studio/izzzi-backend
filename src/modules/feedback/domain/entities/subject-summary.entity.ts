@@ -26,26 +26,27 @@ export class SubjectSummaryEntity extends BaseEntity {
     BaseEntity.validateRequiredString(
       subjectId,
       "Subject ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const organizationId = (data.organizationId ?? "").trim();
     BaseEntity.validateRequiredString(
       organizationId,
       "Organization ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const summary = (data.summary ?? "").trim();
     BaseEntity.validateRequiredString(
       summary,
       "Summary",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     if (data.formType !== "during_course" && data.formType !== "after_course") {
+      const formTypeStr = String(data.formType);
       throw new Error(
-        `Invalid formType: ${data.formType}. Must be "during_course" or "after_course"`
+        `Invalid formType: ${formTypeStr}. Must be "during_course" or "after_course"`,
       );
     }
 
@@ -84,7 +85,7 @@ export class SubjectSummaryEntity extends BaseEntity {
       BaseEntity.validateRequiredString(
         summary,
         "Summary",
-        ErrorCode.UNEXPECTED_ERROR
+        ErrorCode.UNEXPECTED_ERROR,
       );
       this.props.summary = summary;
     }

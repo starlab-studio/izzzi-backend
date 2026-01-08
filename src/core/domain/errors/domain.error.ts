@@ -10,7 +10,7 @@ export class DomainError extends CustomError {
     code: string,
     message: string,
     context?: { [key: string]: any },
-    statusCode: number = HTTP_STATUS.BAD_REQUEST
+    statusCode: number = HTTP_STATUS.BAD_REQUEST,
   ) {
     super(message);
     this.statusCode = statusCode;

@@ -5,16 +5,16 @@ export interface ISubscriptionRepository
   extends IRepository<SubscriptionEntity> {
   findByUserId(userId: string): Promise<SubscriptionEntity | null>;
   findByOrganizationId(
-    organizationId: string
+    organizationId: string,
   ): Promise<SubscriptionEntity | null>;
   findAllByOrganizationId(
-    organizationId: string
+    organizationId: string,
   ): Promise<SubscriptionEntity[]>;
   findByStripeSubscriptionId(
-    stripeSubId: string
+    stripeSubId: string,
   ): Promise<SubscriptionEntity | null>;
   findActiveByOrganizationId(
-    organizationId: string
+    organizationId: string,
   ): Promise<SubscriptionEntity | null>;
   findAllActive(): Promise<SubscriptionEntity[]>;
   findExpiring(beforeDate: Date): Promise<SubscriptionEntity[]>;

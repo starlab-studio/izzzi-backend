@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class CreateContactRequestsTable1735869600000 implements MigrationInterface {
+export class CreateContactRequestsTable1735869600000
+  implements MigrationInterface
+{
   name = "CreateContactRequestsTable1735869600000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -49,4 +51,3 @@ export class CreateContactRequestsTable1735869600000 implements MigrationInterfa
     await queryRunner.query(`DROP TYPE "contact_request_status_enum"`);
   }
 }
-

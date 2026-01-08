@@ -17,7 +17,6 @@ import {
   Param,
   Body,
   Query,
-  Req,
   Res,
 } from "@nestjs/common";
 import type { Response } from "express";
@@ -239,7 +238,8 @@ export class OrganizationController extends BaseController {
   @Get("/:organizationId/members")
   @ApiOperation({
     summary: "Get organization members",
-    description: "Get all active members of an organization with their user details.",
+    description:
+      "Get all active members of an organization with their user details.",
   })
   @ApiParam({
     name: "organizationId",
@@ -269,7 +269,8 @@ export class OrganizationController extends BaseController {
   @Get("/:organizationId/stats")
   @ApiOperation({
     summary: "Get organization statistics",
-    description: "Get statistics for an organization including user count, class count, quiz count, and feedback count.",
+    description:
+      "Get statistics for an organization including user count, class count, quiz count, and feedback count.",
   })
   @ApiParam({
     name: "organizationId",
@@ -299,7 +300,8 @@ export class OrganizationController extends BaseController {
   @Patch("/:organizationId/members/:membershipId/role")
   @ApiOperation({
     summary: "Update member role",
-    description: "Update the role of a member in the organization. Only admin can perform this action.",
+    description:
+      "Update the role of a member in the organization. Only admin can perform this action.",
   })
   @ApiParam({
     name: "organizationId",
@@ -318,7 +320,10 @@ export class OrganizationController extends BaseController {
   })
   @ApiResponse({ status: 400, description: "Invalid input data" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
-  @ApiResponse({ status: 403, description: "Forbidden - User is not admin or trying to change own role" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - User is not admin or trying to change own role",
+  })
   @ApiResponse({ status: 404, description: "Membership not found" })
   async updateMemberRole(
     @CurrentUser() authenticatedUser: JWTPayload,
@@ -341,7 +346,8 @@ export class OrganizationController extends BaseController {
   @Delete("/:organizationId/members/:membershipId")
   @ApiOperation({
     summary: "Remove member from organization",
-    description: "Remove a member from the organization. Only admin can perform this action.",
+    description:
+      "Remove a member from the organization. Only admin can perform this action.",
   })
   @ApiParam({
     name: "organizationId",
@@ -358,7 +364,10 @@ export class OrganizationController extends BaseController {
     description: "Member removed successfully",
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
-  @ApiResponse({ status: 403, description: "Forbidden - User is not admin or trying to remove self" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - User is not admin or trying to remove self",
+  })
   @ApiResponse({ status: 404, description: "Membership not found" })
   async removeMember(
     @CurrentUser() authenticatedUser: JWTPayload,

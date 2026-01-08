@@ -37,7 +37,7 @@ import { CreateAlertDto } from "../dto/alert.dto";
 export class FeedbackController extends BaseController {
   constructor(
     private readonly feedbackFacade: FeedbackFacade,
-    private readonly quizFacade: QuizFacade
+    private readonly quizFacade: QuizFacade,
   ) {
     super();
   }
@@ -85,7 +85,7 @@ export class FeedbackController extends BaseController {
     @Query("tab") tab?: "ongoing" | "finished",
     @Query("search") search?: string,
     @Query("sort") sort?: "plus_recent" | "plus_anciens",
-    @Query("filter") filter?: "tous" | "pendant_cours" | "fin_cours"
+    @Query("filter") filter?: "tous" | "pendant_cours" | "fin_cours",
   ) {
     const organizationId = request.organizationId;
 
@@ -122,7 +122,7 @@ export class FeedbackController extends BaseController {
   async getFeedbackSubjectById(
     @Param("subjectId") subjectId: string,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @Req() request: any,
   ) {
     const organizationId = request.organizationId;
     if (!organizationId) {
@@ -156,7 +156,7 @@ export class FeedbackController extends BaseController {
     @Param("subjectId") subjectId: string,
     @Param("momentId") momentId: string,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @Req() request: any,
   ) {
     const organizationId = request.organizationId;
 
@@ -193,7 +193,7 @@ export class FeedbackController extends BaseController {
     @Req() request: any,
     @Query("periodDays") periodDays?: number,
     @Query("formType") formTypeParam?: string,
-    @Headers("authorization") authHeader?: string
+    @Headers("authorization") authHeader?: string,
   ) {
     const organizationId = request.organizationId;
 
@@ -254,7 +254,7 @@ export class FeedbackController extends BaseController {
     @Req() request: any,
     @Query("periodDays") periodDays?: number,
     @Query("formType") formTypeParam?: string,
-    @Headers("authorization") authHeader?: string
+    @Headers("authorization") authHeader?: string,
   ) {
     const organizationId = request.organizationId;
 
@@ -269,7 +269,7 @@ export class FeedbackController extends BaseController {
       formType = "after_course";
     } else {
       throw new Error(
-        `Invalid formType: ${formTypeParam}. Must be "during" or "end"`
+        `Invalid formType: ${formTypeParam}. Must be "during" or "end"`,
       );
     }
 
@@ -317,7 +317,7 @@ export class FeedbackController extends BaseController {
     @Param("subjectId") subjectId: string,
     @CurrentUser() user: JWTPayload,
     @Req() request: any,
-    @Headers("authorization") authHeader?: string
+    @Headers("authorization") authHeader?: string,
   ) {
     const organizationId = request.organizationId;
 
@@ -351,7 +351,7 @@ export class FeedbackController extends BaseController {
   }
 
   @Post(
-    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/comment"
+    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/comment",
   )
   @ApiOperation({
     summary: "Commenter une alerte",
@@ -368,7 +368,7 @@ export class FeedbackController extends BaseController {
     @Param("subjectId") subjectId: string,
     @Param("alertId") alertId: string,
     @Body() body: { comment: string },
-    @CurrentUser() user: JWTPayload
+    @CurrentUser() user: JWTPayload,
   ) {
     const result = await this.feedbackFacade.commentOnAlert({
       organizationId,
@@ -382,7 +382,7 @@ export class FeedbackController extends BaseController {
   }
 
   @Get(
-    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/comments"
+    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/comments",
   )
   @ApiOperation({
     summary: "Récupérer les commentaires d'une alerte",
@@ -398,7 +398,7 @@ export class FeedbackController extends BaseController {
     @Param("organizationId") organizationId: string,
     @Param("subjectId") subjectId: string,
     @Param("alertId") alertId: string,
-    @CurrentUser() user: JWTPayload
+    @CurrentUser() user: JWTPayload,
   ) {
     const result = await this.feedbackFacade.getAlertComments({
       organizationId,
@@ -410,7 +410,7 @@ export class FeedbackController extends BaseController {
   }
 
   @Post(
-    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/send-message"
+    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/send-message",
   )
   @ApiOperation({
     summary: "Envoyer un message pour une alerte",
@@ -426,7 +426,7 @@ export class FeedbackController extends BaseController {
     @Param("organizationId") organizationId: string,
     @Param("subjectId") subjectId: string,
     @Param("alertId") alertId: string,
-    @CurrentUser() user: JWTPayload
+    @CurrentUser() user: JWTPayload,
   ) {
     const result = await this.feedbackFacade.sendMessageForAlert({
       organizationId,
@@ -439,7 +439,7 @@ export class FeedbackController extends BaseController {
   }
 
   @Patch(
-    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/mark-processed"
+    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/mark-processed",
   )
   @ApiOperation({
     summary: "Marquer une alerte comme traitée",
@@ -456,7 +456,7 @@ export class FeedbackController extends BaseController {
     @Param("subjectId") subjectId: string,
     @Param("alertId") alertId: string,
     @Body() body: { processed: boolean },
-    @CurrentUser() user: JWTPayload
+    @CurrentUser() user: JWTPayload,
   ) {
     const result = await this.feedbackFacade.markAlertAsProcessed({
       organizationId,
@@ -485,7 +485,7 @@ export class FeedbackController extends BaseController {
   async sendReminderBySubject(
     @Param("subjectId") subjectId: string,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @Req() request: any,
   ) {
     const organizationId = request.organizationId;
     if (!organizationId) {
@@ -518,7 +518,7 @@ export class FeedbackController extends BaseController {
     @Param("subjectId") subjectId: string,
     @Param("momentId") momentId: string,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @Req() request: any,
   ) {
     const organizationId = request.organizationId;
     if (!organizationId) {
@@ -551,7 +551,7 @@ export class FeedbackController extends BaseController {
     @Param("subjectId") subjectId: string,
     @Param("momentId") momentId: string,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @Req() request: any,
   ) {
     const organizationId = request.organizationId;
     if (!organizationId) {
@@ -586,7 +586,7 @@ export class FeedbackController extends BaseController {
     @Param("subjectId") subjectId: string,
     @Param("momentId") momentId: string,
     @CurrentUser() user: JWTPayload,
-    @Req() request: any
+    @Req() request: any,
   ) {
     const organizationId = request.organizationId;
     if (!organizationId) {

@@ -1,9 +1,6 @@
 import { Repository, In } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import {
-  type IUnitOfWork,
-  BaseTransactionalRepository,
-} from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { QuizTemplateModel } from "../models/quiz-template.model";
 import { QuizTemplateQuestionModel } from "../models/quiz-template-question.model";
 import { IQuizTemplateRepository } from "../../domain/repositories/quiz-template.repository";
@@ -35,7 +32,7 @@ export class QuizTemplateRepository
     if (!ormEntity) return null;
 
     const entity = QuizTemplateEntity.reconstitute(ormEntity);
-    
+
     const questions = await this.questionRepository.find({
       where: { templateId: id },
       order: { orderIndex: "ASC" },
@@ -47,11 +44,11 @@ export class QuizTemplateRepository
 
   async findByIds(ids: string[]): Promise<QuizTemplateEntity[]> {
     if (ids.length === 0) return [];
-    
+
     const ormEntityList = await this.directRepository.find({
       where: { id: In(ids) },
     });
-    
+
     const entities = ormEntityList.map((ormEntity) =>
       QuizTemplateEntity.reconstitute(ormEntity),
     );
@@ -82,7 +79,7 @@ export class QuizTemplateRepository
     const ormEntity = this.directRepository.create(data);
     const saved = await this.directRepository.save(ormEntity);
     const createdEntity = QuizTemplateEntity.reconstitute(saved);
-    
+
     const questions = entity.questionsList;
     if (questions.length > 0) {
       const questionModels = questions.map((q) =>
@@ -101,7 +98,7 @@ export class QuizTemplateRepository
       await this.questionRepository.save(questionModels);
       createdEntity.setQuestions(questions);
     }
-    
+
     return createdEntity;
   }
 
@@ -115,4 +112,3 @@ export class QuizTemplateRepository
     await this.directRepository.delete(id);
   }
 }
-

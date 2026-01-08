@@ -1,5 +1,4 @@
 import { Module, forwardRef } from "@nestjs/common";
-import { ModuleRef } from "@nestjs/core";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -52,14 +51,10 @@ import { IClassRepository } from "../class/domain/repositories/class.repository"
 import { ISubjectRepository } from "../subject/domain/repositories/subject.repository";
 import { IQuizRepository } from "../quiz/domain/repositories/quiz.repository";
 import { IResponseRepository } from "../quiz/domain/repositories/response.repository";
-import { ClassRepository } from "../class/infrastructure/repositories/class.repository";
-import { SubjectRepository } from "../subject/infrastructure/repositories/subject.repository";
 import { AuthIdentityModel } from "../auth/infrastructure/models/authIdentity.model";
 import { AuthIdentityRepository } from "../auth/infrastructure/repositories/authIdentity.repository";
-import { IAuthIdentityRepository } from "../auth/domain/repositories/authIdentity.repository";
 import { IRefreshTokenRepository } from "../auth/domain/repositories/refreshToken.repository";
 import { RefreshTokenRepository } from "../auth/infrastructure/repositories/refreshToken.repository";
-// @ts-ignore - Circular dependency resolved with forwardRef
 import { AuthModule } from "../auth/auth.module";
 import {
   ISubscriptionRepository,
@@ -296,7 +291,8 @@ import {
         logger: ILoggerService,
         membershipRepository: IMembershipRepository,
         unitOfWork: IUnitOfWork
-      ) => new UpdateMemberRoleUseCase(logger, membershipRepository, unitOfWork),
+      ) =>
+        new UpdateMemberRoleUseCase(logger, membershipRepository, unitOfWork),
       inject: [LoggerService, MembershipRepository, TypeOrmUnitOfWork],
     },
     {
@@ -340,14 +336,15 @@ import {
         subjectRepository: ISubjectRepository,
         quizRepository: IQuizRepository,
         responseRepository: IResponseRepository
-      ) => new GetOrganizationStatsUseCase(
-        logger,
-        membershipRepository,
-        classRepository,
-        subjectRepository,
-        quizRepository,
-        responseRepository
-      ),
+      ) =>
+        new GetOrganizationStatsUseCase(
+          logger,
+          membershipRepository,
+          classRepository,
+          subjectRepository,
+          quizRepository,
+          responseRepository
+        ),
       inject: [
         LoggerService,
         MembershipRepository,

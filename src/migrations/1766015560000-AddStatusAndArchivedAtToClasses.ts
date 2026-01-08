@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AddStatusAndArchivedAtToClasses1766015560000 implements MigrationInterface {
+export class AddStatusAndArchivedAtToClasses1766015560000
+  implements MigrationInterface
+{
   name = "AddStatusAndArchivedAtToClasses1766015560000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -34,9 +36,12 @@ export class AddStatusAndArchivedAtToClasses1766015560000 implements MigrationIn
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "classes" DROP COLUMN IF EXISTS "archived_at"`);
-    await queryRunner.query(`ALTER TABLE "classes" DROP COLUMN IF EXISTS "status"`);
+    await queryRunner.query(
+      `ALTER TABLE "classes" DROP COLUMN IF EXISTS "archived_at"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "classes" DROP COLUMN IF EXISTS "status"`,
+    );
     await queryRunner.query(`DROP TYPE IF EXISTS "classes_status_enum"`);
   }
 }
-

@@ -7,13 +7,13 @@ import { type INotificationGateway } from "../../application/gateways/notificati
 export class PushProvider implements INotificationProvider {
   constructor(
     @Inject("NOTIFICATION_GATEWAY")
-    private readonly notificationGateway: INotificationGateway
+    private readonly notificationGateway: INotificationGateway,
   ) {}
 
   async send(notification: INotification): Promise<void> {
     await this.notificationGateway.emitToUser(
       notification.target,
-      notification
+      notification,
     );
   }
 }

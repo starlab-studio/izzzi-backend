@@ -30,7 +30,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
           ?.map((e) =>
             typeof e.message === "string"
               ? e.message
-              : JSON.stringify(e.message)
+              : JSON.stringify(e.message),
           )
           .join(", "),
         errors: exception.errors?.map((error) => ({

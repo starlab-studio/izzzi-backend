@@ -14,7 +14,7 @@ export class GetOrganizationUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly organizationRepository: IOrganizationRepository,
-    private readonly organizationAuthorizationService: OrganizationAuthorizationService
+    private readonly organizationAuthorizationService: OrganizationAuthorizationService,
   ) {
     super(logger);
   }
@@ -25,17 +25,17 @@ export class GetOrganizationUseCase extends BaseUseCase implements IUseCase {
     try {
       await this.organizationAuthorizationService.assertCanAccess(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       const organisation = await this.organizationRepository.findById(
-        data.organizationId
+        data.organizationId,
       );
 
       if (!organisation) {
         throw new DomainError(
           ErrorCode.ORGANIZATION_NOT_FOUND,
-          "Organization not found"
+          "Organization not found",
         );
       }
 
@@ -45,5 +45,5 @@ export class GetOrganizationUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

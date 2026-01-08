@@ -12,7 +12,7 @@ import { CompleteGoogleRegistrationDto } from "../dto/google-auth.dto";
 export class GoogleAuthController extends BaseController {
   constructor(
     private readonly authFacade: AuthFacade,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     super();
   }
@@ -61,20 +61,20 @@ export class GoogleAuthController extends BaseController {
     @Query("code") code: string,
     @Query("error") error: string,
     @Req() req: Request,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     const frontendUrl =
       this.configService.get<string>("frontend.url") || "http://localhost:3001";
 
     if (error) {
       return res.redirect(
-        `${frontendUrl}/auth/error?error=${encodeURIComponent(error)}`
+        `${frontendUrl}/auth/error?error=${encodeURIComponent(error)}`,
       );
     }
 
     if (!code) {
       return res.redirect(
-        `${frontendUrl}/auth/error?error=${encodeURIComponent("No authorization code provided")}`
+        `${frontendUrl}/auth/error?error=${encodeURIComponent("No authorization code provided")}`,
       );
     }
 
@@ -117,7 +117,7 @@ export class GoogleAuthController extends BaseController {
         }
       }
       res.redirect(
-        `${frontendUrl}/auth/error?error=${encodeURIComponent(errorMessage)}`
+        `${frontendUrl}/auth/error?error=${encodeURIComponent(errorMessage)}`,
       );
     }
   }
@@ -146,7 +146,7 @@ export class GoogleAuthController extends BaseController {
   async completeRegistration(
     @Body() dto: CompleteGoogleRegistrationDto,
     @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
   ) {
     const deviceInfo = req.headers["user-agent"] || undefined;
     const ipAddress =

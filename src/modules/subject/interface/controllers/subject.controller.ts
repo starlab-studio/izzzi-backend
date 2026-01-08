@@ -1,4 +1,14 @@
-import { Controller, Post, Body, UseGuards, Req, Get, Param, Put, Delete } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Get,
+  Param,
+  Put,
+  Delete,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -7,7 +17,11 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { SubjectFacade } from "../../application/facades/subject.facade";
-import { CreateSubjectDto, UpdateSubjectDto, BulkCreateSubjectsDto } from "../dto/subject.dto";
+import {
+  CreateSubjectDto,
+  UpdateSubjectDto,
+  BulkCreateSubjectsDto,
+} from "../dto/subject.dto";
 import {
   BaseController,
   UserRole,
@@ -30,7 +44,8 @@ export class SubjectController extends BaseController {
   @Get("class/:classId")
   @ApiOperation({
     summary: "Récupérer les matières d'une classe",
-    description: "Récupère toutes les matières actives assignées à une classe spécifique. \
+    description:
+      "Récupère toutes les matières actives assignées à une classe spécifique. \
     Nécessite le rôle LEARNING_MANAGER, ADMIN ou STUDENT.",
   })
   @ApiBearerAuth()
@@ -48,7 +63,7 @@ export class SubjectController extends BaseController {
     @Req() request: any,
   ) {
     const organizationId = request.organizationId;
-    
+
     if (!organizationId) {
       throw new Error("Organization context required");
     }
@@ -65,7 +80,8 @@ export class SubjectController extends BaseController {
   @Post("bulk")
   @ApiOperation({
     summary: "Créer plusieurs matières en lot pour une classe",
-    description: "Crée plusieurs matières et les assigne à une classe spécifique. \
+    description:
+      "Crée plusieurs matières et les assigne à une classe spécifique. \
     Si une matière existe déjà dans l'organisation, elle sera réutilisée. \
     Retourne un rapport avec le nombre de créations réussies et les erreurs éventuelles par ligne. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
@@ -74,7 +90,8 @@ export class SubjectController extends BaseController {
   @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
   @ApiResponse({
     status: 201,
-    description: "Résultat de la création en lot avec décompte et erreurs éventuelles",
+    description:
+      "Résultat de la création en lot avec décompte et erreurs éventuelles",
   })
   @ApiResponse({ status: 400, description: "Données invalides" })
   @ApiResponse({ status: 401, description: "Authentification requise" })
@@ -87,7 +104,7 @@ export class SubjectController extends BaseController {
   ) {
     // organizationId is validated by RolesGuard and set in request.organizationId
     const organizationId = request.organizationId || dto.organizationId;
-    
+
     if (!organizationId) {
       throw new Error("Organization context required");
     }
@@ -116,7 +133,8 @@ export class SubjectController extends BaseController {
   @Post()
   @ApiOperation({
     summary: "Créer une nouvelle matière pour une classe",
-    description: "Crée une matière et l'assigne à une classe spécifique. \
+    description:
+      "Crée une matière et l'assigne à une classe spécifique. \
     Si la matière existe déjà dans l'organisation, elle sera réutilisée. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
@@ -137,7 +155,7 @@ export class SubjectController extends BaseController {
   ) {
     // organizationId is validated by RolesGuard and set in request.organizationId
     const organizationId = request.organizationId || dto.organizationId;
-    
+
     const result = await this.subjectFacade.createSubject({
       classId: dto.classId,
       organizationId,
@@ -156,7 +174,8 @@ export class SubjectController extends BaseController {
   @Put(":subjectId")
   @ApiOperation({
     summary: "Modifier une matière",
-    description: "Met à jour les informations d'une matière. \
+    description:
+      "Met à jour les informations d'une matière. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiBearerAuth()
@@ -181,7 +200,7 @@ export class SubjectController extends BaseController {
     @Req() request: any,
   ) {
     const organizationId = request.organizationId;
-    
+
     if (!organizationId) {
       throw new Error("Organization context required");
     }
@@ -203,7 +222,8 @@ export class SubjectController extends BaseController {
   @Delete(":subjectId")
   @ApiOperation({
     summary: "Supprimer une matière",
-    description: "Supprime une matière et toutes ses assignations. \
+    description:
+      "Supprime une matière et toutes ses assignations. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiBearerAuth()
@@ -226,7 +246,7 @@ export class SubjectController extends BaseController {
     @Req() request: any,
   ) {
     const organizationId = request.organizationId;
-    
+
     if (!organizationId) {
       throw new Error("Organization context required");
     }

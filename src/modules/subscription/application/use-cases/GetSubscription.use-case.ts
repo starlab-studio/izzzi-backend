@@ -63,13 +63,13 @@ export class GetSubscriptionUseCase
     private readonly pricingTierRepository: IPricingTierRepository,
     private readonly planFeatureRepository: IPlanFeatureRepository,
     private readonly userRepository: IUserRepository,
-    private readonly classRepository: IClassRepository
+    private readonly classRepository: IClassRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    input: GetSubscriptionInput
+    input: GetSubscriptionInput,
   ): Promise<SubscriptionDetailOutput | null> {
     try {
       const { userId, organizationId, subscriptionId } = input;
@@ -77,7 +77,7 @@ export class GetSubscriptionUseCase
       if (!userId && !organizationId && !subscriptionId) {
         throw new DomainError(
           "INVALID_INPUT",
-          "At least one identifier (userId, organizationId, or subscriptionId) must be provided"
+          "At least one identifier (userId, organizationId, or subscriptionId) must be provided",
         );
       }
 
@@ -94,7 +94,7 @@ export class GetSubscriptionUseCase
         } else if (userOrganizations.length > 1 && !organizationId) {
           throw new DomainError(
             "MULTIPLE_ORGANIZATIONS",
-            "User belongs to multiple organizations. Please specify organizationId"
+            "User belongs to multiple organizations. Please specify organizationId",
           );
         }
       }
@@ -107,7 +107,7 @@ export class GetSubscriptionUseCase
       } else if (organizationId) {
         subscription =
           await this.subscriptionRepository.findActiveByOrganizationId(
-            organizationId
+            organizationId,
           );
       } else if (userId) {
         subscription = await this.subscriptionRepository.findByUserId(userId);
@@ -123,13 +123,13 @@ export class GetSubscriptionUseCase
       // Plus de nettoyage d'upgrades orphelins ici : pendingQuantity est réservé aux downgrades.
 
       const plan = await this.subscriptionPlanRepository.findById(
-        subscription.planId
+        subscription.planId,
       );
       if (!plan) {
         throw new DomainError(
           "PLAN_NOT_FOUND",
           "Plan not found for this subscription",
-          { planId: subscription.planId }
+          { planId: subscription.planId },
         );
       }
 
@@ -147,14 +147,14 @@ export class GetSubscriptionUseCase
         const tiers =
           await this.pricingTierRepository.findByPlanIdAndBillingPeriod(
             plan.id,
-            subscription.billingPeriod
+            subscription.billingPeriod,
           );
 
         if (tiers.length > 0) {
           const tier = tiers.find(
             (t) =>
               effectiveQuantity >= t.minClasses &&
-              effectiveQuantity <= t.maxClasses
+              effectiveQuantity <= t.maxClasses,
           );
 
           if (tier) {
@@ -178,7 +178,7 @@ export class GetSubscriptionUseCase
           : subscription.quantity;
 
       const classesUsed = await this.classRepository.countByOrganization(
-        subscription.organizationId
+        subscription.organizationId,
       );
 
       let classesRemaining: number | null = null;

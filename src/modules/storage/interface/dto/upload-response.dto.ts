@@ -1,21 +1,21 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class UploadResponseDto {
   @ApiProperty({
     description: "URL présignée pour l'upload",
-    example: 'https://bucket.s3.region.amazonaws.com/path/to/file?X-Amz-...',
+    example: "https://bucket.s3.region.amazonaws.com/path/to/file?X-Amz-...",
   })
   uploadUrl: string;
 
   @ApiProperty({
-    description: 'Clé du fichier dans S3',
-    example: 'uploads/images/2024/12/uuid-filename.jpg',
+    description: "Clé du fichier dans S3",
+    example: "uploads/images/2024/12/uuid-filename.jpg",
   })
   fileKey: string;
 
   @ApiProperty({
-    description: 'URL publique du fichier (après upload)',
-    example: 'https://bucket.s3.region.amazonaws.com/path/to/file',
+    description: "URL publique du fichier (après upload)",
+    example: "https://bucket.s3.region.amazonaws.com/path/to/file",
   })
   fileUrl: string;
 
@@ -28,7 +28,7 @@ export class UploadResponseDto {
   @ApiProperty({
     description: "Headers requis pour l'upload",
     example: {
-      'Content-Type': 'image/jpeg',
+      "Content-Type": "image/jpeg",
     },
   })
   requiredHeaders: Record<string, string>;

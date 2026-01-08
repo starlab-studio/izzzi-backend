@@ -2,7 +2,7 @@ export interface IPaymentService {
   getOrCreateCustomer(
     organizationId: string,
     email: string,
-    name: string
+    name: string,
   ): Promise<string>;
 
   createSubscription(params: {

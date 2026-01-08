@@ -8,7 +8,7 @@ import { IInvoiceRepository } from "../../domain/repositories/invoice.repository
 export class InvoiceRepository implements IInvoiceRepository {
   constructor(
     @InjectRepository(InvoiceModel)
-    private ormRepository: Repository<IInvoice>
+    private ormRepository: Repository<IInvoice>,
   ) {}
 
   async findById(id: string): Promise<InvoiceEntity | null> {
@@ -22,12 +22,12 @@ export class InvoiceRepository implements IInvoiceRepository {
       order: { createdAt: "DESC" },
     });
     return ormEntities.map((ormEntity) =>
-      InvoiceEntity.reconstitute(ormEntity)
+      InvoiceEntity.reconstitute(ormEntity),
     );
   }
 
   async findByStripeInvoiceId(
-    stripeInvoiceId: string
+    stripeInvoiceId: string,
   ): Promise<InvoiceEntity | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { stripeInvoiceId },
@@ -42,12 +42,12 @@ export class InvoiceRepository implements IInvoiceRepository {
       order: { createdAt: "DESC" },
     });
     return ormEntities.map((ormEntity) =>
-      InvoiceEntity.reconstitute(ormEntity)
+      InvoiceEntity.reconstitute(ormEntity),
     );
   }
 
   async findLatestByOrganizationId(
-    organizationId: string
+    organizationId: string,
   ): Promise<InvoiceEntity | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { organizationId },
@@ -59,7 +59,7 @@ export class InvoiceRepository implements IInvoiceRepository {
 
   async findLatestPaidByOrganizationId(
     organizationId: string,
-    since?: Date
+    since?: Date,
   ): Promise<InvoiceEntity | null> {
     const queryBuilder = this.ormRepository
       .createQueryBuilder("invoice")

@@ -13,11 +13,11 @@ export class VerificationTokenRepository
 {
   constructor(
     @InjectRepository(VerificationTokenModel)
-    private ormRepository: Repository<IVerificationToken>
+    private ormRepository: Repository<IVerificationToken>,
   ) {}
 
   async create(
-    entity: VerificationTokenEntity
+    entity: VerificationTokenEntity,
   ): Promise<VerificationTokenEntity> {
     const data = entity.toPersistence();
     const ormEntity = this.ormRepository.create(data);
@@ -28,7 +28,7 @@ export class VerificationTokenRepository
 
   async findByEmailAndType(
     email: string,
-    type: VerificationTokenType
+    type: VerificationTokenType,
   ): Promise<VerificationTokenEntity | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: {
@@ -46,7 +46,7 @@ export class VerificationTokenRepository
   }
 
   async save(
-    entity: VerificationTokenEntity
+    entity: VerificationTokenEntity,
   ): Promise<VerificationTokenEntity> {
     const data = entity.toPersistence();
     const ormEntity = await this.ormRepository.save(data);
@@ -71,7 +71,7 @@ export class VerificationTokenRepository
 
   async deleteByEmailAndType(
     email: string,
-    type: VerificationTokenType
+    type: VerificationTokenType,
   ): Promise<void> {
     await this.ormRepository.delete({ email, type });
   }

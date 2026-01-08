@@ -30,7 +30,7 @@ export class SignUpFromInvitationUseCase
     private readonly eventStore: IEventStore,
     private readonly authProvider: IAuthStrategy,
     private readonly authIdentityRepository: IAuthIdentityRepository,
-    private readonly organizationFacade: OrganizationFacade
+    private readonly organizationFacade: OrganizationFacade,
   ) {
     super(logger);
   }
@@ -38,7 +38,7 @@ export class SignUpFromInvitationUseCase
   async execute(data: SignUpFromInvitationData): Promise<SignUpResponse> {
     try {
       const invitation = await this.organizationFacade.findInvitationByToken(
-        data.token
+        data.token,
       );
 
       if (!invitation) {
@@ -46,7 +46,7 @@ export class SignUpFromInvitationUseCase
           ErrorCode.INVALID_OR_EXPIRED_INVITATION,
           "Invalid invitation token",
           undefined,
-          HTTP_STATUS.NOT_FOUND
+          HTTP_STATUS.NOT_FOUND,
         );
       }
 
@@ -57,7 +57,7 @@ export class SignUpFromInvitationUseCase
             ? "Invitation has expired"
             : "Invitation is no longer valid",
           undefined,
-          HTTP_STATUS.BAD_REQUEST
+          HTTP_STATUS.BAD_REQUEST,
         );
       }
 
@@ -68,25 +68,30 @@ export class SignUpFromInvitationUseCase
           ErrorCode.INVALID_OR_EXPIRED_INVITATION,
           "Email does not match the invitation email",
           undefined,
-          HTTP_STATUS.BAD_REQUEST
+          HTTP_STATUS.BAD_REQUEST,
         );
       }
 
-      const existingAuthIdentity = await this.authIdentityRepository.findByUsername(normalizedEmail);
-      
+      const existingAuthIdentity =
+        await this.authIdentityRepository.findByUsername(normalizedEmail);
+
       if (existingAuthIdentity) {
         if (existingAuthIdentity.userId) {
-          const deletedUser = await this.organizationFacade.findDeletedUserById(existingAuthIdentity.userId);
-          
+          const deletedUser = await this.organizationFacade.findDeletedUserById(
+            existingAuthIdentity.userId,
+          );
+
           if (deletedUser) {
-            this.logger.info(`Reactivating deleted user ${deletedUser.id} via invitation`);
-            
+            this.logger.info(
+              `Reactivating deleted user ${deletedUser.id} via invitation`,
+            );
+
             await this.organizationFacade.reactivateUserFromInvitation(
               deletedUser.id,
               invitation.organizationId,
               invitation.role,
               invitation.invitedBy,
-              data.token
+              data.token,
             );
 
             this.eventStore.publish(
@@ -95,7 +100,7 @@ export class SignUpFromInvitationUseCase
                 organizationId: invitation.organizationId,
                 email: invitation.email,
                 firstName: deletedUser.firstName,
-              })
+              }),
             );
 
             return {
@@ -109,29 +114,32 @@ export class SignUpFromInvitationUseCase
             };
           }
 
-        throw new DomainError(
-          ErrorCode.USER_ALREADY_EXISTS,
-          "User with this email already exists. Please sign in and accept the invitation.",
-          undefined,
-          HTTP_STATUS.CONFLICT
-        );
+          throw new DomainError(
+            ErrorCode.USER_ALREADY_EXISTS,
+            "User with this email already exists. Please sign in and accept the invitation.",
+            undefined,
+            HTTP_STATUS.CONFLICT,
+          );
         }
 
-        this.logger.info(`Found orphan auth identity for ${normalizedEmail}, creating user and linking`);
-        
-        const user = await this.organizationFacade.createUserAndAcceptInvitation({
-          userData: {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: normalizedEmail,
-            authIdentityId: existingAuthIdentity.id,
-            organization: "",
-          },
-          invitationToken: data.token,
-          organizationId: invitation.organizationId,
-          role: invitation.role,
-          invitedBy: invitation.invitedBy,
-        });
+        this.logger.info(
+          `Found orphan auth identity for ${normalizedEmail}, creating user and linking`,
+        );
+
+        const user =
+          await this.organizationFacade.createUserAndAcceptInvitation({
+            userData: {
+              firstName: data.firstName,
+              lastName: data.lastName,
+              email: normalizedEmail,
+              authIdentityId: existingAuthIdentity.id,
+              organization: "",
+            },
+            invitationToken: data.token,
+            organizationId: invitation.organizationId,
+            role: invitation.role,
+            invitedBy: invitation.invitedBy,
+          });
 
         existingAuthIdentity.setUser(user.id);
         existingAuthIdentity.verifyEmail(normalizedEmail);
@@ -143,7 +151,7 @@ export class SignUpFromInvitationUseCase
             organizationId: invitation.organizationId,
             email: invitation.email,
             firstName: user.firstName,
-          })
+          }),
         );
 
         return {
@@ -182,14 +190,14 @@ export class SignUpFromInvitationUseCase
       });
 
       const authIdentity = await this.authIdentityRepository.findById(
-        signUpResponse.authIdentityId
+        signUpResponse.authIdentityId,
       );
       if (!authIdentity) {
         throw new DomainError(
           ErrorCode.UNEXPECTED_ERROR,
           "AuthIdentity not found after creation",
           undefined,
-          HTTP_STATUS.INTERNAL_SERVER_ERROR
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
         );
       }
 
@@ -203,7 +211,7 @@ export class SignUpFromInvitationUseCase
           organizationId: invitation.organizationId,
           email: invitation.email,
           firstName: user.firstName,
-        })
+        }),
       );
 
       return signUpResponse;
@@ -212,5 +220,5 @@ export class SignUpFromInvitationUseCase
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

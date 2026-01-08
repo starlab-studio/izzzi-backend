@@ -22,7 +22,7 @@ export class CommentOnAlertUseCase
   constructor(
     readonly logger: ILoggerService,
     private readonly alertCommentRepository: IAlertCommentRepository,
-    private readonly organizationFacade: OrganizationFacade
+    private readonly organizationFacade: OrganizationFacade,
   ) {
     super(logger);
   }
@@ -31,11 +31,11 @@ export class CommentOnAlertUseCase
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       this.logger.info(
-        `Adding comment to alert ${data.alertId} for subject ${data.subjectId}`
+        `Adding comment to alert ${data.alertId} for subject ${data.subjectId}`,
       );
 
       const commentEntity = AlertCommentEntity.create({

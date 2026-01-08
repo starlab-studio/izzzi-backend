@@ -34,32 +34,32 @@ export class GenerateAndSaveSubjectSummaryUseCase
     private readonly aiClientService: AiClientService,
     private readonly subjectSummaryRepository: ISubjectSummaryRepository,
     private readonly quizRepository: IQuizRepository,
-    private readonly responseRepository: IResponseRepository
+    private readonly responseRepository: IResponseRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: GenerateAndSaveSubjectSummaryInput
+    data: GenerateAndSaveSubjectSummaryInput,
   ): Promise<GenerateAndSaveSubjectSummaryOutput> {
     try {
       const periodDays = data.periodDays || 30;
 
       this.logger.info(
-        `Generating and saving summary for subject ${data.subjectId}, formType ${data.formType} (period: ${periodDays} days)`
+        `Generating and saving summary for subject ${data.subjectId}, formType ${data.formType} (period: ${periodDays} days)`,
       );
 
       // 1. Call Langchain service to generate summary
       const aiResponse = await this.aiClientService.getFeedbackSummary(
         data.subjectId,
         periodDays,
-        data.jwtToken
+        data.jwtToken,
       );
 
       // 2. Count current feedbacks for this subject by counting responses only for quizzes of the specified formType
       const quizzes = await this.quizRepository.findBySubject(data.subjectId);
       const quizzesForFormType = quizzes.filter(
-        (quiz) => quiz.toPersistence().type === data.formType
+        (quiz) => quiz.toPersistence().type === data.formType,
       );
 
       let feedbackCount = 0;
@@ -90,7 +90,7 @@ export class GenerateAndSaveSubjectSummaryUseCase
         await this.subjectSummaryRepository.upsert(summaryEntity);
 
       this.logger.info(
-        `Summary saved successfully for subject ${data.subjectId} (${feedbackCount} feedbacks)`
+        `Summary saved successfully for subject ${data.subjectId} (${feedbackCount} feedbacks)`,
       );
 
       return {

@@ -31,11 +31,11 @@ export class ClassModel implements IClass {
   @Column({ name: "is_active", type: "boolean", default: true })
   isActive: boolean;
 
-  @Column({ 
-    type: "enum", 
+  @Column({
+    type: "enum",
     enum: ["active", "archived"],
     enumName: "classes_status_enum",
-    default: "active" 
+    default: "active",
   })
   status: "active" | "archived";
 

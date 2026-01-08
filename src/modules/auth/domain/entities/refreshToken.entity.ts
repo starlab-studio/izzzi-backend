@@ -15,7 +15,7 @@ export class RefreshToken {
     expiresAt: Date,
     provider?: AuthIdentityName,
     deviceInfo?: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): RefreshToken {
     const now = new Date();
 
@@ -75,7 +75,7 @@ export class RefreshToken {
 
     const normalize = (ua: string): string => {
       const browserMatch = ua.match(
-        /(Chrome|Firefox|Safari|Edge|Opera|MSIE|Trident)/i
+        /(Chrome|Firefox|Safari|Edge|Opera|MSIE|Trident)/i,
       );
       const browser = browserMatch ? browserMatch[1].toLowerCase() : "";
 

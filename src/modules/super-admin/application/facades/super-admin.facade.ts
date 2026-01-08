@@ -32,7 +32,7 @@ export class SuperAdminFacade {
     @InjectRepository(ClassModel)
     private readonly classRepository: Repository<ClassModel>,
     @Inject("IContactRequestRepository")
-    private readonly contactRequestRepository: IContactRequestRepository
+    private readonly contactRequestRepository: IContactRequestRepository,
   ) {}
 
   async getDashboardStats() {
@@ -47,7 +47,9 @@ export class SuperAdminFacade {
       this.userRepository.count(),
       this.classRepository.count(),
       this.subscriptionRepository.count({ where: { status: "active" } }),
-      this.contactRequestRepository.findAll({ status: ContactRequestStatus.PENDING }),
+      this.contactRequestRepository.findAll({
+        status: ContactRequestStatus.PENDING,
+      }),
     ]);
 
     const subscriptions = await this.subscriptionRepository.find({
@@ -74,8 +76,8 @@ export class SuperAdminFacade {
           subscriptionPlanPeriods.map((sp) => [
             `${sp.planId}-${sp.billingPeriod}`,
             sp,
-          ])
-        ).values()
+          ]),
+        ).values(),
       );
 
       const tiersMap = new Map<string, PricingTierModel[]>();
@@ -94,18 +96,19 @@ export class SuperAdminFacade {
         if (isFree) continue;
 
         const tiers = tiersMap.get(
-          `${subscription.planId}-${subscription.billingPeriod}`
+          `${subscription.planId}-${subscription.billingPeriod}`,
         );
         if (!tiers || tiers.length === 0) continue;
 
         const tier = tiers.find(
           (t) =>
             subscription.quantity >= t.minClasses &&
-            subscription.quantity <= t.maxClasses
+            subscription.quantity <= t.maxClasses,
         );
 
         if (tier) {
-          const monthlyRevenue = tier.pricePerClassCents * subscription.quantity;
+          const monthlyRevenue =
+            tier.pricePerClassCents * subscription.quantity;
           mrr += monthlyRevenue;
         }
       }
@@ -143,10 +146,7 @@ export class SuperAdminFacade {
       });
     }
 
-    queryBuilder
-      .orderBy("org.createdAt", "DESC")
-      .take(limit)
-      .skip(offset);
+    queryBuilder.orderBy("org.createdAt", "DESC").take(limit).skip(offset);
 
     const [organizations, total] = await queryBuilder.getManyAndCount();
 
@@ -198,7 +198,7 @@ export class SuperAdminFacade {
           const tier = tiers.find(
             (t) =>
               subscription.quantity >= t.minClasses &&
-              subscription.quantity <= t.maxClasses
+              subscription.quantity <= t.maxClasses,
           );
 
           if (tier) {
@@ -215,16 +215,17 @@ export class SuperAdminFacade {
       where: { organizationId: id },
     });
 
-    const members = organization.memberships?.map((m) => ({
-      id: m.id,
-      userId: m.userId,
-      firstName: m.user?.firstName,
-      lastName: m.user?.lastName,
-      email: m.user?.email,
-      role: m.role,
-      status: m.status,
-      createdAt: m.createdAt,
-    })) || [];
+    const members =
+      organization.memberships?.map((m) => ({
+        id: m.id,
+        userId: m.userId,
+        firstName: m.user?.firstName,
+        lastName: m.user?.lastName,
+        email: m.user?.email,
+        role: m.role,
+        status: m.status,
+        createdAt: m.createdAt,
+      })) || [];
 
     return {
       id: organization.id,
@@ -258,10 +259,10 @@ export class SuperAdminFacade {
     });
 
     const planIds = plans.map((p) => p.id);
-    
+
     const featuresCountMap = new Map<string, number>();
     const tiersCountMap = new Map<string, number>();
-    
+
     if (planIds.length > 0) {
       const featuresCounts = await this.featureRepository
         .createQueryBuilder("f")
@@ -270,7 +271,7 @@ export class SuperAdminFacade {
         .where("f.planId IN (:...planIds)", { planIds })
         .groupBy("f.planId")
         .getRawMany();
-      
+
       featuresCounts.forEach((fc) => {
         featuresCountMap.set(fc.planId, parseInt(fc.count, 10));
       });
@@ -282,7 +283,7 @@ export class SuperAdminFacade {
         .where("t.planId IN (:...planIds)", { planIds })
         .groupBy("t.planId")
         .getRawMany();
-      
+
       tiersCounts.forEach((tc) => {
         tiersCountMap.set(tc.planId, parseInt(tc.count, 10));
       });
@@ -313,17 +314,13 @@ export class SuperAdminFacade {
     const limit = input.limit || 20;
     const offset = input.offset || 0;
 
-    const queryBuilder = this.subscriptionRepository
-      .createQueryBuilder("sub");
+    const queryBuilder = this.subscriptionRepository.createQueryBuilder("sub");
 
     if (input.status) {
       queryBuilder.where("sub.status = :status", { status: input.status });
     }
 
-    queryBuilder
-      .orderBy("sub.createdAt", "DESC")
-      .take(limit)
-      .skip(offset);
+    queryBuilder.orderBy("sub.createdAt", "DESC").take(limit).skip(offset);
 
     const [subscriptions, total] = await queryBuilder.getManyAndCount();
 
@@ -346,7 +343,9 @@ export class SuperAdminFacade {
         where: planIds.map((id) => ({ id })),
         select: ["id", "name", "isFree"],
       });
-      plans.forEach((p) => plansMap.set(p.id, { name: p.name, isFree: p.isFree }));
+      plans.forEach((p) =>
+        plansMap.set(p.id, { name: p.name, isFree: p.isFree }),
+      );
     }
 
     const subscriptionPlanIds = subscriptions.map((s) => ({
@@ -358,8 +357,8 @@ export class SuperAdminFacade {
         subscriptionPlanIds.map((sp) => [
           `${sp.planId}-${sp.billingPeriod}`,
           sp,
-        ])
-      ).values()
+        ]),
+      ).values(),
     );
 
     const tiersMap = new Map<string, PricingTierModel[]>();
@@ -377,7 +376,7 @@ export class SuperAdminFacade {
       if (plan && !plan.isFree) {
         const tiers = tiersMap.get(`${sub.planId}-${sub.billingPeriod}`) || [];
         const tier = tiers.find(
-          (t) => sub.quantity >= t.minClasses && sub.quantity <= t.maxClasses
+          (t) => sub.quantity >= t.minClasses && sub.quantity <= t.maxClasses,
         );
 
         if (tier) {
@@ -406,4 +405,3 @@ export class SuperAdminFacade {
     return { data, total, limit, offset };
   }
 }
-

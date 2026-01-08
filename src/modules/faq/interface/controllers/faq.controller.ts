@@ -40,7 +40,9 @@ export class FaqController extends BaseController {
   }
 
   @Get("tab/:tabId")
-  @ApiOperation({ summary: "Récupérer le contenu (catégories et items) d'un onglet" })
+  @ApiOperation({
+    summary: "Récupérer le contenu (catégories et items) d'un onglet",
+  })
   @ApiResponse({
     status: 200,
     description: "Liste des catégories avec leurs items pour l'onglet donné",

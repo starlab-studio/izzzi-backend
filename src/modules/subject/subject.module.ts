@@ -31,7 +31,6 @@ import { ClassModule } from "../class/class.module";
 import { IClassRepository } from "../class/domain/repositories/class.repository";
 import { ISubjectAssignmentRepository } from "./domain/repositories/subject-assignment.repository";
 import { OrganizationFacade } from "../organization/application/facades/organization.facade";
-import { EventHandlerRegistry } from "src/core";
 import { QuizModule } from "../quiz/quiz.module";
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { IQuizRepository } from "../quiz/domain/repositories/quiz.repository";

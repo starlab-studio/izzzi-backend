@@ -31,7 +31,7 @@ export class GetAlertCommentsUseCase
   constructor(
     readonly logger: ILoggerService,
     private readonly alertCommentRepository: IAlertCommentRepository,
-    private readonly organizationFacade: OrganizationFacade
+    private readonly organizationFacade: OrganizationFacade,
   ) {
     super(logger);
   }
@@ -40,16 +40,16 @@ export class GetAlertCommentsUseCase
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       this.logger.info(
-        `Getting comments for alert ${data.alertId} for subject ${data.subjectId}`
+        `Getting comments for alert ${data.alertId} for subject ${data.subjectId}`,
       );
 
       const commentEntities = await this.alertCommentRepository.findByAlertId(
         data.alertId,
-        data.subjectId
+        data.subjectId,
       );
 
       const comments: AlertCommentOutput[] = commentEntities.map((comment) => ({

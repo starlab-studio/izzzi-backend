@@ -74,7 +74,7 @@ export class CustomAuthAdapter implements IAuthStrategy {
       verificationTokenEntity
     );
 
-    const { password, ...userData } = data;
+    const { password: _password, ...userData } = data;
     return {
       ...userData,
       authIdentityId: ormAuthIdentity.id,

@@ -12,14 +12,14 @@ import { Notification } from "../../domain/entities/notification.entity";
 export class CreatePushNotificationUseCase {
   constructor(
     private readonly notificationDomainService: NotificationDomainService,
-    private readonly notificationRepository: INotificationRespository
+    private readonly notificationRepository: INotificationRespository,
   ) {}
 
   async execute(
     data: Omit<
       ICreateNotification,
       "sender" | "mode" | "deliveredAt" | "template" | "subject"
-    >
+    >,
   ): Promise<INotification> {
     try {
       const sender = "system";

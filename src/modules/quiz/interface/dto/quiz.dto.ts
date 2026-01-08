@@ -1,5 +1,14 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsUUID, IsNotEmpty, IsString, IsOptional, IsArray, ValidateNested, IsIn, IsNumber } from "class-validator";
+import {
+  IsUUID,
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsIn,
+  IsNumber,
+} from "class-validator";
 import { Type } from "class-transformer";
 
 export class AssignQuizPairDto {
@@ -18,27 +27,27 @@ class QuestionDto {
   @IsNotEmpty()
   text: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: "Type de question",
-    enum: ["stars", "radio", "checkbox", "textarea"]
+    enum: ["stars", "radio", "checkbox", "textarea"],
   })
   @IsString()
   @IsIn(["stars", "radio", "checkbox", "textarea"])
   type: "stars" | "radio" | "checkbox" | "textarea";
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: "Options de réponse (pour radio et checkbox)",
     required: false,
-    type: [String]
+    type: [String],
   })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   options?: string[];
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: "Catégorie de la question",
-    enum: ["global", "course", "instructor"]
+    enum: ["global", "course", "instructor"],
   })
   @IsString()
   @IsIn(["global", "course", "instructor"])
@@ -60,9 +69,9 @@ class TemplateDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: "Questions du template",
-    type: [QuestionDto]
+    type: [QuestionDto],
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -81,20 +90,19 @@ export class CreateQuizTemplatePairDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: "Template pour le formulaire pendant le cours",
-    type: TemplateDto
+    type: TemplateDto,
   })
   @ValidateNested()
   @Type(() => TemplateDto)
   duringCourseTemplate: TemplateDto;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: "Template pour le formulaire après le cours",
-    type: TemplateDto
+    type: TemplateDto,
   })
   @ValidateNested()
   @Type(() => TemplateDto)
   afterCourseTemplate: TemplateDto;
 }
-

@@ -31,7 +31,7 @@ import {
 import { GetQuizTemplatePairsUseCase } from "../use-cases/GetQuizTemplatePairs.use-case";
 import { GetQuizTemplateByIdUseCase } from "../use-cases/GetQuizTemplateById.use-case";
 import { CreateQuizTemplateUseCase } from "../use-cases/CreateQuizTemplate.use-case";
-import { 
+import {
   CreateQuizTemplatePairUseCase,
   CreateQuizTemplatePairInput,
   CreateQuizTemplatePairOutput,
@@ -115,15 +115,11 @@ export class QuizFacade {
     return await this.getQuizzesBySubjectUseCase.execute(data);
   }
 
-  async getQuizById(
-    data: GetQuizByIdInput,
-  ): Promise<GetQuizByIdOutput> {
+  async getQuizById(data: GetQuizByIdInput): Promise<GetQuizByIdOutput> {
     return await this.getQuizByIdUseCase.execute(data);
   }
 
-  async getQuizLink(
-    data: GetQuizLinkInput,
-  ): Promise<GetQuizLinkOutput> {
+  async getQuizLink(data: GetQuizLinkInput): Promise<GetQuizLinkOutput> {
     return await this.getQuizLinkUseCase.execute(data);
   }
 
@@ -169,4 +165,3 @@ export class QuizFacade {
     return await this.exportQuizStatisticsUseCase.execute(data);
   }
 }
-

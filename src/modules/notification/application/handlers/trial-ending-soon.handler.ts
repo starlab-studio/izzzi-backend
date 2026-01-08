@@ -6,7 +6,7 @@ import { CreateEmailNotificationUseCase } from "../use-cases/create-email-notifi
 export class TrialEndingSoonEventHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {
     super(logger);
   }
@@ -15,7 +15,7 @@ export class TrialEndingSoonEventHandler extends BaseEventHandler {
     try {
       if (event.payload.adminEmails.length === 0) {
         this.logger.warn(
-          `No admin emails found for organization ${event.payload.organizationId}`
+          `No admin emails found for organization ${event.payload.organizationId}`,
         );
         return;
       }
@@ -40,7 +40,7 @@ export class TrialEndingSoonEventHandler extends BaseEventHandler {
 
       const template = GeneralUtils.htmlTemplateReader(
         "trial-ending-soon.html",
-        templateVars
+        templateVars,
       );
       const subject = "Votre période d'essai se termine bientôt";
 
@@ -49,20 +49,20 @@ export class TrialEndingSoonEventHandler extends BaseEventHandler {
           subject,
           template,
           target: email,
-        })
+        }),
       );
 
       await Promise.all(emailPromises);
 
       this.logger.info(
-        `Trial ending soon notification sent to ${event.payload.adminEmails.length} admin(s) for organization ${event.payload.organizationId}`
+        `Trial ending soon notification sent to ${event.payload.adminEmails.length} admin(s) for organization ${event.payload.organizationId}`,
       );
     } catch (error) {
       this.logger.error(
         `Error handling trial ending soon event: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
     }
   }

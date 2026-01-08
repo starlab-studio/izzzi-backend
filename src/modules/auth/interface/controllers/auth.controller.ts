@@ -34,7 +34,7 @@ import { RefreshToken } from "src/core/interfaces/decorators/refreshToken.decora
 export class AuthController extends BaseController {
   constructor(
     private readonly authFacade: AuthFacade,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     super();
   }
@@ -83,7 +83,7 @@ export class AuthController extends BaseController {
   async signIn(
     @Body() dto: SignInDto,
     @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
   ) {
     const deviceInfo = req.headers["user-agent"] || undefined;
     const ipAddress =
@@ -145,7 +145,7 @@ export class AuthController extends BaseController {
   async refreshAccessToken(
     @RefreshToken() refreshToken: string,
     @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
   ) {
     const deviceInfo = req.headers["user-agent"] || undefined;
     const ipAddress =
@@ -197,7 +197,7 @@ export class AuthController extends BaseController {
       "Password reset email sent successfully (always returns success for security)",
   })
   @ApiResponse({ status: 400, description: "Invalid email address" })
-  async forgotPassword(@Body() dto: ForgotPasswordDto, @Req() req: Request) {
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authFacade.forgotPassword(dto);
     return this.success({
       message:
@@ -243,7 +243,7 @@ export class AuthController extends BaseController {
   })
   async changePassword(
     @Body() dto: ChangePasswordDto,
-    @CurrentUser() user: JWTPayload
+    @CurrentUser() user: JWTPayload,
   ) {
     await this.authFacade.changePassword({
       userId: user.userId,
@@ -267,7 +267,7 @@ export class AuthController extends BaseController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async logout(
     @CurrentUser() user: JWTPayload,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
   ) {
     await this.authFacade.revokeAllRefreshTokens(user.userId);
 

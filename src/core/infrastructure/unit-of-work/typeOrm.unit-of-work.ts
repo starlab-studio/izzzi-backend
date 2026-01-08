@@ -8,7 +8,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   constructor(private readonly dataSource: DataSource) {}
 
   async withTransaction<T>(
-    operation: (uow: IUnitOfWork) => Promise<T>
+    operation: (uow: IUnitOfWork) => Promise<T>,
   ): Promise<T> {
     this.queryRunner = this.dataSource.createQueryRunner();
     await this.queryRunner.connect();
@@ -36,7 +36,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   getRepository<T>(repositoryClass: new (uow: IUnitOfWork) => T): T {
     if (!this.entityManager) {
       throw new Error(
-        "No active transaction. Repository can only be accessed within a transaction."
+        "No active transaction. Repository can only be accessed within a transaction.",
       );
     }
     return new repositoryClass(this);
@@ -46,7 +46,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   getEntityManager(): EntityManager {
     if (!this.entityManager) {
       throw new Error(
-        "No active transaction. EntityManager can only be accessed within a transaction."
+        "No active transaction. EntityManager can only be accessed within a transaction.",
       );
     }
     return this.entityManager;

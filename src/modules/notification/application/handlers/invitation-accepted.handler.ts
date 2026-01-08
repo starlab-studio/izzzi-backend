@@ -6,7 +6,7 @@ import { InvitationAcceptedEvent } from "src/modules/organization/domain/events/
 export class InvitationAcceptedEventHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {
     super(logger);
   }

@@ -69,7 +69,7 @@ export class OrganizationFacade {
     private readonly updateMemberRoleUseCase?: UpdateMemberRoleUseCase,
     private readonly removeMemberUseCase?: RemoveMemberUseCase,
     private readonly getOrganizationMembersUseCase?: GetOrganizationMembersUseCase,
-    private readonly getOrganizationStatsUseCase?: GetOrganizationStatsUseCase
+    private readonly getOrganizationStatsUseCase?: GetOrganizationStatsUseCase,
   ) {}
 
   async createUserAndOrganization(data: IUserCreate): Promise<IUser> {
@@ -108,7 +108,7 @@ export class OrganizationFacade {
     if (!user) {
       throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
     }
-    
+
     if (!user.isActive()) {
       user.activate();
       await this.userRepository.save(user);
@@ -118,7 +118,7 @@ export class OrganizationFacade {
   async validateUserCanCreateClass(
     userId: string,
     organizationId: string,
-    requiredRoles: UserRole[]
+    requiredRoles: UserRole[],
   ): Promise<void> {
     const user =
       await this.userRepository.findByIdWithActiveMemberships(userId);
@@ -129,21 +129,21 @@ export class OrganizationFacade {
     if (!user.belongsToOrganization(organizationId)) {
       throw new DomainError(
         ErrorCode.USER_HAS_NO_ORGANIZATION,
-        "User is not a member of this organization"
+        "User is not a member of this organization",
       );
     }
 
     if (!user.hasAnyRoleInOrganization(organizationId, requiredRoles)) {
       throw new DomainError(
         ErrorCode.UNAUTHORIZED_ROLE,
-        `User must have one of the following roles: ${requiredRoles.join(", ")}`
+        `User must have one of the following roles: ${requiredRoles.join(", ")}`,
       );
     }
   }
 
   async validateUserBelongsToOrganization(
     userId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<void> {
     const user =
       await this.userRepository.findByIdWithActiveMemberships(userId);
@@ -154,14 +154,14 @@ export class OrganizationFacade {
     if (!user.belongsToOrganization(organizationId)) {
       throw new DomainError(
         ErrorCode.USER_HAS_NO_ORGANIZATION,
-        "User is not a member of this organization"
+        "User is not a member of this organization",
       );
     }
   }
 
   async getOneOrganization(
     organizationId: string,
-    userId: string
+    userId: string,
   ): Promise<IOrganization | null> {
     try {
       return await this.getOrganizationUseCase.execute({
@@ -192,7 +192,7 @@ export class OrganizationFacade {
   }
 
   async validateInvitation(
-    data: ValidateInvitationData
+    data: ValidateInvitationData,
   ): Promise<ValidateInvitationResponse> {
     try {
       return await this.validateInvitationUseCase.execute(data);
@@ -248,7 +248,7 @@ export class OrganizationFacade {
       if (!invitation) {
         throw new DomainError(
           ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-          "Invitation not found"
+          "Invitation not found",
         );
       }
       invitation.markAsAccepted();
@@ -280,12 +280,12 @@ export class OrganizationFacade {
         const user = await this.createUserUseCase.execute(data.userData);
 
         const invitation = await this.invitationRepository.findByToken(
-          data.invitationToken
+          data.invitationToken,
         );
         if (!invitation) {
           throw new DomainError(
             ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-            "Invitation not found"
+            "Invitation not found",
           );
         }
 
@@ -324,12 +324,12 @@ export class OrganizationFacade {
     try {
       return await this.unitOfWork.withTransaction(async () => {
         const invitation = await this.invitationRepository.findByToken(
-          data.invitationToken
+          data.invitationToken,
         );
         if (!invitation) {
           throw new DomainError(
             ErrorCode.INVALID_OR_EXPIRED_INVITATION,
-            "Invitation not found"
+            "Invitation not found",
           );
         }
 
@@ -352,12 +352,12 @@ export class OrganizationFacade {
     if (!this.updateMemberRoleUseCase) {
       throw new DomainError(
         ErrorCode.UNEXPECTED_ERROR,
-        "UpdateMemberRoleUseCase not initialized"
+        "UpdateMemberRoleUseCase not initialized",
       );
     }
     try {
       // Don't wrap in transaction - the use case has its own transaction
-      return await this.updateMemberRoleUseCase!.execute(data);
+      return await this.updateMemberRoleUseCase.execute(data);
     } catch (error) {
       throw error;
     }
@@ -367,19 +367,19 @@ export class OrganizationFacade {
     if (!this.removeMemberUseCase) {
       throw new DomainError(
         ErrorCode.UNEXPECTED_ERROR,
-        "RemoveMemberUseCase not initialized"
+        "RemoveMemberUseCase not initialized",
       );
     }
     return await this.removeMemberUseCase.execute(data);
   }
 
   async getOrganizationMembers(
-    data: GetOrganizationMembersData
+    data: GetOrganizationMembersData,
   ): Promise<OrganizationMember[]> {
     if (!this.getOrganizationMembersUseCase) {
       throw new DomainError(
         ErrorCode.UNEXPECTED_ERROR,
-        "GetOrganizationMembersUseCase not initialized"
+        "GetOrganizationMembersUseCase not initialized",
       );
     }
     try {
@@ -390,12 +390,12 @@ export class OrganizationFacade {
   }
 
   async getOrganizationStats(
-    data: GetOrganizationStatsData
+    data: GetOrganizationStatsData,
   ): Promise<OrganizationStats> {
     if (!this.getOrganizationStatsUseCase) {
       throw new DomainError(
         ErrorCode.UNEXPECTED_ERROR,
-        "GetOrganizationStatsUseCase not initialized"
+        "GetOrganizationStatsUseCase not initialized",
       );
     }
     try {
@@ -410,7 +410,7 @@ export class OrganizationFacade {
     organizationId: string,
     role: UserRole,
     invitedBy: string | null,
-    invitationToken?: string
+    invitationToken?: string,
   ): Promise<ReactivationResult> {
     try {
       return await this.unitOfWork.withTransaction(async () => {
@@ -427,7 +427,7 @@ export class OrganizationFacade {
         const existingMembership =
           await this.membershipRepository.findByUserAndOrganization(
             userId,
-            organizationId
+            organizationId,
           );
 
         if (existingMembership) {
@@ -446,7 +446,8 @@ export class OrganizationFacade {
         }
 
         if (invitationToken) {
-          const invitation = await this.invitationRepository.findByToken(invitationToken);
+          const invitation =
+            await this.invitationRepository.findByToken(invitationToken);
           if (invitation) {
             invitation.markAsAccepted();
             await this.invitationRepository.save(invitation);

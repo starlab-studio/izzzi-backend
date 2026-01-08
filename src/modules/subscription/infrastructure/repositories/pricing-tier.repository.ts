@@ -8,7 +8,7 @@ import { IPricingTierRepository } from "../../domain/repositories/pricing-tier.r
 export class PricingTierRepository implements IPricingTierRepository {
   constructor(
     @InjectRepository(PricingTierModel)
-    private ormRepository: Repository<IPricingTier>
+    private ormRepository: Repository<IPricingTier>,
   ) {}
 
   async findByPlanId(planId: string): Promise<PricingTierEntity[]> {
@@ -17,20 +17,20 @@ export class PricingTierRepository implements IPricingTierRepository {
       order: { minClasses: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      PricingTierEntity.reconstitute(ormEntity)
+      PricingTierEntity.reconstitute(ormEntity),
     );
   }
 
   async findByPlanIdAndBillingPeriod(
     planId: string,
-    billingPeriod: "monthly" | "annual"
+    billingPeriod: "monthly" | "annual",
   ): Promise<PricingTierEntity[]> {
     const ormEntities = await this.ormRepository.find({
       where: { planId, billingPeriod },
       order: { minClasses: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      PricingTierEntity.reconstitute(ormEntity)
+      PricingTierEntity.reconstitute(ormEntity),
     );
   }
 
@@ -39,7 +39,7 @@ export class PricingTierRepository implements IPricingTierRepository {
       order: { minClasses: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      PricingTierEntity.reconstitute(ormEntity)
+      PricingTierEntity.reconstitute(ormEntity),
     );
   }
 

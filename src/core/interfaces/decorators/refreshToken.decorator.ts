@@ -10,10 +10,10 @@ export const RefreshToken = createParamDecorator(
 
     if (!refreshToken) {
       throw new Error(
-        "RefreshToken not found. Make sure RefreshTokenGuard is applied."
+        "RefreshToken not found. Make sure RefreshTokenGuard is applied.",
       );
     }
 
     return refreshToken;
-  }
+  },
 );

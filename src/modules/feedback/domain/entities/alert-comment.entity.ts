@@ -22,35 +22,35 @@ export class AlertCommentEntity extends BaseEntity {
     BaseEntity.validateRequiredString(
       alertId,
       "Alert ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const subjectId = (data.subjectId ?? "").trim();
     BaseEntity.validateRequiredString(
       subjectId,
       "Subject ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const organizationId = (data.organizationId ?? "").trim();
     BaseEntity.validateRequiredString(
       organizationId,
       "Organization ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const userId = (data.userId ?? "").trim();
     BaseEntity.validateRequiredString(
       userId,
       "User ID",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     const comment = (data.comment ?? "").trim();
     BaseEntity.validateRequiredString(
       comment,
       "Comment",
-      ErrorCode.UNEXPECTED_ERROR
+      ErrorCode.UNEXPECTED_ERROR,
     );
 
     return new AlertCommentEntity({

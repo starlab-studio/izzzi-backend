@@ -9,7 +9,7 @@ export class EventHandlerRegistry {
 
   constructor(
     private readonly eventStore: IEventStore,
-    private readonly logger: ILoggerService
+    private readonly logger: ILoggerService,
   ) {}
 
   registerHandler(eventName: string, handler: IEventHandler): void {
@@ -32,7 +32,7 @@ export class EventHandlerRegistry {
     }
 
     this.logger.info(
-      `Processing event: ${event.name} with ${eventHandlers.length} handler(s)`
+      `Processing event: ${event.name} with ${eventHandlers.length} handler(s)`,
     );
 
     const handlerPromises = eventHandlers.map(async (handler) => {
@@ -47,7 +47,7 @@ export class EventHandlerRegistry {
           `Handler failed for event: ${event.name}`,
           {
             eventName: event.name,
-          }
+          },
         );
       }
     });

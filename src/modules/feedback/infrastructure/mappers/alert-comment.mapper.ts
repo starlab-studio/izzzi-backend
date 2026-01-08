@@ -15,4 +15,3 @@ export class AlertCommentMapper {
     return entity.toPersistence();
   }
 }
-

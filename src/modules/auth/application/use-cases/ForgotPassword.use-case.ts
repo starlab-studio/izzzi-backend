@@ -4,13 +4,13 @@ import { IAuthStrategy, ForgotPasswordData } from "../../domain/types";
 export class ForgotPasswordUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly authProvider: IAuthStrategy
+    private readonly authProvider: IAuthStrategy,
   ) {
     super(logger);
   }
 
   async execute(
-    data: ForgotPasswordData & { ipAddress?: string; userAgent?: string }
+    data: ForgotPasswordData & { ipAddress?: string; userAgent?: string },
   ): Promise<void> {
     try {
       return await this.authProvider.forgotPassword(data);
@@ -19,5 +19,5 @@ export class ForgotPasswordUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

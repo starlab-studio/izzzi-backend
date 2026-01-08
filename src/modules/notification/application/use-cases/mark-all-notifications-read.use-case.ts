@@ -19,34 +19,34 @@ export class MarkAllNotificationsReadUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly notificationRepository: INotificationRespository
+    private readonly notificationRepository: INotificationRespository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: MarkAllNotificationsReadInput
+    data: MarkAllNotificationsReadInput,
   ): Promise<MarkAllNotificationsReadOutput> {
     try {
       this.logger.info(
-        `Marking all notifications as read for user ${data.userId}`
+        `Marking all notifications as read for user ${data.userId}`,
       );
 
       const notifications = await this.notificationRepository.findByTarget(
         data.userId,
-        NotificationMode.PUSH
+        NotificationMode.PUSH,
       );
 
       const unreadNotifications = notifications.filter((n) => !n.isRead);
 
       const updatePromises = unreadNotifications.map((notification) =>
-        this.notificationRepository.update(notification.id, { isRead: true })
+        this.notificationRepository.update(notification.id, { isRead: true }),
       );
 
       await Promise.all(updatePromises);
 
       this.logger.info(
-        `Marked ${unreadNotifications.length} notifications as read for user ${data.userId}`
+        `Marked ${unreadNotifications.length} notifications as read for user ${data.userId}`,
       );
 
       return {
@@ -60,5 +60,7 @@ export class MarkAllNotificationsReadUseCase
     }
   }
 
-  async withCompensation(input: MarkAllNotificationsReadInput): Promise<void> {}
+  async withCompensation(
+    _input: MarkAllNotificationsReadInput,
+  ): Promise<void> {}
 }

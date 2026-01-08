@@ -27,7 +27,7 @@ export class RequestLoggingInterceptor implements NestInterceptor {
           const ms = Date.now() - start;
           this.logger.warn(`${method} ${url} - error - ${ms}ms`);
         },
-      })
+      }),
     );
   }
 }

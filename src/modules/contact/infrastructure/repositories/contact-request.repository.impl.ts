@@ -10,7 +10,7 @@ import { ContactRequestStatus } from "../../domain/types";
 export class ContactRequestRepositoryImpl implements IContactRequestRepository {
   constructor(
     @InjectRepository(ContactRequestModel)
-    private readonly repository: Repository<ContactRequestModel>
+    private readonly repository: Repository<ContactRequestModel>,
   ) {}
 
   async save(contactRequest: ContactRequestEntity): Promise<void> {
@@ -48,7 +48,9 @@ export class ContactRequestRepositoryImpl implements IContactRequestRepository {
     }
 
     const [models, total] = await queryBuilder.getManyAndCount();
-    const data = models.map((model) => ContactRequestEntity.reconstitute(model));
+    const data = models.map((model) =>
+      ContactRequestEntity.reconstitute(model),
+    );
 
     return { data, total };
   }
@@ -57,4 +59,3 @@ export class ContactRequestRepositoryImpl implements IContactRequestRepository {
     await this.repository.delete(id);
   }
 }
-

@@ -2,7 +2,6 @@ import {
   IUseCase,
   BaseUseCase,
   ILoggerService,
-  ApplicationError,
   ErrorCode,
   UserRole,
   DomainError,
@@ -20,7 +19,7 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
     readonly logger: ILoggerService,
     private readonly classRepository: IClassRepository,
     private readonly classStudentRepository: IClassStudentRepository,
-    private readonly organizationFacade: OrganizationFacade,
+    private readonly organizationFacade: OrganizationFacade
   ) {
     super(logger);
   }
@@ -30,43 +29,41 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
       await this.organizationFacade.validateUserCanCreateClass(
         data.userId,
         data.organizationId,
-        [UserRole.LEARNING_MANAGER, UserRole.ADMIN],
+        [UserRole.LEARNING_MANAGER, UserRole.ADMIN]
       );
 
       const classEntity = await this.classRepository.findById(data.classId);
 
       if (!classEntity) {
-        throw new DomainError(
-          ErrorCode.CLASS_NOT_FOUND,
-          "Class not found",
-        );
+        throw new DomainError(ErrorCode.CLASS_NOT_FOUND, "Class not found");
       }
 
       if (classEntity.organizationId !== data.organizationId) {
         throw new DomainError(
           ErrorCode.UNAUTHORIZED_ROLE,
-          "Class does not belong to this organization",
+          "Class does not belong to this organization"
         );
       }
 
       if (classEntity.status === "archived") {
         throw new DomainError(
           ErrorCode.CLASS_ALREADY_ARCHIVED,
-          "Cannot update an archived class",
+          "Cannot update an archived class"
         );
       }
 
       // Vérifie si le nom existe déjà dans l'organisation (uniquement si le nom change)
       if (data.name && data.name !== classEntity.name) {
-        const existingClass = await this.classRepository.findByNameAndOrganization(
-          data.name,
-          data.organizationId,
-        );
+        const existingClass =
+          await this.classRepository.findByNameAndOrganization(
+            data.name,
+            data.organizationId
+          );
 
         if (existingClass && existingClass.id !== data.classId) {
           throw new DomainError(
             ErrorCode.CLASS_ALREADY_EXISTS,
-            "A class with this name already exists in this organization",
+            "A class with this name already exists in this organization"
           );
         }
       }
@@ -99,8 +96,10 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
         updateData.studentEmails = validatedEmails;
 
         // Met à jour les étudiants : désactive ceux qui ne sont plus dans la liste
-        const existingStudents = await this.classStudentRepository.findByClass(data.classId);
-        const existingEmails = new Set(existingStudents.map((s) => s.email.toLowerCase()));
+        const existingStudents = await this.classStudentRepository.findByClass(
+          data.classId
+        );
+        new Set(existingStudents.map((s) => s.email.toLowerCase()));
         const newEmails = new Set(validatedEmails.map((e) => e.toLowerCase()));
 
         for (const student of existingStudents) {
@@ -112,10 +111,11 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
 
         // Crée de nouveaux étudiants ou réactive ceux qui existent déjà
         for (const email of validatedEmails) {
-          const existingStudent = await this.classStudentRepository.findByEmailAndClass(
-            email,
-            data.classId,
-          );
+          const existingStudent =
+            await this.classStudentRepository.findByEmailAndClass(
+              email,
+              data.classId
+            );
 
           if (existingStudent) {
             if (!existingStudent.isActive) {
@@ -144,4 +144,3 @@ export class UpdateClassUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

@@ -32,7 +32,7 @@ export class NotificationController extends BaseController {
   constructor(
     private readonly getNotificationsUseCase: GetNotificationsUseCase,
     private readonly markNotificationReadUseCase: MarkNotificationReadUseCase,
-    private readonly markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase
+    private readonly markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase,
   ) {
     super();
   }
@@ -74,7 +74,7 @@ export class NotificationController extends BaseController {
   async markAsRead(
     @Param("id") notificationId: string,
     @Body() body: { read: boolean },
-    @CurrentUser() user: JWTPayload
+    @CurrentUser() user: JWTPayload,
   ) {
     const result = await this.markNotificationReadUseCase.execute({
       notificationId,

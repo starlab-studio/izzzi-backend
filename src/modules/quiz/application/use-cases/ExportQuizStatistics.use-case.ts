@@ -29,7 +29,10 @@ export interface ExportQuizStatisticsOutput {
   contentType: string;
 }
 
-export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase {
+export class ExportQuizStatisticsUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly quizRepository: IQuizRepository,
@@ -39,18 +42,18 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
     private readonly organizationFacade: OrganizationFacade,
     private readonly responseVisibilityService: ResponseVisibilityService,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository
+    private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: ExportQuizStatisticsInput
+    data: ExportQuizStatisticsInput,
   ): Promise<ExportQuizStatisticsOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
-        data.organizationId
+        data.organizationId,
       );
 
       const quiz = await this.quizRepository.findById(data.quizId);
@@ -60,30 +63,30 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
 
       const subscription =
         await this.subscriptionRepository.findActiveByOrganizationId(
-          data.organizationId
+          data.organizationId,
         );
       const plan = subscription
         ? await this.subscriptionPlanRepository.findById(subscription.planId)
         : null;
 
       const allResponses = await this.responseRepository.findByQuiz(
-        data.quizId
+        data.quizId,
       );
 
       const responseEntities = allResponses.map((r) =>
-        ResponseEntity.reconstitute(r)
+        ResponseEntity.reconstitute(r),
       );
 
       const visibleResponses =
         this.responseVisibilityService.getVisibleResponses(
           responseEntities,
           subscription,
-          plan
+          plan,
         );
 
       const visibleResponseIds = new Set(visibleResponses.map((r) => r.id));
       const responses = allResponses.filter((r) =>
-        visibleResponseIds.has(r.id)
+        visibleResponseIds.has(r.id),
       );
 
       const allAnswers = await this.answerRepository.findByQuiz(data.quizId);
@@ -95,14 +98,14 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
       });
 
       const template = await this.quizTemplateRepository.findById(
-        quiz.templateId
+        quiz.templateId,
       );
       if (!template) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Template not found");
       }
 
       const questions = template.questionsList.sort(
-        (a, b) => a.orderIndex - b.orderIndex
+        (a, b) => a.orderIndex - b.orderIndex,
       );
 
       const responsesData = responses.map((r) => ({
@@ -122,14 +125,19 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
 
       const sanitizedQuizName = "quiz";
       const dateStr = new Date().toISOString().split("T")[0];
-      
+
       if (data.format === "xlsx") {
-        const buffer = this.generateExcel(questions, responsesData, answersData);
+        const buffer = this.generateExcel(
+          questions,
+          responsesData,
+          answersData,
+        );
         const filename = `retours_${sanitizedQuizName}_${dateStr}.xlsx`;
         return {
           data: buffer,
           filename,
-          contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          contentType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         };
       } else {
         const csv = this.generateCSV(questions, responsesData, answersData);
@@ -164,7 +172,7 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
       valueRadio: string | null;
       valueCheckbox: string[] | null;
       valueText: string | null;
-    }>
+    }>,
   ): string {
     const escapeCSV = (value: string | number | null | undefined): string => {
       if (value === null || value === undefined) return "";
@@ -175,14 +183,14 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
       return str;
     };
 
-    const headers = [
-      "Date de soumission",
-      ...questions.map((q) => q.text),
-    ];
+    const headers = ["Date de soumission", ...questions.map((q) => q.text)];
 
     const csvRows: string[] = [headers.map(escapeCSV).join(",")];
 
-    const answersByResponse = new Map<string, Map<string, typeof answers[0]>>();
+    const answersByResponse = new Map<
+      string,
+      Map<string, (typeof answers)[0]>
+    >();
     answers.forEach((answer) => {
       if (!answersByResponse.has(answer.responseId)) {
         answersByResponse.set(answer.responseId, new Map());
@@ -191,7 +199,8 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
     });
 
     const sortedResponses = [...responses].sort(
-      (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+      (a, b) =>
+        new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime(),
     );
 
     sortedResponses.forEach((response) => {
@@ -249,14 +258,14 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
       valueRadio: string | null;
       valueCheckbox: string[] | null;
       valueText: string | null;
-    }>
+    }>,
   ): Buffer {
-    const headers = [
-      "Date de soumission",
-      ...questions.map((q) => q.text),
-    ];
+    const headers = ["Date de soumission", ...questions.map((q) => q.text)];
 
-    const answersByResponse = new Map<string, Map<string, typeof answers[0]>>();
+    const answersByResponse = new Map<
+      string,
+      Map<string, (typeof answers)[0]>
+    >();
     answers.forEach((answer) => {
       if (!answersByResponse.has(answer.responseId)) {
         answersByResponse.set(answer.responseId, new Map());
@@ -265,11 +274,12 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
     });
 
     const sortedResponses = [...responses].sort(
-      (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+      (a, b) =>
+        new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime(),
     );
 
     const rows: any[][] = [headers];
-    
+
     sortedResponses.forEach((response) => {
       const responseAnswers = answersByResponse.get(response.id) || new Map();
       const row = [
@@ -306,10 +316,9 @@ export class ExportQuizStatisticsUseCase extends BaseUseCase implements IUseCase
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Retours");
-    
+
     return XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
   }
 
   async withCompensation(): Promise<void> {}
 }
-

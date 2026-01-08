@@ -12,7 +12,7 @@ export class FeedbackAlertRepository
   constructor(
     @InjectRepository(FeedbackAlertModel)
     private readonly directRepository: Repository<FeedbackAlertModel>,
-    readonly unitOfWork: IUnitOfWork
+    readonly unitOfWork: IUnitOfWork,
   ) {
     super(unitOfWork);
   }
@@ -25,7 +25,7 @@ export class FeedbackAlertRepository
 
   async findByAlertId(
     alertId: string,
-    subjectId: string
+    subjectId: string,
   ): Promise<FeedbackAlertEntity | null> {
     const ormEntity = await this.directRepository.findOne({
       where: { alertId, subjectId },
@@ -39,7 +39,7 @@ export class FeedbackAlertRepository
       where: { subjectId },
     });
     return ormEntityList.map((ormEntity) =>
-      FeedbackAlertEntity.reconstitute(ormEntity)
+      FeedbackAlertEntity.reconstitute(ormEntity),
     );
   }
 
@@ -51,7 +51,7 @@ export class FeedbackAlertRepository
       where: { subjectId: In(subjectIds) },
     });
     return ormEntityList.map((ormEntity) =>
-      FeedbackAlertEntity.reconstitute(ormEntity)
+      FeedbackAlertEntity.reconstitute(ormEntity),
     );
   }
 
@@ -75,7 +75,7 @@ export class FeedbackAlertRepository
   async findAll(): Promise<FeedbackAlertEntity[]> {
     const ormEntityList = await this.directRepository.find();
     return ormEntityList.map((ormEntity) =>
-      FeedbackAlertEntity.reconstitute(ormEntity)
+      FeedbackAlertEntity.reconstitute(ormEntity),
     );
   }
 

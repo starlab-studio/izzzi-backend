@@ -28,7 +28,7 @@ export class GetNotificationsUseCase
   constructor(
     readonly logger: ILoggerService,
     private readonly notificationRepository: INotificationRespository,
-    private readonly subjectRepository: ISubjectRepository
+    private readonly subjectRepository: ISubjectRepository,
   ) {
     super(logger);
   }
@@ -39,7 +39,7 @@ export class GetNotificationsUseCase
 
       const notifications = await this.notificationRepository.findByTarget(
         data.userId,
-        NotificationMode.PUSH
+        NotificationMode.PUSH,
       );
 
       const mappedNotifications: NotificationOutput[] = [];
@@ -55,7 +55,7 @@ export class GetNotificationsUseCase
 
           if (!subjectId) {
             this.logger.warn(
-              `Notification ${notification.id} missing subjectId metadata`
+              `Notification ${notification.id} missing subjectId metadata`,
             );
             continue;
           }
@@ -63,7 +63,7 @@ export class GetNotificationsUseCase
           const subject = await this.subjectRepository.findById(subjectId);
           if (!subject) {
             this.logger.warn(
-              `Subject ${subjectId} not found for notification ${notification.id}`
+              `Subject ${subjectId} not found for notification ${notification.id}`,
             );
             continue;
           }
@@ -86,7 +86,7 @@ export class GetNotificationsUseCase
             `Error mapping notification ${notification.id}: ${
               error instanceof Error ? error.message : String(error)
             }`,
-            "get-notification-use-case"
+            "get-notification-use-case",
           );
           continue;
         }
@@ -95,7 +95,7 @@ export class GetNotificationsUseCase
       const unreadCount = mappedNotifications.filter((n) => !n.isRead).length;
 
       this.logger.info(
-        `Retrieved ${mappedNotifications.length} notifications for user ${data.userId} (${unreadCount} unread)`
+        `Retrieved ${mappedNotifications.length} notifications for user ${data.userId} (${unreadCount} unread)`,
       );
 
       return {
@@ -108,5 +108,6 @@ export class GetNotificationsUseCase
     }
   }
 
-  async withCompensation(input: GetNotificationsInput): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: GetNotificationsInput): Promise<void> {}
 }

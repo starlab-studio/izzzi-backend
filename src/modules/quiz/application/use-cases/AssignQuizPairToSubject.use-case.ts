@@ -18,7 +18,10 @@ import { OrganizationFacade } from "src/modules/organization/application/facades
 import { QuizEntity } from "../../domain/entities/quiz.entity";
 import { randomBytes } from "crypto";
 
-export class AssignQuizPairToSubjectUseCase extends BaseUseCase implements IUseCase {
+export class AssignQuizPairToSubjectUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly quizTemplatePairRepository: IQuizTemplatePairRepository,
@@ -31,39 +34,60 @@ export class AssignQuizPairToSubjectUseCase extends BaseUseCase implements IUseC
     super(logger);
   }
 
-  async execute(data: AssignQuizPairToSubjectInput): Promise<AssignQuizPairToSubjectOutput> {
+  async execute(
+    data: AssignQuizPairToSubjectInput,
+  ): Promise<AssignQuizPairToSubjectOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
         data.organizationId,
       );
 
-      const subjectEntity = await this.subjectRepository.findById(data.subjectId);
+      const subjectEntity = await this.subjectRepository.findById(
+        data.subjectId,
+      );
       if (!subjectEntity) {
         throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject not found");
       }
 
       if (subjectEntity.organizationId !== data.organizationId) {
-        throw new DomainError(ErrorCode.UNAUTHORIZED_ACCESS, "Unauthorized access to subject");
+        throw new DomainError(
+          ErrorCode.UNAUTHORIZED_ACCESS,
+          "Unauthorized access to subject",
+        );
       }
 
-      const assignments = await this.subjectAssignmentRepository.findBySubject(subjectEntity.id);
+      const assignments = await this.subjectAssignmentRepository.findBySubject(
+        subjectEntity.id,
+      );
       const activeAssignment = assignments.find((a) => a.isActive);
       if (!activeAssignment) {
-        throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Subject is not assigned to any class");
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "Subject is not assigned to any class",
+        );
       }
 
-      const classEntity = await this.classRepository.findById(activeAssignment.classId);
+      const classEntity = await this.classRepository.findById(
+        activeAssignment.classId,
+      );
       if (!classEntity) {
         throw new DomainError(ErrorCode.CLASS_NOT_FOUND, "Class not found");
       }
 
-      const templatePair = await this.quizTemplatePairRepository.findById(data.templatePairId);
+      const templatePair = await this.quizTemplatePairRepository.findById(
+        data.templatePairId,
+      );
       if (!templatePair) {
-        throw new DomainError(ErrorCode.UNEXPECTED_ERROR, "Template pair not found");
+        throw new DomainError(
+          ErrorCode.UNEXPECTED_ERROR,
+          "Template pair not found",
+        );
       }
 
-      const existingQuizzes = await this.quizRepository.findBySubject(data.subjectId);
+      const existingQuizzes = await this.quizRepository.findBySubject(
+        data.subjectId,
+      );
       if (existingQuizzes.length > 0) {
         throw new DomainError(
           ErrorCode.UNEXPECTED_ERROR,
@@ -139,4 +163,3 @@ export class AssignQuizPairToSubjectUseCase extends BaseUseCase implements IUseC
 
   async withCompensation(): Promise<void> {}
 }
-

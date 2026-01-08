@@ -13,15 +13,16 @@ export class CreateReportUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly eventStore: IEventStore
+    private readonly eventStore: IEventStore,
   ) {
     super(logger);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async execute(data: CreateReportInput): Promise<CreateReportOutput> {
     try {
       this.logger.info(
-        `Creating report for organization ${data.organizationId}`
+        `Creating report for organization ${data.organizationId}`,
       );
 
       const event = new ReportGeneratedEvent({
@@ -32,10 +33,10 @@ export class CreateReportUseCase
         generatedAt: new Date().toISOString(),
       });
 
-      await this.eventStore.publish(event);
+      this.eventStore.publish(event);
 
       this.logger.info(
-        `Report event published for organization ${data.organizationId}`
+        `Report event published for organization ${data.organizationId}`,
       );
 
       return {

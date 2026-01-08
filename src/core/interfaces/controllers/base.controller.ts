@@ -13,7 +13,7 @@ export abstract class BaseController {
     data: T[],
     total: number,
     page: number,
-    limit: number
+    limit: number,
   ): Response<{
     items: T[];
     pagination: {

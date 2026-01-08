@@ -8,11 +8,11 @@ export interface IInvitationRepository extends IRepository<InvitationEntity> {
   findByInviter(inviterId: string): Promise<InvitationEntity[] | []>;
   findByInviterAndOrganization(
     inviterId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<InvitationEntity[] | []>;
   findPendingByEmailAndOrg(
     email: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<InvitationEntity | null>;
   findByToken(token: string): Promise<InvitationEntity | null>;
 }

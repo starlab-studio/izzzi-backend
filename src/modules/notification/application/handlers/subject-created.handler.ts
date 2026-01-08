@@ -6,7 +6,7 @@ import { CreateEmailNotificationUseCase } from "../use-cases/create-email-notifi
 export class SubjectCreatedEventHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {
     super(logger);
   }
@@ -14,7 +14,7 @@ export class SubjectCreatedEventHandler extends BaseEventHandler {
   async handle(event: SubjectCreatedEvent): Promise<void> {
     try {
       this.logger.info(
-        `Handling subject created event for subject ${event.payload.name}`
+        `Handling subject created event for subject ${event.payload.name}`,
       );
 
       const subjectName = event.payload.name;
@@ -30,14 +30,14 @@ export class SubjectCreatedEventHandler extends BaseEventHandler {
       });
 
       this.logger.info(
-        `Subject created notification sent to ${event.payload.userEmail}`
+        `Subject created notification sent to ${event.payload.userEmail}`,
       );
     } catch (error) {
       this.logger.error(
         `Error handling subject created event: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
     }
   }

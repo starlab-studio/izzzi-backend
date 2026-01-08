@@ -11,7 +11,7 @@ import { RefreshToken } from "../../domain/entities/refreshToken.entity";
 export class RefreshTokenRepository implements IRefreshTokenRepository {
   constructor(
     @InjectRepository(RefreshTokenModel)
-    private ormRepository: Repository<IRefreshToken>
+    private ormRepository: Repository<IRefreshToken>,
   ) {}
 
   async save(token: RefreshToken): Promise<void> {
@@ -71,7 +71,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
       {
         isRevoked: true,
         revokedAt: new Date(),
-      }
+      },
     );
   }
 

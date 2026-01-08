@@ -17,23 +17,23 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
     private readonly eventStore: EventStore,
-    private readonly organizationRepository: IOrganizationRepository
+    private readonly organizationRepository: IOrganizationRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: Pick<IOrganizationCreate, "name" | "ownerId">
+    data: Pick<IOrganizationCreate, "name" | "ownerId">,
   ): Promise<IOrganization> {
     try {
       const existingOrganization = await this.organizationRepository.findByName(
-        data.name
+        data.name,
       );
 
       if (existingOrganization) {
         throw new DomainError(
           ErrorCode.ORGANIZATION_ALREADY_EXIST,
-          "Organization name is not available"
+          "Organization name is not available",
         );
       }
 
@@ -43,12 +43,12 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
       if (!createdOrganization) {
         throw new ApplicationError(
           ErrorCode.APPLICATION_FAILED_TO_CREATE,
-          "Something went wrong during creation. Please try again later."
+          "Something went wrong during creation. Please try again later.",
         );
       }
 
       this.eventStore.publish(
-        new OrganizationCreatedEvent(createdOrganization)
+        new OrganizationCreatedEvent(createdOrganization),
       );
       return createdOrganization;
     } catch (error) {
@@ -56,5 +56,6 @@ export class CreateOrganizationUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: IOrganization): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: IOrganization): Promise<void> {}
 }

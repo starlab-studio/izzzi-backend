@@ -3,7 +3,6 @@ import { Controller, UseGuards, Get } from "@nestjs/common";
 
 import {
   AuthGuard,
-  UserRole,
   CurrentUser,
   type JWTPayload,
   BaseController,

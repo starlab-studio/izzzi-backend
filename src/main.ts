@@ -24,7 +24,7 @@ async function bootstrap() {
 
   // Custom Request logging interceptor
   app.useGlobalInterceptors(
-    new RequestLoggingInterceptor(app.get(LoggerService))
+    new RequestLoggingInterceptor(app.get(LoggerService)),
   );
 
   // Validation pipes for DTOs
@@ -33,7 +33,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    })
+    }),
   );
 
   // Enable CORS

@@ -26,7 +26,9 @@ export class SubjectAssignmentRepository
     return typeOrmUow.getEntityManager().getRepository(SubjectAssignmentModel);
   }
 
-  async create(entity: SubjectAssignmentEntity): Promise<SubjectAssignmentEntity> {
+  async create(
+    entity: SubjectAssignmentEntity,
+  ): Promise<SubjectAssignmentEntity> {
     return this.assign(entity);
   }
 
@@ -126,7 +128,9 @@ export class SubjectAssignmentRepository
     await this.directRepository.delete({ subjectId, classId });
   }
 
-  async save(entity: SubjectAssignmentEntity): Promise<SubjectAssignmentEntity> {
+  async save(
+    entity: SubjectAssignmentEntity,
+  ): Promise<SubjectAssignmentEntity> {
     const data = entity.toPersistence();
     const ormEntity = this.directRepository.create(data);
     const saved = await this.directRepository.save(ormEntity);

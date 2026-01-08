@@ -152,7 +152,7 @@ export class SubscriptionController extends BaseController {
     description: "Synchronisation réussie",
     type: SyncPlansWithStripeResponseDto,
   })
-  async syncWithStripe(@CurrentUser() authenticatedUser: JWTPayload) {
+  async syncWithStripe() {
     const result = await this.subscriptionFacade.syncPlansWithStripe();
     return this.success(result);
   }

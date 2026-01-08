@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 
-import { DomainError, ErrorCode, UserRole } from "src/core";
+import { UserRole } from "src/core";
 import {
   IMembership,
   IMembershipCreate,
@@ -15,7 +15,11 @@ export class MembershipEntity {
   private _organization?: OrganizationEntity;
   private _user?: IUser;
 
-  private constructor(props: IMembership, organization?: OrganizationEntity, user?: IUser) {
+  private constructor(
+    props: IMembership,
+    organization?: OrganizationEntity,
+    user?: IUser
+  ) {
     this.props = props;
     this._organization = organization;
     this._user = user;
@@ -117,6 +121,10 @@ export class MembershipEntity {
   }
 
   static reconstitute(data: IMembershipReconstitute): MembershipEntity {
-    return new MembershipEntity(data, data.organization || undefined, data.user || undefined);
+    return new MembershipEntity(
+      data,
+      data.organization || undefined,
+      data.user || undefined
+    );
   }
 }

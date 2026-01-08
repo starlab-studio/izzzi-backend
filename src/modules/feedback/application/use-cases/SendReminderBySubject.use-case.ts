@@ -11,13 +11,13 @@ export class SendReminderBySubjectUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly quizFacade: QuizFacade
+    private readonly quizFacade: QuizFacade,
   ) {
     super(logger);
   }
 
   async execute(
-    data: SendReminderBySubjectInput
+    data: SendReminderBySubjectInput,
   ): Promise<SendReminderBySubjectOutput> {
     try {
       const quizzesResult = await this.quizFacade.getQuizzesBySubject({
@@ -27,7 +27,7 @@ export class SendReminderBySubjectUseCase
       });
 
       const activeQuizzes = quizzesResult.quizzes.filter(
-        (q) => q.status === "active"
+        (q) => q.status === "active",
       );
 
       if (activeQuizzes.length === 0) {

@@ -9,7 +9,7 @@ export class AuthIdentityUniquenessService {
     if (existingAuthIdentity) {
       throw new DomainError(
         ErrorCode.EMAIL_ALREADY_EXISTS,
-        "This email is already registered"
+        "This email is already registered",
       );
     }
   }

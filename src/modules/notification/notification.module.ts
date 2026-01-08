@@ -1,7 +1,6 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { JwtService } from "@nestjs/jwt";
 
 import { CoreModule } from "src/core/core.module";
 import { EventHandlerRegistry, ILoggerService, LoggerService } from "src/core";
@@ -263,7 +262,7 @@ import { INotificationGateway } from "./application/gateways/notification-gatewa
       useFactory: (
         logger: ILoggerService,
         notificationRepository: INotificationRespository,
-        subjectRepository: any
+        subjectRepository: ISubjectRepository
       ) =>
         new GetNotificationsUseCase(
           logger,
@@ -311,7 +310,7 @@ export class NotificationModule {
     private readonly subjectCreatedEventHandler: SubjectCreatedEventHandler
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     NotificationProviderFactory.register(
       NotificationMode.EMAIL,
       this.emailNotificationProvider

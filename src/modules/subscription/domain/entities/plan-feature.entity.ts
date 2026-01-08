@@ -17,7 +17,7 @@ export class PlanFeatureEntity {
       | "section"
       | "displayOrder"
       | "isComingSoon"
-    >
+    >,
   ): PlanFeatureEntity {
     return new PlanFeatureEntity({
       id: randomUUID(),

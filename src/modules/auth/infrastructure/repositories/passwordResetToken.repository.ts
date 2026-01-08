@@ -13,7 +13,7 @@ export class PasswordResetTokenRepository
 {
   constructor(
     @InjectRepository(PasswordResetTokenModel)
-    private ormRepository: Repository<IPasswordResetToken>
+    private ormRepository: Repository<IPasswordResetToken>,
   ) {}
 
   async save(token: PasswordResetToken): Promise<void> {
@@ -31,7 +31,7 @@ export class PasswordResetTokenRepository
   }
 
   async findByEmailAndNotUsed(
-    email: string
+    email: string,
   ): Promise<PasswordResetToken | null> {
     const normalizedEmail = email.trim().toLowerCase();
     const ormEntity = await this.ormRepository.findOne({

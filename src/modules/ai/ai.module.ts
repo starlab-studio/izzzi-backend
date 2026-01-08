@@ -11,7 +11,7 @@ import { AiClientService } from "./application/services/ai-client.service";
       provide: AiClientService,
       useFactory: (
         configService: ConfigService,
-        loggerService: ILoggerService
+        loggerService: ILoggerService,
       ) => new AiClientService(configService, loggerService),
       inject: [ConfigService, LoggerService],
     },

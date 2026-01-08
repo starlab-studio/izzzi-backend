@@ -122,4 +122,3 @@ export class QuizEntity extends BaseEntity {
     return new QuizEntity(data);
   }
 }
-

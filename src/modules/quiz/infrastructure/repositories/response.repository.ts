@@ -1,9 +1,6 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import {
-  type IUnitOfWork,
-  BaseTransactionalRepository,
-} from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { ResponseModel } from "../models/response.model";
 import { IResponseRepository } from "../../domain/repositories/response.repository";
 import { ResponseEntity } from "../../domain/entities/response.entity";
@@ -50,7 +47,10 @@ export class ResponseRepository
     return ResponseEntity.reconstitute(ormEntity);
   }
 
-  async findByQuizAndFingerprint(quizId: string, fingerprint: string): Promise<ResponseEntity | null> {
+  async findByQuizAndFingerprint(
+    quizId: string,
+    fingerprint: string,
+  ): Promise<ResponseEntity | null> {
     const ormEntity = await this.directRepository.findOne({
       where: { quizId, fingerprint },
     });
@@ -79,4 +79,3 @@ export class ResponseRepository
     await this.directRepository.delete(id);
   }
 }
-

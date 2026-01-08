@@ -5,7 +5,7 @@ import type { IContactRequestRepository } from "../../domain/repositories/contac
 export class DeleteContactRequestUseCase {
   constructor(
     @Inject("IContactRequestRepository")
-    private readonly contactRequestRepository: IContactRequestRepository
+    private readonly contactRequestRepository: IContactRequestRepository,
   ) {}
 
   async execute(id: string): Promise<void> {
@@ -18,4 +18,3 @@ export class DeleteContactRequestUseCase {
     await this.contactRequestRepository.delete(id);
   }
 }
-

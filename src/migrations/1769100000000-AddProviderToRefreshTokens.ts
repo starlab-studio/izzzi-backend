@@ -7,13 +7,13 @@ export class AddProviderToRefreshTokens1769100000000
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "refresh_tokens" ADD "provider" character varying(45)`
+      `ALTER TABLE "refresh_tokens" ADD "provider" character varying(45)`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "refresh_tokens" DROP COLUMN "provider"`
+      `ALTER TABLE "refresh_tokens" DROP COLUMN "provider"`,
     );
   }
 }

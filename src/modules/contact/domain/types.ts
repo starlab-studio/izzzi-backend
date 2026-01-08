@@ -38,4 +38,3 @@ export interface IContactRequestUpdate {
   notes?: string;
   processedBy?: string;
 }
-

@@ -13,7 +13,7 @@ export class AlertGeneratedEventHandler extends BaseEventHandler {
     private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
     private readonly createPushNotificationUseCase: CreatePushNotificationUseCase,
     private readonly membershipRepository: IMembershipRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
   ) {
     super(logger);
   }
@@ -21,23 +21,23 @@ export class AlertGeneratedEventHandler extends BaseEventHandler {
   async handle(event: AlertGeneratedEvent): Promise<void> {
     try {
       this.logger.info(
-        `Handling alert generated event for organization ${event.payload.organizationId}, subject ${event.payload.subjectId}`
+        `Handling alert generated event for organization ${event.payload.organizationId}, subject ${event.payload.subjectId}`,
       );
 
       const memberships = await this.membershipRepository.findByOrganization(
-        event.payload.organizationId
+        event.payload.organizationId,
       );
 
       const relevantMemberships = memberships.filter(
         (membership) =>
           (membership.role === UserRole.ADMIN ||
             membership.role === UserRole.LEARNING_MANAGER) &&
-          membership.status === MembershipStatus.ACTIVE
+          membership.status === MembershipStatus.ACTIVE,
       );
 
       if (relevantMemberships.length === 0) {
         this.logger.warn(
-          `No active admin or learning manager members found for organization ${event.payload.organizationId}`
+          `No active admin or learning manager members found for organization ${event.payload.organizationId}`,
         );
         return;
       }
@@ -52,7 +52,7 @@ export class AlertGeneratedEventHandler extends BaseEventHandler {
 
       if (userData.length === 0) {
         this.logger.warn(
-          `No user emails found for organization ${event.payload.organizationId}`
+          `No user emails found for organization ${event.payload.organizationId}`,
         );
         return;
       }
@@ -73,7 +73,7 @@ export class AlertGeneratedEventHandler extends BaseEventHandler {
               : ""
           }
         </div>
-      `
+      `,
         )
         .join("");
 
@@ -90,19 +90,19 @@ export class AlertGeneratedEventHandler extends BaseEventHandler {
             day: "numeric",
             hour: "2-digit",
             minute: "2-digit",
-          }
+          },
         ),
       };
 
       const template = GeneralUtils.htmlTemplateReader(
         "alert.html",
-        templateVars
+        templateVars,
       );
 
       const subject = `${event.payload.alerts.length} alerte(s) détectée(s) - ${event.payload.subjectName}`;
 
       const hasNegativeAlert = event.payload.alerts.some(
-        (alert) => alert.type === "negative"
+        (alert) => alert.type === "negative",
       );
       const alertType = hasNegativeAlert ? "negative" : "alert";
 
@@ -127,14 +127,14 @@ export class AlertGeneratedEventHandler extends BaseEventHandler {
       await Promise.all(notificationPromises);
 
       this.logger.info(
-        `Alert notifications sent to ${userData.length} user(s) for organization ${event.payload.organizationId}, subject ${event.payload.subjectId}`
+        `Alert notifications sent to ${userData.length} user(s) for organization ${event.payload.organizationId}, subject ${event.payload.subjectId}`,
       );
     } catch (error) {
       this.logger.error(
         `Error handling alert generated event: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
     }
   }

@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Param, Body, Query, UseGuards, Req, Res } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  Req,
+  Res,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -31,7 +42,8 @@ export class QuizController extends BaseController {
   @Post(":subjectId/quizzes/assign")
   @ApiOperation({
     summary: "Assigner une paire de templates à une matière",
-    description: "Crée deux quiz (during_course et after_course) pour une matière. \
+    description:
+      "Crée deux quiz (during_course et after_course) pour une matière. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -47,7 +59,10 @@ export class QuizController extends BaseController {
   @ApiResponse({ status: 400, description: "Données invalides" })
   @ApiResponse({ status: 401, description: "Authentification requise" })
   @ApiResponse({ status: 403, description: "Accès interdit" })
-  @ApiResponse({ status: 404, description: "Matière ou template pair non trouvé" })
+  @ApiResponse({
+    status: 404,
+    description: "Matière ou template pair non trouvé",
+  })
   async assignQuizPair(
     @Param("subjectId") subjectId: string,
     @Body() dto: AssignQuizPairDto,
@@ -74,7 +89,8 @@ export class QuizController extends BaseController {
   @Put(":subjectId/quizzes/reassign")
   @ApiOperation({
     summary: "Modifier le duo de questionnaires d'une matière",
-    description: "Modifie le duo de questionnaires d'une matière. \
+    description:
+      "Modifie le duo de questionnaires d'une matière. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN. \
     Contrainte : modification possible uniquement si le questionnaire 'en cours' n'a aucune réponse.",
   })
@@ -91,7 +107,10 @@ export class QuizController extends BaseController {
   @ApiResponse({ status: 400, description: "Des réponses existent déjà" })
   @ApiResponse({ status: 401, description: "Authentification requise" })
   @ApiResponse({ status: 403, description: "Accès interdit" })
-  @ApiResponse({ status: 404, description: "Matière ou template pair non trouvé" })
+  @ApiResponse({
+    status: 404,
+    description: "Matière ou template pair non trouvé",
+  })
   async reassignQuizPair(
     @Param("subjectId") subjectId: string,
     @Body() dto: AssignQuizPairDto,
@@ -118,7 +137,8 @@ export class QuizController extends BaseController {
   @Get(":subjectId/quizzes")
   @ApiOperation({
     summary: "Récupérer les quiz d'une matière",
-    description: "Récupère tous les quiz (during_course et after_course) d'une matière. \
+    description:
+      "Récupère tous les quiz (during_course et after_course) d'une matière. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -167,7 +187,8 @@ export class QuizDetailController extends BaseController {
   @Get(":id")
   @ApiOperation({
     summary: "Récupérer un quiz par son ID",
-    description: "Récupère les détails d'un quiz. \
+    description:
+      "Récupère les détails d'un quiz. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -206,7 +227,8 @@ export class QuizDetailController extends BaseController {
   @Get(":id/link")
   @ApiOperation({
     summary: "Récupérer le lien et le QR code d'un quiz",
-    description: "Récupère le lien public et l'URL du QR code d'un quiz. \
+    description:
+      "Récupère le lien public et l'URL du QR code d'un quiz. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -245,7 +267,8 @@ export class QuizDetailController extends BaseController {
   @Get(":id/qrcode")
   @ApiOperation({
     summary: "Télécharger le QR code d'un quiz",
-    description: "Télécharge l'image du QR code d'un quiz. \
+    description:
+      "Télécharge l'image du QR code d'un quiz. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -263,7 +286,10 @@ export class QuizDetailController extends BaseController {
   })
   @ApiResponse({ status: 401, description: "Authentification requise" })
   @ApiResponse({ status: 403, description: "Accès interdit" })
-  @ApiResponse({ status: 404, description: "Quiz non trouvé ou QR code non disponible" })
+  @ApiResponse({
+    status: 404,
+    description: "Quiz non trouvé ou QR code non disponible",
+  })
   async getQuizQRCode(
     @Param("id") quizId: string,
     @CurrentUser() user: JWTPayload,
@@ -296,7 +322,8 @@ export class QuizDetailController extends BaseController {
   @Post(":id/send")
   @ApiOperation({
     summary: "Envoyer le questionnaire à tous les étudiants",
-    description: "Envoie le questionnaire par email à tous les étudiants de la classe. \
+    description:
+      "Envoie le questionnaire par email à tous les étudiants de la classe. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -335,7 +362,8 @@ export class QuizDetailController extends BaseController {
   @Post(":id/remind")
   @ApiOperation({
     summary: "Relancer les étudiants n'ayant pas répondu",
-    description: "Envoie un email de relance aux étudiants qui n'ont pas encore répondu. \
+    description:
+      "Envoie un email de relance aux étudiants qui n'ont pas encore répondu. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -374,7 +402,8 @@ export class QuizDetailController extends BaseController {
   @Get(":id/statistics")
   @ApiOperation({
     summary: "Récupérer les statistiques des réponses d'un quiz",
-    description: "Récupère les statistiques détaillées des réponses d'un quiz. \
+    description:
+      "Récupère les statistiques détaillées des réponses d'un quiz. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -413,7 +442,8 @@ export class QuizDetailController extends BaseController {
   @Get(":id/export")
   @ApiOperation({
     summary: "Exporter les retours d'un quiz",
-    description: "Exporte toutes les réponses d'un quiz au format CSV ou XLSX. \
+    description:
+      "Exporte toutes les réponses d'un quiz au format CSV ou XLSX. \
     Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
   })
   @ApiParam({
@@ -446,7 +476,7 @@ export class QuizDetailController extends BaseController {
       throw new Error("Organization context required");
     }
 
-    const exportFormat = (format === "xlsx" ? "xlsx" : "csv") as "csv" | "xlsx";
+    const exportFormat = format === "xlsx" ? "xlsx" : "csv";
 
     const result = await this.quizFacade.exportQuizStatistics({
       quizId,
@@ -458,11 +488,10 @@ export class QuizDetailController extends BaseController {
     res.setHeader("Content-Type", result.contentType);
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${encodeURIComponent(result.filename)}"`
+      `attachment; filename="${encodeURIComponent(result.filename)}"`,
     );
     res.setHeader("Content-Transfer-Encoding", "binary");
 
     return res.send(result.data);
   }
 }
-

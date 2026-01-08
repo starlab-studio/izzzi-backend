@@ -11,7 +11,7 @@ export class ClassLimitReachedEventHandler extends BaseEventHandler {
     readonly logger: ILoggerService,
     private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
     private readonly membershipRepository: IMembershipRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
   ) {
     super(logger);
   }
@@ -19,18 +19,18 @@ export class ClassLimitReachedEventHandler extends BaseEventHandler {
   async handle(event: ClassLimitReachedEvent): Promise<void> {
     try {
       const memberships = await this.membershipRepository.findByOrganization(
-        event.payload.organizationId
+        event.payload.organizationId,
       );
 
       const adminMemberships = memberships.filter(
         (membership) =>
           membership.role === UserRole.ADMIN &&
-          membership.status === MembershipStatus.ACTIVE
+          membership.status === MembershipStatus.ACTIVE,
       );
 
       if (adminMemberships.length === 0) {
         this.logger.warn(
-          `No active admin members found for organization ${event.payload.organizationId}`
+          `No active admin members found for organization ${event.payload.organizationId}`,
         );
         return;
       }
@@ -45,7 +45,7 @@ export class ClassLimitReachedEventHandler extends BaseEventHandler {
 
       if (adminEmails.length === 0) {
         this.logger.warn(
-          `No admin emails found for organization ${event.payload.organizationId}`
+          `No admin emails found for organization ${event.payload.organizationId}`,
         );
         return;
       }
@@ -64,7 +64,7 @@ export class ClassLimitReachedEventHandler extends BaseEventHandler {
 
       const template = GeneralUtils.htmlTemplateReader(
         "class-limit-reached.html",
-        templateVars
+        templateVars,
       );
       const subject = "Limite de classes atteinte !";
 
@@ -73,20 +73,20 @@ export class ClassLimitReachedEventHandler extends BaseEventHandler {
           subject,
           template,
           target: email,
-        })
+        }),
       );
 
       await Promise.all(emailPromises);
 
       this.logger.info(
-        `Class limit reached notification sent to ${adminEmails.length} admin(s) for organization ${event.payload.organizationId}`
+        `Class limit reached notification sent to ${adminEmails.length} admin(s) for organization ${event.payload.organizationId}`,
       );
     } catch (error) {
       this.logger.error(
         `Error handling class limit reached event: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
     }
   }

@@ -19,20 +19,20 @@ export class SyncSubscriptionFromStripeUseCase
 {
   constructor(
     logger: ILoggerService,
-    private readonly subscriptionRepository: ISubscriptionRepository
+    private readonly subscriptionRepository: ISubscriptionRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    input: SyncSubscriptionFromStripeInput
+    input: SyncSubscriptionFromStripeInput,
   ): Promise<SyncSubscriptionFromStripeOutput> {
     const { stripeSubscription } = input;
 
     try {
       let subscription =
         await this.subscriptionRepository.findByStripeSubscriptionId(
-          stripeSubscription.id
+          stripeSubscription.id,
         );
 
       if (!subscription) {
@@ -46,7 +46,7 @@ export class SyncSubscriptionFromStripeUseCase
           throw new DomainError(
             "SUBSCRIPTION_NOT_FOUND",
             "Subscription not found for this Stripe subscription",
-            { stripeSubscriptionId: stripeSubscription.id }
+            { stripeSubscriptionId: stripeSubscription.id },
           );
         }
 
@@ -55,7 +55,7 @@ export class SyncSubscriptionFromStripeUseCase
             stripeSubscription.id,
             typeof stripeSubscription.customer === "string"
               ? stripeSubscription.customer
-              : stripeSubscription.customer.id
+              : stripeSubscription.customer.id,
           );
         }
       }
@@ -80,10 +80,10 @@ export class SyncSubscriptionFromStripeUseCase
           ) {
             const canceledAt = new Date(stripeSubscription.canceled_at * 1000);
             const periodEnd = new Date(
-              stripeSubscription.current_period_end * 1000
+              stripeSubscription.current_period_end * 1000,
             );
             const timeDiff = Math.abs(
-              canceledAt.getTime() - periodEnd.getTime()
+              canceledAt.getTime() - periodEnd.getTime(),
             );
             const hoursDiff = timeDiff / (1000 * 60 * 60);
             if (hoursDiff <= 24) {
@@ -119,19 +119,19 @@ export class SyncSubscriptionFromStripeUseCase
 
       if (stripeSubscription.current_period_start) {
         (subscription as any).props.currentPeriodStart = new Date(
-          stripeSubscription.current_period_start * 1000
+          stripeSubscription.current_period_start * 1000,
         );
       }
 
       if (stripeSubscription.current_period_end) {
         (subscription as any).props.currentPeriodEnd = new Date(
-          stripeSubscription.current_period_end * 1000
+          stripeSubscription.current_period_end * 1000,
         );
       }
 
       if (!subscription.currentPeriodStart || !subscription.currentPeriodEnd) {
         this.logger.warn(
-          `Subscription ${subscription.id} has missing period dates after Stripe sync; applying domain defaults`
+          `Subscription ${subscription.id} has missing period dates after Stripe sync; applying domain defaults`,
         );
         try {
           subscription.activate();
@@ -139,7 +139,7 @@ export class SyncSubscriptionFromStripeUseCase
           const msg = e instanceof Error ? e.message : String(e);
           this.logger.error(
             `Failed to activate subscription ${subscription.id} while fixing missing period dates: ${msg}`,
-            e instanceof Error ? e.stack || "" : ""
+            e instanceof Error ? e.stack || "" : "",
           );
         }
       }
@@ -172,7 +172,7 @@ export class SyncSubscriptionFromStripeUseCase
           // If Stripe quantity matches pendingQuantity, it means payment was processed
           // Don't update yet, wait for payment webhook to handle it
           this.logger.info(
-            `Stripe quantity (${stripeQuantity}) matches pendingQuantity (${subscription.pendingQuantity}) for subscription ${subscription.id}. Waiting for payment confirmation.`
+            `Stripe quantity (${stripeQuantity}) matches pendingQuantity (${subscription.pendingQuantity}) for subscription ${subscription.id}. Waiting for payment confirmation.`,
           );
         }
       }
@@ -204,14 +204,14 @@ export class SyncSubscriptionFromStripeUseCase
         (stripeStatus === "canceled" || stripeStatus === "unpaid")
       ) {
         (subscription as any).props.cancelledAt = new Date(
-          stripeSubscription.canceled_at * 1000
+          stripeSubscription.canceled_at * 1000,
         );
       }
 
       subscription = await this.subscriptionRepository.save(subscription);
 
       this.logger.info(
-        `Subscription ${subscription.id} synchronized from Stripe subscription ${stripeSubscription.id}`
+        `Subscription ${subscription.id} synchronized from Stripe subscription ${stripeSubscription.id}`,
       );
 
       return { subscription };

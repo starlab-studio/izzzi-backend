@@ -18,7 +18,7 @@ export class TrialEndingCheckerService {
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly membershipRepository: IMembershipRepository,
     private readonly userRepository: IUserRepository,
-    private readonly eventStore: IEventStore
+    private readonly eventStore: IEventStore,
   ) {}
 
   @Cron("0 9 * * *")
@@ -32,7 +32,7 @@ export class TrialEndingCheckerService {
       for (const subscription of subscriptions) {
         try {
           const plan = await this.subscriptionPlanRepository.findById(
-            subscription.planId
+            subscription.planId,
           );
 
           if (!plan || !plan.isFree) {
@@ -41,18 +41,18 @@ export class TrialEndingCheckerService {
 
           const memberships =
             await this.membershipRepository.findByOrganization(
-              subscription.organizationId
+              subscription.organizationId,
             );
 
           const adminMemberships = memberships.filter(
             (membership) =>
               membership.role === UserRole.ADMIN &&
-              membership.status === MembershipStatus.ACTIVE
+              membership.status === MembershipStatus.ACTIVE,
           );
 
           if (adminMemberships.length === 0) {
             this.logger.warn(
-              `No active admin members found for organization ${subscription.organizationId}`
+              `No active admin members found for organization ${subscription.organizationId}`,
             );
             continue;
           }
@@ -67,7 +67,7 @@ export class TrialEndingCheckerService {
 
           if (adminEmails.length === 0) {
             this.logger.warn(
-              `No admin emails found for organization ${subscription.organizationId}`
+              `No admin emails found for organization ${subscription.organizationId}`,
             );
             continue;
           }
@@ -81,31 +81,31 @@ export class TrialEndingCheckerService {
               trialEndDate: subscription.trialEndDate!,
               planName,
               adminEmails,
-            })
+            }),
           );
 
           this.logger.info(
-            `Published TrialEndingSoonEvent for organization ${subscription.organizationId}`
+            `Published TrialEndingSoonEvent for organization ${subscription.organizationId}`,
           );
         } catch (error) {
           this.logger.error(
             `Error processing subscription ${subscription.id}: ${
               error instanceof Error ? error.message : String(error)
             }`,
-            error instanceof Error ? error.stack || "" : ""
+            error instanceof Error ? error.stack || "" : "",
           );
         }
       }
 
       this.logger.info(
-        `Finished checking trials. Processed ${subscriptions.length} subscription(s).`
+        `Finished checking trials. Processed ${subscriptions.length} subscription(s).`,
       );
     } catch (error) {
       this.logger.error(
         `Error in checkTrialsEndingSoon: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
     }
   }

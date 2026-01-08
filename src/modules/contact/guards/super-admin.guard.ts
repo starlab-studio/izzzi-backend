@@ -13,7 +13,7 @@ import { GlobalRole } from "src/modules/organization/domain/types";
 export class SuperAdminGuard implements CanActivate {
   constructor(
     @Inject(forwardRef(() => OrganizationFacade))
-    private readonly organizationFacade: OrganizationFacade
+    private readonly organizationFacade: OrganizationFacade,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -27,7 +27,7 @@ export class SuperAdminGuard implements CanActivate {
     }
 
     const userProfile = await this.organizationFacade.getUserProfile(
-      user.userId
+      user.userId,
     );
 
     if (userProfile.role !== GlobalRole.SUPER_ADMIN) {

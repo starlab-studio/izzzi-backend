@@ -1,9 +1,6 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import {
-  type IUnitOfWork,
-  BaseTransactionalRepository,
-} from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { QuizModel } from "../models/quiz.model";
 import { IQuizRepository } from "../../domain/repositories/quiz.repository";
 import { QuizEntity } from "../../domain/entities/quiz.entity";
@@ -34,7 +31,9 @@ export class QuizRepository
   }
 
   async findByAccessToken(accessToken: string): Promise<QuizEntity | null> {
-    const ormEntity = await this.directRepository.findOne({ where: { accessToken } });
+    const ormEntity = await this.directRepository.findOne({
+      where: { accessToken },
+    });
     if (!ormEntity) return null;
     return QuizEntity.reconstitute(ormEntity);
   }
@@ -44,9 +43,7 @@ export class QuizRepository
       where: { subjectId },
       order: { type: "ASC" },
     });
-    return ormEntityList.map((ormEntity) =>
-      QuizEntity.reconstitute(ormEntity),
-    );
+    return ormEntityList.map((ormEntity) => QuizEntity.reconstitute(ormEntity));
   }
 
   async findBySubjectAndType(
@@ -72,9 +69,6 @@ export class QuizRepository
 
   async findAll(): Promise<QuizEntity[]> {
     const ormEntityList = await this.directRepository.find();
-    return ormEntityList.map((ormEntity) =>
-      QuizEntity.reconstitute(ormEntity),
-    );
+    return ormEntityList.map((ormEntity) => QuizEntity.reconstitute(ormEntity));
   }
 }
-

@@ -11,7 +11,7 @@ export class ResponseVisibilityService {
   calculateVisibilityStats(
     responses: ResponseEntity[],
     subscription: SubscriptionEntity | null,
-    plan: SubscriptionPlanEntity | null
+    plan: SubscriptionPlanEntity | null,
   ): VisibilityStats {
     if (!subscription || !plan) {
       return {
@@ -52,7 +52,7 @@ export class ResponseVisibilityService {
   getVisibleResponses(
     responses: ResponseEntity[],
     subscription: SubscriptionEntity | null,
-    plan: SubscriptionPlanEntity | null
+    plan: SubscriptionPlanEntity | null,
   ): ResponseEntity[] {
     const stats = this.calculateVisibilityStats(responses, subscription, plan);
 
@@ -61,7 +61,7 @@ export class ResponseVisibilityService {
     }
 
     const sortedResponses = [...responses].sort(
-      (a, b) => a.submittedAt.getTime() - b.submittedAt.getTime()
+      (a, b) => a.submittedAt.getTime() - b.submittedAt.getTime(),
     );
 
     return sortedResponses.slice(0, stats.visible);
@@ -70,7 +70,7 @@ export class ResponseVisibilityService {
   getHiddenResponses(
     responses: ResponseEntity[],
     subscription: SubscriptionEntity | null,
-    plan: SubscriptionPlanEntity | null
+    plan: SubscriptionPlanEntity | null,
   ): ResponseEntity[] {
     const stats = this.calculateVisibilityStats(responses, subscription, plan);
 
@@ -79,7 +79,7 @@ export class ResponseVisibilityService {
     }
 
     const sortedResponses = [...responses].sort(
-      (a, b) => a.submittedAt.getTime() - b.submittedAt.getTime()
+      (a, b) => a.submittedAt.getTime() - b.submittedAt.getTime(),
     );
 
     return sortedResponses.slice(stats.visible);

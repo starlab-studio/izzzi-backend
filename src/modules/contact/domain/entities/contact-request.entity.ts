@@ -122,4 +122,3 @@ export class ContactRequestEntity {
     return new ContactRequestEntity(data);
   }
 }
-

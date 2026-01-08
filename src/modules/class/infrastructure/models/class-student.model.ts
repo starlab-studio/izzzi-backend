@@ -22,4 +22,3 @@ export class ClassStudentModel implements IClassStudent {
   @Column({ name: "updated_at", type: "timestamp" })
   updatedAt: Date;
 }
-

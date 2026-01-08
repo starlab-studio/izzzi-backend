@@ -10,8 +10,7 @@ export interface AlertGeneratedPayload {
   generatedAt: string;
 }
 
-export interface IAlertGeneratedEvent
-  extends IDomainEvent<AlertGeneratedPayload> {}
+export type IAlertGeneratedEvent = IDomainEvent<AlertGeneratedPayload>;
 
 export class AlertGeneratedEvent implements IAlertGeneratedEvent {
   readonly name: string = "alert.generated";

@@ -1,9 +1,6 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import {
-  type IUnitOfWork,
-  BaseTransactionalRepository,
-} from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { QuizTemplatePairModel } from "../models/quiz-template-pair.model";
 import { IQuizTemplatePairRepository } from "../../domain/repositories/quiz-template-pair.repository";
 import { QuizTemplatePairEntity } from "../../domain/entities/quiz-template-pair.entity";
@@ -43,7 +40,9 @@ export class QuizTemplatePairRepository
     return QuizTemplatePairEntity.reconstitute(ormEntity);
   }
 
-  async create(entity: QuizTemplatePairEntity): Promise<QuizTemplatePairEntity> {
+  async create(
+    entity: QuizTemplatePairEntity,
+  ): Promise<QuizTemplatePairEntity> {
     const data = entity.toPersistence();
     const ormEntity = this.directRepository.create(data);
     const saved = await this.directRepository.save(ormEntity);
@@ -60,4 +59,3 @@ export class QuizTemplatePairRepository
     await this.directRepository.delete(id);
   }
 }
-

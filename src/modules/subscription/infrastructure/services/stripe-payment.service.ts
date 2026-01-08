@@ -9,12 +9,12 @@ export class StripePaymentService implements IPaymentService {
   async getOrCreateCustomer(
     organizationId: string,
     email: string,
-    name: string
+    name: string,
   ): Promise<string> {
     return this.stripeSyncService.getOrCreateCustomer(
       organizationId,
       email,
-      name
+      name,
     );
   }
 

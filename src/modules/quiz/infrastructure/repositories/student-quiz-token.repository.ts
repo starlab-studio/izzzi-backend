@@ -1,9 +1,6 @@
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import {
-  type IUnitOfWork,
-  BaseTransactionalRepository,
-} from "src/core";
+import { type IUnitOfWork, BaseTransactionalRepository } from "src/core";
 import { StudentQuizTokenModel } from "../models/student-quiz-token.model";
 import { IStudentQuizTokenRepository } from "../../domain/repositories/student-quiz-token.repository";
 import { StudentQuizTokenEntity } from "../../domain/entities/student-quiz-token.entity";
@@ -20,7 +17,9 @@ export class StudentQuizTokenRepository
     super(unitOfWork);
   }
 
-  async create(entity: StudentQuizTokenEntity): Promise<StudentQuizTokenEntity> {
+  async create(
+    entity: StudentQuizTokenEntity,
+  ): Promise<StudentQuizTokenEntity> {
     const data = entity.toPersistence();
     const ormEntity = this.directRepository.create(data);
     const saved = await this.directRepository.save(ormEntity);
@@ -49,7 +48,9 @@ export class StudentQuizTokenRepository
     );
   }
 
-  async findByQuizAndNotResponded(quizId: string): Promise<StudentQuizTokenEntity[]> {
+  async findByQuizAndNotResponded(
+    quizId: string,
+  ): Promise<StudentQuizTokenEntity[]> {
     const ormEntityList = await this.directRepository.find({
       where: { quizId, hasResponded: false },
     });
@@ -74,4 +75,3 @@ export class StudentQuizTokenRepository
     await this.directRepository.delete(id);
   }
 }
-

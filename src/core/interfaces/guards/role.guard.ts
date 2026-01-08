@@ -26,13 +26,13 @@ export class RolesGuard implements CanActivate {
     private reflector: Reflector,
     @Inject("CACHE_SERVICE") private cacheService: ICacheService,
     @Inject(forwardRef(() => OrganizationFacade))
-    private organizationFacade: OrganizationFacade
+    private organizationFacade: OrganizationFacade,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
-      [context.getHandler(), context.getClass()]
+      [context.getHandler(), context.getClass()],
     );
 
     if (!requiredRoles || requiredRoles.length === 0) {
@@ -77,18 +77,18 @@ export class RolesGuard implements CanActivate {
       userRoles.some(
         (userRole) =>
           userRole.organizationId === organizationId &&
-          userRole.role === requiredRole
-      )
+          userRole.role === requiredRole,
+      ),
     );
 
     if (!hasRole) {
       throw new ForbiddenException(
-        `User does not have required role(s): ${requiredRoles.join(", ")}`
+        `User does not have required role(s): ${requiredRoles.join(", ")}`,
       );
     }
     request.organizationId = organizationId;
     request.userRoles = userRoles.filter(
-      (r) => r.organizationId === organizationId
+      (r) => r.organizationId === organizationId,
     );
 
     return true;

@@ -6,12 +6,12 @@ import * as crypto from "crypto";
 export class GeneralUtils {
   static htmlTemplateReader = (
     templateName: string,
-    variables: Record<string, any>
+    variables: Record<string, any>,
   ) => {
     const templatePath = path.join(
       __dirname,
       "../../src/templates/",
-      templateName
+      templateName,
     );
     const templateContent = fs.readFileSync(templatePath, "utf-8");
     const template = Handlebars.compile(templateContent);

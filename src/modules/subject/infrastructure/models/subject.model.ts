@@ -12,10 +12,20 @@ export class SubjectModel implements ISubject {
   @Column({ name: "is_active", type: "boolean", default: true })
   isActive: boolean;
 
-  @Column({ name: "instructor_name", type: "varchar", length: 255, nullable: true })
+  @Column({
+    name: "instructor_name",
+    type: "varchar",
+    length: 255,
+    nullable: true,
+  })
   instructorName: string | null;
 
-  @Column({ name: "instructor_email", type: "varchar", length: 255, nullable: true })
+  @Column({
+    name: "instructor_email",
+    type: "varchar",
+    length: 255,
+    nullable: true,
+  })
   instructorEmail: string | null;
 
   @Column({ name: "first_course_date", type: "date", nullable: true })

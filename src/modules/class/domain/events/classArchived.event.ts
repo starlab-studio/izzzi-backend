@@ -10,4 +10,3 @@ export class ClassArchivedEvent implements IClassArchivedEvent {
     this.payload = payload;
   }
 }
-

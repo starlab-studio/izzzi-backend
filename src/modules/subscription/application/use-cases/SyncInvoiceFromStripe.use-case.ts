@@ -26,13 +26,13 @@ export class SyncInvoiceFromStripeUseCase
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly subscriptionPlanRepository: ISubscriptionPlanRepository,
     private readonly stripeSyncService: IStripeSyncService,
-    private readonly eventStore: IEventStore
+    private readonly eventStore: IEventStore,
   ) {
     super(logger);
   }
 
   async execute(
-    input: SyncInvoiceFromStripeInput
+    input: SyncInvoiceFromStripeInput,
   ): Promise<SyncInvoiceFromStripeOutput> {
     const { stripeInvoice } = input;
 
@@ -47,25 +47,25 @@ export class SyncInvoiceFromStripeUseCase
         throw new DomainError(
           "SUBSCRIPTION_ID_MISSING",
           "Unable to find subscription ID in Stripe invoice",
-          { stripeInvoiceId: stripeInvoice.id }
+          { stripeInvoiceId: stripeInvoice.id },
         );
       }
 
       const subscription =
         await this.subscriptionRepository.findByStripeSubscriptionId(
-          subscriptionId
+          subscriptionId,
         );
 
       if (!subscription) {
         throw new DomainError(
           "SUBSCRIPTION_NOT_FOUND",
           "Subscription not found for this invoice",
-          { subscriptionId, stripeInvoiceId: stripeInvoice.id }
+          { subscriptionId, stripeInvoiceId: stripeInvoice.id },
         );
       }
 
       let invoice = await this.invoiceRepository.findByStripeInvoiceId(
-        stripeInvoice.id
+        stripeInvoice.id,
       );
 
       if (invoice) {
@@ -76,7 +76,7 @@ export class SyncInvoiceFromStripeUseCase
           stripeInvoice,
           subscription.userId,
           subscription.organizationId,
-          subscription.id
+          subscription.id,
         );
         invoice = await this.invoiceRepository.save(invoice);
       }
@@ -87,7 +87,7 @@ export class SyncInvoiceFromStripeUseCase
         (subscription.status === "pending" || subscription.status === "trial")
       ) {
         const plan = await this.subscriptionPlanRepository.findById(
-          subscription.planId
+          subscription.planId,
         );
 
         if (subscription.status === "pending") {
@@ -98,14 +98,14 @@ export class SyncInvoiceFromStripeUseCase
             !subscription.currentPeriodEnd
           ) {
             this.logger.warn(
-              `Subscription ${subscription.id} missing period dates at activation time; attempting to sync from Stripe`
+              `Subscription ${subscription.id} missing period dates at activation time; attempting to sync from Stripe`,
             );
 
             if (subscription.stripeSubscriptionId) {
               try {
                 const stripeSubscription =
                   await this.stripeSyncService.getSubscription(
-                    subscription.stripeSubscriptionId
+                    subscription.stripeSubscriptionId,
                   );
 
                 if (
@@ -114,14 +114,14 @@ export class SyncInvoiceFromStripeUseCase
                   stripeSubscription.current_period_end
                 ) {
                   (subscription as any).props.currentPeriodStart = new Date(
-                    stripeSubscription.current_period_start * 1000
+                    stripeSubscription.current_period_start * 1000,
                   );
                   (subscription as any).props.currentPeriodEnd = new Date(
-                    stripeSubscription.current_period_end * 1000
+                    stripeSubscription.current_period_end * 1000,
                   );
                   (subscription as any).props.updatedAt = new Date();
                   this.logger.info(
-                    `Extracted period dates from Stripe subscription for ${subscription.id}`
+                    `Extracted period dates from Stripe subscription for ${subscription.id}`,
                   );
                 }
               } catch (stripeError) {
@@ -131,7 +131,7 @@ export class SyncInvoiceFromStripeUseCase
                       ? stripeError.message
                       : String(stripeError)
                   }`,
-                  stripeError instanceof Error ? stripeError.stack || "" : ""
+                  stripeError instanceof Error ? stripeError.stack || "" : "",
                 );
               }
             }
@@ -153,21 +153,21 @@ export class SyncInvoiceFromStripeUseCase
               organizationId: subscription.organizationId,
               planId: subscription.planId,
               planName,
-            })
+            }),
           );
 
           this.logger.info(
-            `Subscription ${subscription.id} activated and event published`
+            `Subscription ${subscription.id} activated and event published`,
           );
         } else {
           this.logger.info(
-            `Free plan subscription ${subscription.id} - keeping trial status after invoice payment`
+            `Free plan subscription ${subscription.id} - keeping trial status after invoice payment`,
           );
         }
       }
 
       this.logger.info(
-        `Invoice ${invoice.id} synchronized from Stripe invoice ${stripeInvoice.id}`
+        `Invoice ${invoice.id} synchronized from Stripe invoice ${stripeInvoice.id}`,
       );
 
       return { invoice };

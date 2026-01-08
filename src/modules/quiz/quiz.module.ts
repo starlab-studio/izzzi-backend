@@ -115,7 +115,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       provide: OrganizationRepository,
       useFactory: (
         ormRepository: Repository<OrganizationModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new OrganizationRepository(ormRepository, unitOfWork),
       inject: [getRepositoryToken(OrganizationModel), TypeOrmUnitOfWork],
     },
@@ -123,7 +123,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       provide: QuizTemplatePairRepository,
       useFactory: (
         directRepository: Repository<QuizTemplatePairModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new QuizTemplatePairRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(QuizTemplatePairModel), TypeOrmUnitOfWork],
     },
@@ -136,12 +136,12 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       useFactory: (
         directRepository: Repository<QuizTemplateModel>,
         questionRepository: Repository<QuizTemplateQuestionModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) =>
         new QuizTemplateRepository(
           directRepository,
           questionRepository,
-          unitOfWork
+          unitOfWork,
         ),
       inject: [
         getRepositoryToken(QuizTemplateModel),
@@ -157,7 +157,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       provide: QuizRepository,
       useFactory: (
         directRepository: Repository<QuizModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new QuizRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(QuizModel), TypeOrmUnitOfWork],
     },
@@ -169,7 +169,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       provide: ResponseRepository,
       useFactory: (
         directRepository: Repository<ResponseModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new ResponseRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(ResponseModel), TypeOrmUnitOfWork],
     },
@@ -181,7 +181,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       provide: AnswerRepository,
       useFactory: (
         directRepository: Repository<AnswerModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new AnswerRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(AnswerModel), TypeOrmUnitOfWork],
     },
@@ -193,7 +193,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       provide: StudentQuizTokenRepository,
       useFactory: (
         directRepository: Repository<StudentQuizTokenModel>,
-        unitOfWork: IUnitOfWork
+        unitOfWork: IUnitOfWork,
       ) => new StudentQuizTokenRepository(directRepository, unitOfWork),
       inject: [getRepositoryToken(StudentQuizTokenModel), TypeOrmUnitOfWork],
     },
@@ -207,13 +207,13 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         logger: ILoggerService,
         quizTemplatePairRepository: IQuizTemplatePairRepository,
         quizTemplateRepository: IQuizTemplateRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new GetQuizTemplatePairsUseCase(
           logger,
           quizTemplatePairRepository,
           quizTemplateRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -227,12 +227,12 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       useFactory: (
         logger: ILoggerService,
         quizTemplateRepository: IQuizTemplateRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new GetQuizTemplateByIdUseCase(
           logger,
           quizTemplateRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [LoggerService, "QUIZ_TEMPLATE_REPOSITORY", OrganizationFacade],
     },
@@ -241,12 +241,12 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       useFactory: (
         logger: ILoggerService,
         quizTemplateRepository: IQuizTemplateRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new CreateQuizTemplateUseCase(
           logger,
           quizTemplateRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [LoggerService, "QUIZ_TEMPLATE_REPOSITORY", OrganizationFacade],
     },
@@ -257,13 +257,13 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         unitOfWork: IUnitOfWork,
         quizTemplateRepository: IQuizTemplateRepository,
         quizTemplatePairRepository: IQuizTemplatePairRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new CreateQuizTemplatePairUseCase(
           logger,
           quizTemplateRepository,
           quizTemplatePairRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -282,7 +282,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new AssignQuizPairToSubjectUseCase(
           logger,
@@ -291,7 +291,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -313,7 +313,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new ReassignQuizPairToSubjectUseCase(
           logger,
@@ -323,7 +323,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -346,7 +346,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         organizationFacade: OrganizationFacade,
         studentQuizTokenRepository: IStudentQuizTokenRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
-        classStudentRepository: IClassStudentRepository
+        classStudentRepository: IClassStudentRepository,
       ) =>
         new GetQuizzesBySubjectUseCase(
           logger,
@@ -356,7 +356,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           organizationFacade,
           studentQuizTokenRepository,
           subjectAssignmentRepository,
-          classStudentRepository
+          classStudentRepository,
         ),
       inject: [
         LoggerService,
@@ -378,7 +378,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new GetQuizByIdUseCase(
           logger,
@@ -387,7 +387,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -405,13 +405,13 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         logger: ILoggerService,
         quizRepository: IQuizRepository,
         subjectRepository: ISubjectRepository,
-        organizationFacade: OrganizationFacade
+        organizationFacade: OrganizationFacade,
       ) =>
         new GetQuizLinkUseCase(
           logger,
           quizRepository,
           subjectRepository,
-          organizationFacade
+          organizationFacade,
         ),
       inject: [
         LoggerService,
@@ -429,7 +429,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         subjectRepository: ISubjectRepository,
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classRepository: IClassRepository,
-        organizationRepository: IOrganizationRepository
+        organizationRepository: IOrganizationRepository,
       ) =>
         new GetQuizByAccessTokenUseCase(
           logger,
@@ -438,7 +438,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           subjectRepository,
           subjectAssignmentRepository,
           classRepository,
-          organizationRepository
+          organizationRepository,
         ),
       inject: [
         LoggerService,
@@ -462,7 +462,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         organizationFacade: OrganizationFacade,
         createEmailNotificationUseCase: CreateEmailNotificationUseCase,
         subscriptionRepository: ISubscriptionRepository,
-        subscriptionPlanRepository: ISubscriptionPlanRepository
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
       ) =>
         new SendQuizToStudentsUseCase(
           logger,
@@ -474,7 +474,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           organizationFacade,
           createEmailNotificationUseCase,
           subscriptionRepository,
-          subscriptionPlanRepository
+          subscriptionPlanRepository,
         ),
       inject: [
         LoggerService,
@@ -499,7 +499,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         subjectAssignmentRepository: ISubjectAssignmentRepository,
         classStudentRepository: IClassStudentRepository,
         organizationFacade: OrganizationFacade,
-        createEmailNotificationUseCase: CreateEmailNotificationUseCase
+        createEmailNotificationUseCase: CreateEmailNotificationUseCase,
       ) =>
         new RemindQuizToStudentsUseCase(
           logger,
@@ -509,7 +509,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           subjectAssignmentRepository,
           classStudentRepository,
           organizationFacade,
-          createEmailNotificationUseCase
+          createEmailNotificationUseCase,
         ),
       inject: [
         LoggerService,
@@ -530,7 +530,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         quizTemplateRepository: IQuizTemplateRepository,
         responseRepository: IResponseRepository,
         answerRepository: IAnswerRepository,
-        studentQuizTokenRepository: IStudentQuizTokenRepository
+        studentQuizTokenRepository: IStudentQuizTokenRepository,
       ) =>
         new SubmitQuizResponseUseCase(
           logger,
@@ -538,7 +538,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           quizTemplateRepository,
           responseRepository,
           answerRepository,
-          studentQuizTokenRepository
+          studentQuizTokenRepository,
         ),
       inject: [
         LoggerService,
@@ -554,12 +554,12 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
       useFactory: (
         logger: ILoggerService,
         quizRepository: IQuizRepository,
-        responseRepository: IResponseRepository
+        responseRepository: IResponseRepository,
       ) =>
         new CheckQuizResponseStatusUseCase(
           logger,
           quizRepository,
-          responseRepository
+          responseRepository,
         ),
       inject: [LoggerService, "QUIZ_REPOSITORY", "RESPONSE_REPOSITORY"],
     },
@@ -579,7 +579,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         responseVisibilityService: ResponseVisibilityService,
         subscriptionFeatureService: SubscriptionFeatureService,
         subscriptionRepository: ISubscriptionRepository,
-        subscriptionPlanRepository: ISubscriptionPlanRepository
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
       ) =>
         new GetQuizStatisticsUseCase(
           logger,
@@ -595,7 +595,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           responseVisibilityService,
           subscriptionFeatureService,
           subscriptionRepository,
-          subscriptionPlanRepository
+          subscriptionPlanRepository,
         ),
       inject: [
         LoggerService,
@@ -625,7 +625,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         organizationFacade: OrganizationFacade,
         responseVisibilityService: ResponseVisibilityService,
         subscriptionRepository: ISubscriptionRepository,
-        subscriptionPlanRepository: ISubscriptionPlanRepository
+        subscriptionPlanRepository: ISubscriptionPlanRepository,
       ) =>
         new ExportQuizStatisticsUseCase(
           logger,
@@ -636,7 +636,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           organizationFacade,
           responseVisibilityService,
           subscriptionRepository,
-          subscriptionPlanRepository
+          subscriptionPlanRepository,
         ),
       inject: [
         LoggerService,
@@ -668,7 +668,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
         submitQuizResponseUseCase: SubmitQuizResponseUseCase,
         checkQuizResponseStatusUseCase: CheckQuizResponseStatusUseCase,
         getQuizStatisticsUseCase: GetQuizStatisticsUseCase,
-        exportQuizStatisticsUseCase: ExportQuizStatisticsUseCase
+        exportQuizStatisticsUseCase: ExportQuizStatisticsUseCase,
       ) =>
         new QuizFacade(
           getQuizTemplatePairsUseCase,
@@ -686,7 +686,7 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
           submitQuizResponseUseCase,
           checkQuizResponseStatusUseCase,
           getQuizStatisticsUseCase,
-          exportQuizStatisticsUseCase
+          exportQuizStatisticsUseCase,
         ),
       inject: [
         GetQuizTemplatePairsUseCase,
@@ -724,6 +724,5 @@ import { SubscriptionFeatureService } from "../subscription/domain/services/subs
     "ANSWER_REPOSITORY",
     "QUIZ_TEMPLATE_REPOSITORY",
   ],
-
 })
 export class QuizModule {}

@@ -11,7 +11,7 @@ export class SubscriptionExpirationCheckerService {
     private readonly logger: ILoggerService,
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly stripeSyncService: IStripeSyncService,
-    private readonly syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase
+    private readonly syncSubscriptionFromStripeUseCase: SyncSubscriptionFromStripeUseCase,
   ) {}
 
   @Cron("0 * * * *")
@@ -25,7 +25,7 @@ export class SubscriptionExpirationCheckerService {
         await this.subscriptionRepository.findExpiredWithStripeId(now);
 
       this.logger.info(
-        `Found ${subscriptionsToCheck.length} subscription(s) with expired periods to check`
+        `Found ${subscriptionsToCheck.length} subscription(s) with expired periods to check`,
       );
 
       let checkedCount = 0;
@@ -38,12 +38,12 @@ export class SubscriptionExpirationCheckerService {
 
           const stripeSubscription =
             await this.stripeSyncService.getSubscription(
-              subscription.stripeSubscriptionId!
+              subscription.stripeSubscriptionId!,
             );
 
           if (!stripeSubscription) {
             this.logger.warn(
-              `Subscription ${subscription.id} (Stripe ID: ${subscription.stripeSubscriptionId}) not found in Stripe, skipping`
+              `Subscription ${subscription.id} (Stripe ID: ${subscription.stripeSubscriptionId}) not found in Stripe, skipping`,
             );
             continue;
           }
@@ -55,7 +55,7 @@ export class SubscriptionExpirationCheckerService {
           syncedCount++;
 
           this.logger.info(
-            `Synchronized subscription ${subscription.id} from Stripe (status: ${stripeSubscription.status})`
+            `Synchronized subscription ${subscription.id} from Stripe (status: ${stripeSubscription.status})`,
           );
         } catch (error) {
           errorCount++;
@@ -63,20 +63,20 @@ export class SubscriptionExpirationCheckerService {
             `Error processing subscription ${subscription.id}: ${
               error instanceof Error ? error.message : String(error)
             }`,
-            error instanceof Error ? error.stack || "" : ""
+            error instanceof Error ? error.stack || "" : "",
           );
         }
       }
 
       this.logger.info(
-        `Finished checking expired subscriptions. Checked: ${checkedCount}, Synced: ${syncedCount}, Errors: ${errorCount}`
+        `Finished checking expired subscriptions. Checked: ${checkedCount}, Synced: ${syncedCount}, Errors: ${errorCount}`,
       );
     } catch (error) {
       this.logger.error(
         `Error in checkExpiredSubscriptions: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
     }
   }

@@ -26,7 +26,7 @@ export class WebhookEventMapper {
   }
 
   private static toDomainEventObject(
-    stripeEvent: Stripe.Event
+    stripeEvent: Stripe.Event,
   ): IWebhookInvoice | IWebhookPaymentIntent | IWebhookSubscription {
     const object = stripeEvent.data.object;
 
@@ -50,7 +50,7 @@ export class WebhookEventMapper {
   }
 
   private static toDomainInvoice(
-    stripeInvoice: Stripe.Invoice | ExpandedInvoice
+    stripeInvoice: Stripe.Invoice | ExpandedInvoice,
   ): IWebhookInvoice {
     const subscription = (stripeInvoice as ExpandedInvoice).subscription;
     return {
@@ -66,7 +66,7 @@ export class WebhookEventMapper {
   }
 
   private static toDomainPaymentIntent(
-    stripePaymentIntent: Stripe.PaymentIntent | ExpandedPaymentIntent
+    stripePaymentIntent: Stripe.PaymentIntent | ExpandedPaymentIntent,
   ): IWebhookPaymentIntent {
     const invoice = (stripePaymentIntent as ExpandedPaymentIntent).invoice;
     return {
@@ -82,7 +82,7 @@ export class WebhookEventMapper {
   }
 
   private static toDomainSubscription(
-    stripeSubscription: Stripe.Subscription
+    stripeSubscription: Stripe.Subscription,
   ): IWebhookSubscription {
     return {
       id: stripeSubscription.id,

@@ -17,13 +17,13 @@ export class GetFeedbackSubjectByIdUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly getFeedbackSubjectsUseCase: GetFeedbackSubjectsUseCase
+    private readonly getFeedbackSubjectsUseCase: GetFeedbackSubjectsUseCase,
   ) {
     super(logger);
   }
 
   async execute(
-    data: GetFeedbackSubjectByIdInput
+    data: GetFeedbackSubjectByIdInput,
   ): Promise<GetFeedbackSubjectByIdOutput> {
     try {
       const result = await this.getFeedbackSubjectsUseCase.execute({
@@ -35,7 +35,7 @@ export class GetFeedbackSubjectByIdUseCase
         (s) =>
           s.subjectId === data.subjectId ||
           s.id === data.subjectId ||
-          s.id.includes(data.subjectId)
+          s.id.includes(data.subjectId),
       );
 
       if (!subject) {

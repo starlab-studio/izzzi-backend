@@ -27,4 +27,3 @@ export class QuizTemplatePairModel implements IQuizTemplatePair {
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

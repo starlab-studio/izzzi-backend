@@ -9,13 +9,11 @@ import type {
   StripeSubscriptionStatus,
   StripeInvoice,
   StripePaymentMethod,
-  StripeEvent,
   StripePrice,
 } from "../../domain/types/stripe.types";
 import { StripeDomainMapper } from "../mappers/stripe-domain.mapper";
 import type {
   ExpandedInvoice,
-  ExpandedPaymentIntent,
   ExpandedInvoiceLineItem,
 } from "../types/stripe-extended.types";
 import { isExpandedPaymentIntent } from "../types/stripe-extended.types";

@@ -15,9 +15,9 @@ export class NotificationProviderFactory {
     if (!provider) {
       throw new ApplicationError(
         ErrorCode.INVALID_NOTIFICATION_PROVIDER,
-        `No provider available for mode: ${mode}`
+        `No provider available for mode: ${mode}`,
       );
     }
-    return provider as INotificationProvider;
+    return provider;
   }
 }

@@ -13,7 +13,7 @@ export class OrganizationRepository
   constructor(
     @InjectRepository(OrganizationModel)
     private readonly directRepository: Repository<OrganizationModel>,
-    unitOfWork: IUnitOfWork
+    unitOfWork: IUnitOfWork,
   ) {
     super(unitOfWork);
   }

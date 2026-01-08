@@ -13,7 +13,7 @@ export class ReportGeneratedEventHandler extends BaseEventHandler {
     private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
     private readonly createPushNotificationUseCase: CreatePushNotificationUseCase,
     private readonly membershipRepository: IMembershipRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
   ) {
     super(logger);
   }
@@ -21,23 +21,23 @@ export class ReportGeneratedEventHandler extends BaseEventHandler {
   async handle(event: ReportGeneratedEvent): Promise<void> {
     try {
       this.logger.info(
-        `Handling report generated event for organization ${event.payload.organizationId}`
+        `Handling report generated event for organization ${event.payload.organizationId}`,
       );
 
       const memberships = await this.membershipRepository.findByOrganization(
-        event.payload.organizationId
+        event.payload.organizationId,
       );
 
       const relevantMemberships = memberships.filter(
         (membership) =>
           (membership.role === UserRole.ADMIN ||
             membership.role === UserRole.LEARNING_MANAGER) &&
-          membership.status === MembershipStatus.ACTIVE
+          membership.status === MembershipStatus.ACTIVE,
       );
 
       if (relevantMemberships.length === 0) {
         this.logger.warn(
-          `No active admin or learning manager members found for organization ${event.payload.organizationId}`
+          `No active admin or learning manager members found for organization ${event.payload.organizationId}`,
         );
         return;
       }
@@ -52,7 +52,7 @@ export class ReportGeneratedEventHandler extends BaseEventHandler {
 
       if (userData.length === 0) {
         this.logger.warn(
-          `No user emails found for organization ${event.payload.organizationId}`
+          `No user emails found for organization ${event.payload.organizationId}`,
         );
         return;
       }
@@ -66,13 +66,13 @@ export class ReportGeneratedEventHandler extends BaseEventHandler {
             year: "numeric",
             month: "long",
             day: "numeric",
-          }
+          },
         ),
       };
 
       const template = GeneralUtils.htmlTemplateReader(
         "weekly-report.html",
-        templateVars
+        templateVars,
       );
       const subject = `Rapport hebdomadaire - ${event.payload.organizationName}`;
 
@@ -92,14 +92,14 @@ export class ReportGeneratedEventHandler extends BaseEventHandler {
       await Promise.all(notificationPromises);
 
       this.logger.info(
-        `Report notifications sent to ${userData.length} user(s) for organization ${event.payload.organizationId}`
+        `Report notifications sent to ${userData.length} user(s) for organization ${event.payload.organizationId}`,
       );
     } catch (error) {
       this.logger.error(
         `Error handling report generated event: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
     }
   }

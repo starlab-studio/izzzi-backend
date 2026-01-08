@@ -11,4 +11,3 @@ export interface IContactRequestRepository {
   }): Promise<{ data: ContactRequestEntity[]; total: number }>;
   delete(id: string): Promise<void>;
 }
-

@@ -20,12 +20,13 @@ export class SendMessageForAlertUseCase
     super(logger);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async execute(
-    data: SendMessageForAlertInput
+    data: SendMessageForAlertInput,
   ): Promise<SendMessageForAlertOutput> {
     try {
       this.logger.info(
-        `Sending message for alert ${data.alertId} for subject ${data.subjectId}`
+        `Sending message for alert ${data.alertId} for subject ${data.subjectId}`,
       );
 
       // TODO: Implémenter la logique d'envoi de message
@@ -37,7 +38,7 @@ export class SendMessageForAlertUseCase
         success: true,
         message: "Message envoyé avec succès aux étudiants",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleError(error);
       throw error;
     }

@@ -17,12 +17,12 @@ export class AuthService {
     private readonly logger: ILoggerService,
     private readonly eventStore: IEventStore,
     private readonly signUpUseCase: SignUpUseCase,
-    private readonly authIdentityRepository: IAuthIdentityRepository
+    private readonly authIdentityRepository: IAuthIdentityRepository,
   ) {}
 
   async signUp(
     organizationFacade: OrganizationFacade,
-    data: SignUpData
+    data: SignUpData,
   ): Promise<SignUpResponse | undefined> {
     try {
       const signUpResponse = await this.signUpUseCase.execute(data);
@@ -30,14 +30,14 @@ export class AuthService {
         await organizationFacade.createUserAndOrganization(signUpResponse);
 
       const authIdentity = await this.authIdentityRepository.findById(
-        signUpResponse.authIdentityId
+        signUpResponse.authIdentityId,
       );
       if (!authIdentity) {
         throw new DomainError(
           ErrorCode.UNEXPECTED_ERROR,
           "AuthIdentity not found after creation",
           undefined,
-          HTTP_STATUS.INTERNAL_SERVER_ERROR
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
         );
       }
 
@@ -55,7 +55,7 @@ export class AuthService {
           email: user.email,
           verificationLink,
           sendVerificationToken,
-        })
+        }),
       );
       return signUpResponse;
     } catch (error) {

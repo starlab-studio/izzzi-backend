@@ -9,7 +9,7 @@ export class SeedSuperAdmin1767473000000 implements MigrationInterface {
     const password = "SuperAdmin123!@#";
     const firstName = "Super";
     const lastName = "Admin";
-    
+
     const hashedPassword = await argon2.hash(password, {
       type: argon2.argon2id,
       memoryCost: 2 ** 16,
@@ -86,4 +86,3 @@ export class SeedSuperAdmin1767473000000 implements MigrationInterface {
     `);
   }
 }
-

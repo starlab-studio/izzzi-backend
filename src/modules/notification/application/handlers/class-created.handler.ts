@@ -6,7 +6,7 @@ import { CreateEmailNotificationUseCase } from "../use-cases/create-email-notifi
 export class ClassCreatedEventHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {
     super(logger);
   }
@@ -28,4 +28,3 @@ export class ClassCreatedEventHandler extends BaseEventHandler {
     return eventName === "class.created";
   }
 }
-

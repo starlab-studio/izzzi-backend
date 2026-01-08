@@ -747,4 +747,3 @@ export class SeedQuizTemplates1767000000000 implements MigrationInterface {
     `);
   }
 }
-

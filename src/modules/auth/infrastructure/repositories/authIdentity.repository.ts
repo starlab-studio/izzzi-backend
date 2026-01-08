@@ -9,7 +9,7 @@ import { IAuthIdentityRepository } from "../../domain/repositories/authIdentity.
 export class AuthIdentityRepository implements IAuthIdentityRepository {
   constructor(
     @InjectRepository(AuthIdentityModel)
-    private ormRepository: Repository<IAuthIdentity>
+    private ormRepository: Repository<IAuthIdentity>,
   ) {}
 
   async create(entity: AuthIdentityEntity): Promise<AuthIdentityEntity> {
@@ -39,7 +39,7 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
 
   async findByProviderAndUsername(
     provider: AuthIdentityName,
-    username: string
+    username: string,
   ): Promise<AuthIdentityEntity | null> {
     const normalizedUsername = username.trim().toLowerCase();
     const ormEntity = await this.ormRepository.findOne({
@@ -52,7 +52,7 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
 
   async findByProviderAndProviderUserId(
     provider: AuthIdentityName,
-    providerUserId: string
+    providerUserId: string,
   ): Promise<AuthIdentityEntity | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { provider, providerUserId },
@@ -68,7 +68,7 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
     });
 
     return ormEntityList.map((ormEntity) =>
-      AuthIdentityEntity.reconstitute(ormEntity)
+      AuthIdentityEntity.reconstitute(ormEntity),
     );
   }
 
@@ -76,7 +76,7 @@ export class AuthIdentityRepository implements IAuthIdentityRepository {
     const ormEntityList = await this.ormRepository.find();
 
     return ormEntityList.map((ormEntity) =>
-      AuthIdentityEntity.reconstitute(ormEntity)
+      AuthIdentityEntity.reconstitute(ormEntity),
     );
   }
 

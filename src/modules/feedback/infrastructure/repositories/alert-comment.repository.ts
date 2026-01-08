@@ -12,7 +12,7 @@ export class AlertCommentRepository
   constructor(
     @InjectRepository(AlertCommentModel)
     private readonly directRepository: Repository<AlertCommentModel>,
-    readonly unitOfWork: IUnitOfWork
+    readonly unitOfWork: IUnitOfWork,
   ) {
     super(unitOfWork);
   }
@@ -25,14 +25,14 @@ export class AlertCommentRepository
 
   async findByAlertId(
     alertId: string,
-    subjectId: string
+    subjectId: string,
   ): Promise<AlertCommentEntity[]> {
     const ormEntityList = await this.directRepository.find({
       where: { alertId, subjectId },
       order: { createdAt: "ASC" },
     });
     return ormEntityList.map((ormEntity) =>
-      AlertCommentEntity.reconstitute(ormEntity)
+      AlertCommentEntity.reconstitute(ormEntity),
     );
   }
 
@@ -56,7 +56,7 @@ export class AlertCommentRepository
   async findAll(): Promise<AlertCommentEntity[]> {
     const ormEntityList = await this.directRepository.find();
     return ormEntityList.map((ormEntity) =>
-      AlertCommentEntity.reconstitute(ormEntity)
+      AlertCommentEntity.reconstitute(ormEntity),
     );
   }
 

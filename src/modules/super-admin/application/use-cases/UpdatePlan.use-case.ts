@@ -45,7 +45,7 @@ export class UpdatePlanUseCase {
     @Inject(STRIPE_SYNC_SERVICE)
     private readonly stripeSyncService: IStripeSyncService,
     @Inject("ILoggerService")
-    private readonly logger: ILoggerService
+    private readonly logger: ILoggerService,
   ) {}
 
   async execute(input: UpdatePlanInput): Promise<UpdatePlanOutput> {
@@ -58,27 +58,47 @@ export class UpdatePlanUseCase {
     const persistence = existingPlan.toPersistence();
     const updatedPersistence = {
       ...persistence,
-      displayPrice: input.displayPrice !== undefined ? input.displayPrice : persistence.displayPrice,
-      priceSubtext: input.priceSubtext !== undefined ? input.priceSubtext : persistence.priceSubtext,
-      basePriceCents: input.basePriceCents !== undefined ? input.basePriceCents : persistence.basePriceCents,
-      trialPeriodDays: input.trialPeriodDays !== undefined ? input.trialPeriodDays : persistence.trialPeriodDays,
-      isActive: input.isActive !== undefined ? input.isActive : persistence.isActive,
-      displayOrder: input.displayOrder !== undefined ? input.displayOrder : persistence.displayOrder,
+      displayPrice:
+        input.displayPrice !== undefined
+          ? input.displayPrice
+          : persistence.displayPrice,
+      priceSubtext:
+        input.priceSubtext !== undefined
+          ? input.priceSubtext
+          : persistence.priceSubtext,
+      basePriceCents:
+        input.basePriceCents !== undefined
+          ? input.basePriceCents
+          : persistence.basePriceCents,
+      trialPeriodDays:
+        input.trialPeriodDays !== undefined
+          ? input.trialPeriodDays
+          : persistence.trialPeriodDays,
+      isActive:
+        input.isActive !== undefined ? input.isActive : persistence.isActive,
+      displayOrder:
+        input.displayOrder !== undefined
+          ? input.displayOrder
+          : persistence.displayOrder,
       updatedAt: new Date(),
     };
 
-    const updatedPlanEntity = SubscriptionPlanEntity.reconstitute(updatedPersistence);
+    const updatedPlanEntity =
+      SubscriptionPlanEntity.reconstitute(updatedPersistence);
     const savedPlan = await this.planRepository.save(updatedPlanEntity);
 
     if (savedPlan.isActive && !savedPlan.isFree) {
       try {
-        this.logger.info(`Syncing plan ${savedPlan.name} (${savedPlan.id}) with Stripe after update`);
-        
-        const productId = await this.stripeSyncService.syncPlanToStripe(savedPlan);
-        
+        this.logger.info(
+          `Syncing plan ${savedPlan.name} (${savedPlan.id}) with Stripe after update`,
+        );
+
+        const productId =
+          await this.stripeSyncService.syncPlanToStripe(savedPlan);
+
         if (!productId) {
           this.logger.warn(
-            `No product ID returned from Stripe sync for plan ${savedPlan.name} (${savedPlan.id})`
+            `No product ID returned from Stripe sync for plan ${savedPlan.name} (${savedPlan.id})`,
           );
         } else {
           const currentProductId = savedPlan.stripeProductId || null;
@@ -91,13 +111,16 @@ export class UpdatePlanUseCase {
             await this.planRepository.save(planWithProductId);
           }
 
-          const tiers = await this.pricingTierRepository.findByPlanId(savedPlan.id);
-          
+          const tiers = await this.pricingTierRepository.findByPlanId(
+            savedPlan.id,
+          );
+
           if (tiers.length > 0) {
-            const tierToPriceIdMap = await this.stripeSyncService.syncPricingTiersToStripe(
-              productId,
-              tiers
-            );
+            const tierToPriceIdMap =
+              await this.stripeSyncService.syncPricingTiersToStripe(
+                productId,
+                tiers,
+              );
 
             for (const tier of tiers) {
               const priceId = tierToPriceIdMap.get(tier.id);
@@ -111,20 +134,22 @@ export class UpdatePlanUseCase {
             }
 
             this.logger.info(
-              `Synced ${tiers.length} pricing tiers for plan ${savedPlan.name} with Stripe`
+              `Synced ${tiers.length} pricing tiers for plan ${savedPlan.name} with Stripe`,
             );
           } else {
             this.logger.warn(
-              `No pricing tiers found for plan ${savedPlan.name} (${savedPlan.id})`
+              `No pricing tiers found for plan ${savedPlan.name} (${savedPlan.id})`,
             );
           }
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorStack = error instanceof Error && error.stack ? error.stack : "";
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const errorStack =
+          error instanceof Error && error.stack ? error.stack : "";
         this.logger.error(
           `Failed to sync plan ${savedPlan.name} (${savedPlan.id}) with Stripe: ${errorMessage}`,
-          errorStack
+          errorStack,
         );
       }
     }
@@ -147,4 +172,3 @@ export class UpdatePlanUseCase {
     };
   }
 }
-

@@ -24,7 +24,12 @@ export class ContactRequestModel {
   @Column({ type: "varchar", length: 20, nullable: true })
   phone: string | null;
 
-  @Column({ name: "organization_name", type: "varchar", length: 255, nullable: true })
+  @Column({
+    name: "organization_name",
+    type: "varchar",
+    length: 255,
+    nullable: true,
+  })
   organizationName: string | null;
 
   @Column({ name: "number_of_classes", type: "int", nullable: true })
@@ -55,4 +60,3 @@ export class ContactRequestModel {
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 }
-

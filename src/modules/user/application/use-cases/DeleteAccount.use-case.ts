@@ -23,20 +23,24 @@ export class DeleteAccountUseCase extends BaseUseCase implements IUseCase {
     private readonly authIdentityRepository: IAuthIdentityRepository,
     private readonly organizationRepository: IOrganizationRepository,
     private readonly membershipRepository: IMembershipRepository,
-    private readonly authStrategy: IAuthStrategy
+    private readonly authStrategy: IAuthStrategy,
   ) {
     super(logger);
   }
 
   async execute(data: DeleteAccountInput): Promise<void> {
     try {
-      const user = await this.userRepository.findByIdWithActiveMemberships(data.userId);
+      const user = await this.userRepository.findByIdWithActiveMemberships(
+        data.userId,
+      );
       if (!user) {
         throw new DomainError(ErrorCode.USER_NOT_FOUND, "User not found");
       }
 
       let isAdmin = false;
-      const ownedOrganizations = await this.organizationRepository.findByOwner(data.userId);
+      const ownedOrganizations = await this.organizationRepository.findByOwner(
+        data.userId,
+      );
       for (const org of ownedOrganizations) {
         if (user.hasRoleInOrganization(org.id, UserRole.ADMIN)) {
           isAdmin = true;
@@ -47,36 +51,51 @@ export class DeleteAccountUseCase extends BaseUseCase implements IUseCase {
       if (!isAdmin) {
         throw new DomainError(
           ErrorCode.INVALID_ROLE_FOR_MEMBERSHIP,
-          "Only admins can delete their account"
+          "Only admins can delete their account",
         );
       }
 
       await this.unitOfWork.withTransaction(async () => {
         for (const organization of ownedOrganizations) {
-          const memberships = await this.membershipRepository.findByOrganization(organization.id);
+          const memberships =
+            await this.membershipRepository.findByOrganization(organization.id);
 
           for (const membership of memberships) {
             if (membership.userId === data.userId) {
               continue;
             }
 
-            const memberUser = await this.userRepository.findByIdWithActiveMemberships(membership.userId);
+            const memberUser =
+              await this.userRepository.findByIdWithActiveMemberships(
+                membership.userId,
+              );
             if (!memberUser) {
               continue;
             }
 
-            const allMemberships = await this.membershipRepository.findByUserIdWithOrganizations(memberUser.id);
-            const activeMemberships = allMemberships.filter((m) => m.isActive());
-
-            if (activeMemberships.length === 1 && activeMemberships[0].organizationId === organization.id) {
-              const memberAuthIdentity = await this.authIdentityRepository.findByUsername(
-                memberUser.email
+            const allMemberships =
+              await this.membershipRepository.findByUserIdWithOrganizations(
+                memberUser.id,
               );
+            const activeMemberships = allMemberships.filter((m) =>
+              m.isActive(),
+            );
+
+            if (
+              activeMemberships.length === 1 &&
+              activeMemberships[0].organizationId === organization.id
+            ) {
+              const memberAuthIdentity =
+                await this.authIdentityRepository.findByUsername(
+                  memberUser.email,
+                );
               if (memberAuthIdentity) {
                 try {
                   await this.authStrategy.deleteIdentity(memberUser.email);
                 } catch (error) {
-                  this.logger.warn(`Failed to delete auth identity for ${memberUser.email}: ${error}`);
+                  this.logger.warn(
+                    `Failed to delete auth identity for ${memberUser.email}: ${error}`,
+                  );
                 }
               }
               await this.userRepository.delete(memberUser.id);
@@ -85,19 +104,25 @@ export class DeleteAccountUseCase extends BaseUseCase implements IUseCase {
             }
           }
 
-          const adminMembership = memberships.find((m) => m.userId === data.userId);
+          const adminMembership = memberships.find(
+            (m) => m.userId === data.userId,
+          );
           if (adminMembership) {
             await this.membershipRepository.delete(adminMembership.id);
           }
           await this.organizationRepository.delete(organization.id);
         }
 
-        const authIdentity = await this.authIdentityRepository.findByUsername(user.email);
+        const authIdentity = await this.authIdentityRepository.findByUsername(
+          user.email,
+        );
         if (authIdentity) {
           try {
             await this.authStrategy.deleteIdentity(user.email);
           } catch (error) {
-            this.logger.warn(`Failed to delete auth identity for ${user.email}: ${error}`);
+            this.logger.warn(
+              `Failed to delete auth identity for ${user.email}: ${error}`,
+            );
           }
         }
 
@@ -110,4 +135,3 @@ export class DeleteAccountUseCase extends BaseUseCase implements IUseCase {
 
   async withCompensation(): Promise<void> {}
 }
-

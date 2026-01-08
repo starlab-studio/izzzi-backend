@@ -1,5 +1,4 @@
 import {
-  ISubject,
   CreateSubjectInput,
   CreateSubjectOutput,
   GetSubjectsByClassInput,
@@ -22,35 +21,29 @@ export class SubjectFacade {
     private readonly getSubjectsByClassUseCase: GetSubjectsByClassUseCase,
     private readonly updateSubjectUseCase: UpdateSubjectUseCase,
     private readonly deleteSubjectUseCase: DeleteSubjectUseCase,
-    private readonly bulkCreateSubjectsUseCase: BulkCreateSubjectsUseCase,
+    private readonly bulkCreateSubjectsUseCase: BulkCreateSubjectsUseCase
   ) {}
 
-  async createSubject(
-    data: CreateSubjectInput,
-  ): Promise<CreateSubjectOutput> {
+  async createSubject(data: CreateSubjectInput): Promise<CreateSubjectOutput> {
     return await this.createSubjectUseCase.execute(data);
   }
 
   async getSubjectsByClass(
-    data: GetSubjectsByClassInput,
+    data: GetSubjectsByClassInput
   ): Promise<GetSubjectsByClassOutput> {
     return await this.getSubjectsByClassUseCase.execute(data);
   }
 
-  async updateSubject(
-    data: UpdateSubjectInput,
-  ): Promise<UpdateSubjectOutput> {
+  async updateSubject(data: UpdateSubjectInput): Promise<UpdateSubjectOutput> {
     return await this.updateSubjectUseCase.execute(data);
   }
 
-  async deleteSubject(
-    data: DeleteSubjectInput,
-  ): Promise<void> {
+  async deleteSubject(data: DeleteSubjectInput): Promise<void> {
     return await this.deleteSubjectUseCase.execute(data);
   }
 
   async bulkCreateSubjects(
-    data: BulkCreateSubjectsInput,
+    data: BulkCreateSubjectsInput
   ): Promise<BulkCreateSubjectsOutput> {
     return await this.bulkCreateSubjectsUseCase.execute(data);
   }

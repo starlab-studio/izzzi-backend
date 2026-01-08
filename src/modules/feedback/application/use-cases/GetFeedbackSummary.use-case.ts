@@ -11,17 +11,17 @@ export class GetFeedbackSummaryUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly subjectSummaryRepository: ISubjectSummaryRepository
+    private readonly subjectSummaryRepository: ISubjectSummaryRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    data: GetFeedbackSummaryInput
+    data: GetFeedbackSummaryInput,
   ): Promise<GetFeedbackSummaryOutput> {
     try {
       this.logger.info(
-        `Getting feedback summary for subject ${data.subjectId}, formType: ${data.formType || "not specified"}`
+        `Getting feedback summary for subject ${data.subjectId}, formType: ${data.formType || "not specified"}`,
       );
 
       const periodDays = data.periodDays || 30;
@@ -29,7 +29,7 @@ export class GetFeedbackSummaryUseCase
       // If formType is not provided, return empty summary
       if (!data.formType) {
         this.logger.warn(
-          `FormType not provided for subject ${data.subjectId}, returning empty summary`
+          `FormType not provided for subject ${data.subjectId}, returning empty summary`,
         );
         return {
           summary: "",
@@ -42,12 +42,12 @@ export class GetFeedbackSummaryUseCase
         await this.subjectSummaryRepository.findBySubjectIdAndFormType(
           data.subjectId,
           periodDays,
-          data.formType
+          data.formType,
         );
 
       if (!summaryEntity) {
         this.logger.info(
-          `No summary found in database for subject ${data.subjectId}, formType: ${data.formType}`
+          `No summary found in database for subject ${data.subjectId}, formType: ${data.formType}`,
         );
         return {
           summary: "",

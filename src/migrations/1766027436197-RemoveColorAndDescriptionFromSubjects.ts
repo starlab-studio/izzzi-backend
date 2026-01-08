@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class RemoveColorAndDescriptionFromSubjects1766027436197 implements MigrationInterface {
+export class RemoveColorAndDescriptionFromSubjects1766027436197
+  implements MigrationInterface
+{
   name = "RemoveColorAndDescriptionFromSubjects1766027436197";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -11,12 +13,16 @@ export class RemoveColorAndDescriptionFromSubjects1766027436197 implements Migra
       SET "color" = '#000000' 
       WHERE "color" IS NULL;
     `);
-    
+
     // Now we can drop the column
-    await queryRunner.query(`ALTER TABLE "subjects" DROP COLUMN IF EXISTS "color"`);
-    
+    await queryRunner.query(
+      `ALTER TABLE "subjects" DROP COLUMN IF EXISTS "color"`,
+    );
+
     // Remove description column (it's nullable, so we can drop it directly)
-    await queryRunner.query(`ALTER TABLE "subjects" DROP COLUMN IF EXISTS "description"`);
+    await queryRunner.query(
+      `ALTER TABLE "subjects" DROP COLUMN IF EXISTS "description"`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -25,7 +31,7 @@ export class RemoveColorAndDescriptionFromSubjects1766027436197 implements Migra
       ALTER TABLE "subjects" 
       ADD COLUMN "description" text;
     `);
-    
+
     // Re-add color column with NOT NULL constraint
     await queryRunner.query(`
       ALTER TABLE "subjects" 

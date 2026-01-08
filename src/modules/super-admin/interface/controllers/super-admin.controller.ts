@@ -18,7 +18,10 @@ import {
 import { BaseController, AuthGuard } from "src/core";
 import { SuperAdminFacade } from "../../application/facades/super-admin.facade";
 import { SuperAdminGuard } from "../../../contact/guards/super-admin.guard";
-import { UpdatePlanUseCase, UpdatePlanInput } from "../../application/use-cases/UpdatePlan.use-case";
+import {
+  UpdatePlanUseCase,
+  UpdatePlanInput,
+} from "../../application/use-cases/UpdatePlan.use-case";
 
 @ApiTags("Super Admin")
 @Controller("v1/super-admin")
@@ -27,7 +30,7 @@ import { UpdatePlanUseCase, UpdatePlanInput } from "../../application/use-cases/
 export class SuperAdminController extends BaseController {
   constructor(
     private readonly superAdminFacade: SuperAdminFacade,
-    private readonly updatePlanUseCase: UpdatePlanUseCase
+    private readonly updatePlanUseCase: UpdatePlanUseCase,
   ) {
     super();
   }
@@ -49,7 +52,8 @@ export class SuperAdminController extends BaseController {
   @Get("organizations")
   @ApiOperation({
     summary: "Lister les organisations",
-    description: "Récupère la liste de toutes les organisations avec pagination.",
+    description:
+      "Récupère la liste de toutes les organisations avec pagination.",
   })
   @ApiQuery({ name: "limit", required: false, type: Number })
   @ApiQuery({ name: "offset", required: false, type: Number })
@@ -61,7 +65,7 @@ export class SuperAdminController extends BaseController {
   async getOrganizations(
     @Query("limit") limit?: number,
     @Query("offset") offset?: number,
-    @Query("search") search?: string
+    @Query("search") search?: string,
   ) {
     const result = await this.superAdminFacade.getOrganizations({
       limit: limit ? Number(limit) : undefined,
@@ -122,7 +126,10 @@ export class SuperAdminController extends BaseController {
     status: 200,
     description: "Plan mis à jour",
   })
-  async updatePlan(@Param("id") id: string, @Body() body: Partial<UpdatePlanInput>) {
+  async updatePlan(
+    @Param("id") id: string,
+    @Body() body: Partial<UpdatePlanInput>,
+  ) {
     const result = await this.updatePlanUseCase.execute({
       planId: id,
       ...body,
@@ -145,7 +152,7 @@ export class SuperAdminController extends BaseController {
   async getSubscriptions(
     @Query("limit") limit?: number,
     @Query("offset") offset?: number,
-    @Query("status") status?: string
+    @Query("status") status?: string,
   ) {
     const result = await this.superAdminFacade.getSubscriptions({
       limit: limit ? Number(limit) : undefined,
@@ -155,4 +162,3 @@ export class SuperAdminController extends BaseController {
     return this.success(result);
   }
 }
-

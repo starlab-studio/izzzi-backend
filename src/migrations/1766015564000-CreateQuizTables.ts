@@ -161,4 +161,3 @@ export class CreateQuizTables1766015564000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS "quiz_templates"`);
   }
 }
-

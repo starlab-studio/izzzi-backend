@@ -17,12 +17,12 @@ export class AddFormTypeToSubjectSummaries1766027436199
         length: "50",
         isNullable: false,
         default: "'during_course'",
-      })
+      }),
     );
 
     await queryRunner.dropUniqueConstraint(
       "subject_summaries",
-      "UQ_subject_summaries_subject_period"
+      "UQ_subject_summaries_subject_period",
     );
 
     await queryRunner.createUniqueConstraint(
@@ -30,14 +30,14 @@ export class AddFormTypeToSubjectSummaries1766027436199
       new TableUnique({
         name: "UQ_subject_summaries_subject_period_form_type",
         columnNames: ["subject_id", "period_days", "form_type"],
-      })
+      }),
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropUniqueConstraint(
       "subject_summaries",
-      "UQ_subject_summaries_subject_period_form_type"
+      "UQ_subject_summaries_subject_period_form_type",
     );
 
     await queryRunner.createUniqueConstraint(
@@ -45,7 +45,7 @@ export class AddFormTypeToSubjectSummaries1766027436199
       new TableUnique({
         name: "UQ_subject_summaries_subject_period",
         columnNames: ["subject_id", "period_days"],
-      })
+      }),
     );
 
     await queryRunner.dropColumn("subject_summaries", "form_type");

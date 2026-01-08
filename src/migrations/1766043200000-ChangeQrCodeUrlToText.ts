@@ -19,4 +19,3 @@ export class ChangeQrCodeUrlToText1766043200000 implements MigrationInterface {
     `);
   }
 }
-

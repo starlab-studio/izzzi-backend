@@ -7,7 +7,7 @@ import { IContactRequestCreate } from "../../domain/types";
 export class CreateContactRequestUseCase {
   constructor(
     @Inject("IContactRequestRepository")
-    private readonly contactRequestRepository: IContactRequestRepository
+    private readonly contactRequestRepository: IContactRequestRepository,
   ) {}
 
   async execute(data: IContactRequestCreate): Promise<{ id: string }> {
@@ -17,4 +17,3 @@ export class CreateContactRequestUseCase {
     return { id: contactRequest.id };
   }
 }
-

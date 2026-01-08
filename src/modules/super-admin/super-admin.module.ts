@@ -69,13 +69,13 @@ import { SubscriptionPlanRepository } from "../subscription/infrastructure/repos
         planRepository: ISubscriptionPlanRepository,
         pricingTierRepository: IPricingTierRepository,
         stripeSyncService: any,
-        logger: ILoggerService
+        logger: ILoggerService,
       ) => {
         return new UpdatePlanUseCase(
           planRepository,
           pricingTierRepository,
           stripeSyncService,
-          logger
+          logger,
         );
       },
       inject: [
@@ -89,4 +89,3 @@ import { SubscriptionPlanRepository } from "../subscription/infrastructure/repos
   exports: [SuperAdminFacade],
 })
 export class SuperAdminModule {}
-

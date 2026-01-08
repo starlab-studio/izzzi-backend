@@ -5,7 +5,6 @@ import type {
   StripeSubscriptionStatus,
   StripeInvoice,
   StripePaymentMethod,
-  StripeEvent,
   StripeProrationBehavior,
   StripePrice,
 } from "../types/stripe.types";

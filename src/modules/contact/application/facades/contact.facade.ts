@@ -8,7 +8,11 @@ import {
 import { UpdateContactRequestUseCase } from "../use-cases/UpdateContactRequest.use-case";
 import { DeleteContactRequestUseCase } from "../use-cases/DeleteContactRequest.use-case";
 import { SendContactReplyEmailUseCase } from "../use-cases/SendContactReplyEmail.use-case";
-import { IContactRequest, IContactRequestCreate, IContactRequestUpdate } from "../../domain/types";
+import {
+  IContactRequest,
+  IContactRequestCreate,
+  IContactRequestUpdate,
+} from "../../domain/types";
 
 @Injectable()
 export class ContactFacade {
@@ -17,20 +21,24 @@ export class ContactFacade {
     private readonly getContactRequestsUseCase: GetContactRequestsUseCase,
     private readonly updateContactRequestUseCase: UpdateContactRequestUseCase,
     private readonly deleteContactRequestUseCase: DeleteContactRequestUseCase,
-    private readonly sendContactReplyEmailUseCase: SendContactReplyEmailUseCase
+    private readonly sendContactReplyEmailUseCase: SendContactReplyEmailUseCase,
   ) {}
 
-  async createContactRequest(data: IContactRequestCreate): Promise<{ id: string }> {
+  async createContactRequest(
+    data: IContactRequestCreate,
+  ): Promise<{ id: string }> {
     return this.createContactRequestUseCase.execute(data);
   }
 
-  async getContactRequests(input: GetContactRequestsInput): Promise<GetContactRequestsOutput> {
+  async getContactRequests(
+    input: GetContactRequestsInput,
+  ): Promise<GetContactRequestsOutput> {
     return this.getContactRequestsUseCase.execute(input);
   }
 
   async updateContactRequest(
     id: string,
-    data: IContactRequestUpdate
+    data: IContactRequestUpdate,
   ): Promise<IContactRequest> {
     return this.updateContactRequestUseCase.execute({ id, data });
   }
@@ -42,7 +50,7 @@ export class ContactFacade {
   async sendReply(
     contactRequestId: string,
     subject: string,
-    message: string
+    message: string,
   ): Promise<{ success: boolean }> {
     return this.sendContactReplyEmailUseCase.execute({
       contactRequestId,
@@ -51,4 +59,3 @@ export class ContactFacade {
     });
   }
 }
-

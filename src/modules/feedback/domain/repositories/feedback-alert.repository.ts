@@ -7,7 +7,7 @@ export interface IFeedbackAlertRepository
   save(entity: FeedbackAlertEntity): Promise<FeedbackAlertEntity>;
   findByAlertId(
     alertId: string,
-    subjectId: string
+    subjectId: string,
   ): Promise<FeedbackAlertEntity | null>;
   findBySubjectId(subjectId: string): Promise<FeedbackAlertEntity[]>;
   findBySubjectIds(subjectIds: string[]): Promise<FeedbackAlertEntity[]>;

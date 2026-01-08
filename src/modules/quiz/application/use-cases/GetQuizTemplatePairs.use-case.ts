@@ -14,7 +14,10 @@ import { IQuizTemplatePairRepository } from "../../domain/repositories/quiz-temp
 import { IQuizTemplateRepository } from "../../domain/repositories/quiz-template.repository";
 import { OrganizationFacade } from "src/modules/organization/application/facades/organization.facade";
 
-export class GetQuizTemplatePairsUseCase extends BaseUseCase implements IUseCase {
+export class GetQuizTemplatePairsUseCase
+  extends BaseUseCase
+  implements IUseCase
+{
   constructor(
     readonly logger: ILoggerService,
     private readonly quizTemplatePairRepository: IQuizTemplatePairRepository,
@@ -24,7 +27,9 @@ export class GetQuizTemplatePairsUseCase extends BaseUseCase implements IUseCase
     super(logger);
   }
 
-  async execute(data: GetQuizTemplatePairsInput): Promise<GetQuizTemplatePairsOutput> {
+  async execute(
+    data: GetQuizTemplatePairsInput,
+  ): Promise<GetQuizTemplatePairsOutput> {
     try {
       await this.organizationFacade.validateUserBelongsToOrganization(
         data.userId,
@@ -38,7 +43,8 @@ export class GetQuizTemplatePairsUseCase extends BaseUseCase implements IUseCase
         pair.afterCourseTemplateId,
       ]);
 
-      const templates = await this.quizTemplateRepository.findByIds(templateIds);
+      const templates =
+        await this.quizTemplateRepository.findByIds(templateIds);
 
       const templateMap = new Map(templates.map((t) => [t.id, t]));
 
@@ -82,4 +88,3 @@ export class GetQuizTemplatePairsUseCase extends BaseUseCase implements IUseCase
 
   async withCompensation(): Promise<void> {}
 }
-

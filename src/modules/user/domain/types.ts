@@ -4,7 +4,7 @@ export interface GetProfileInput {
   userId: string;
 }
 
-export interface GetProfileOutput extends IUser {}
+export type GetProfileOutput = IUser;
 
 export interface UpdateProfileInput {
   userId: string;
@@ -24,7 +24,6 @@ export interface UpdateAvatarInput {
   avatarUrl: string;
 }
 
-export interface UpdateAvatarOutput extends IUser {}
+export type UpdateAvatarOutput = IUser;
 
-export interface UpdateProfileOutput extends IUser {}
-
+export type UpdateProfileOutput = IUser;

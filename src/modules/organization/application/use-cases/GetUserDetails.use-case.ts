@@ -13,13 +13,13 @@ import { IUserRepository } from "../../domain/repositories/user.repository";
 export class GetUserDetailsUseCase extends BaseUseCase implements IUseCase {
   constructor(
     readonly logger: ILoggerService,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
   ) {
     super(logger);
   }
 
   async execute(
-    userId: string
+    userId: string,
   ): Promise<
     IUser & { memberships: { organizationId: string; role: UserRole }[] }
   > {
@@ -36,7 +36,7 @@ export class GetUserDetailsUseCase extends BaseUseCase implements IUseCase {
         if (!role) {
           throw new DomainError(
             ErrorCode.USER_HAS_NO_ORGANIZATION,
-            `User does not have a role in organization ${organizationId}`
+            `User does not have a role in organization ${organizationId}`,
           );
         }
         return {
@@ -54,5 +54,6 @@ export class GetUserDetailsUseCase extends BaseUseCase implements IUseCase {
     }
   }
 
-  async withCompensation(input: IMembership): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async withCompensation(_input: IMembership): Promise<void> {}
 }

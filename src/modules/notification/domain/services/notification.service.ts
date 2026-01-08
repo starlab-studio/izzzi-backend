@@ -16,7 +16,7 @@ export class NotificationDomainService {
     if (!notification.name || !notification.subject || !notification.template) {
       throw new DomainError(
         ErrorCode.INVALID_EMAIL_NOTIFICATION_DATA,
-        "Name, subject and template are required for email notification"
+        "Name, subject and template are required for email notification",
       );
     }
   }
@@ -25,7 +25,7 @@ export class NotificationDomainService {
     if (!notification.message) {
       throw new DomainError(
         ErrorCode.INVALID_SMS_NOTIFICATION_DATA,
-        "Message is required for sms notification"
+        "Message is required for sms notification",
       );
     }
   }
@@ -34,7 +34,7 @@ export class NotificationDomainService {
     if (!notification.message) {
       throw new DomainError(
         ErrorCode.INVALID_PUSH_NOTIFICATION_DATA,
-        "Message is required for push notification"
+        "Message is required for push notification",
       );
     }
   }

@@ -8,7 +8,7 @@ import { IFaqCategoryRepository } from "../../domain/repositories/faq-category.r
 export class FaqCategoryRepository implements IFaqCategoryRepository {
   constructor(
     @InjectRepository(FaqCategoryModel)
-    private ormRepository: Repository<IFaqCategory>
+    private ormRepository: Repository<IFaqCategory>,
   ) {}
 
   async findAll(): Promise<FaqCategoryEntity[]> {
@@ -16,7 +16,7 @@ export class FaqCategoryRepository implements IFaqCategoryRepository {
       order: { orderIndex: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      FaqCategoryEntity.reconstitute(ormEntity)
+      FaqCategoryEntity.reconstitute(ormEntity),
     );
   }
 
@@ -26,7 +26,7 @@ export class FaqCategoryRepository implements IFaqCategoryRepository {
       order: { orderIndex: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      FaqCategoryEntity.reconstitute(ormEntity)
+      FaqCategoryEntity.reconstitute(ormEntity),
     );
   }
 
@@ -36,14 +36,16 @@ export class FaqCategoryRepository implements IFaqCategoryRepository {
       order: { orderIndex: "ASC" },
     });
     return ormEntities.map((ormEntity) =>
-      FaqCategoryEntity.reconstitute(ormEntity)
+      FaqCategoryEntity.reconstitute(ormEntity),
     );
   }
 
   async findById(id: string): Promise<FaqCategoryEntity | null> {
     const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) return null;
-    const ormEntity = await this.ormRepository.findOne({ where: { id: parsedId } });
+    const ormEntity = await this.ormRepository.findOne({
+      where: { id: parsedId },
+    });
     if (!ormEntity) return null;
     return FaqCategoryEntity.reconstitute(ormEntity);
   }

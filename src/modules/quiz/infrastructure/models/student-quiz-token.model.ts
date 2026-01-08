@@ -35,4 +35,3 @@ export class StudentQuizTokenModel implements IStudentQuizToken {
   @Column({ name: "created_at", type: "timestamp" })
   createdAt: Date;
 }
-

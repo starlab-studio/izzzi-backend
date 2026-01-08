@@ -6,7 +6,7 @@ export interface IAlertCommentRepository
   create(entity: AlertCommentEntity): Promise<AlertCommentEntity>;
   findByAlertId(
     alertId: string,
-    subjectId: string
+    subjectId: string,
   ): Promise<AlertCommentEntity[]>;
   findById(id: string): Promise<AlertCommentEntity | null>;
 }

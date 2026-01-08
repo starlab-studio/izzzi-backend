@@ -8,7 +8,7 @@ export class HandleGoogleCallbackUseCase
 {
   constructor(
     readonly logger: ILoggerService,
-    private readonly googleAuthAdapter: GoogleAuthAdapter
+    private readonly googleAuthAdapter: GoogleAuthAdapter,
   ) {
     super(logger);
   }
@@ -22,12 +22,12 @@ export class HandleGoogleCallbackUseCase
       return await this.googleAuthAdapter.handleCallback(
         data.code,
         data.deviceInfo,
-        data.ipAddress
+        data.ipAddress,
       );
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async withCompensation(input: any): Promise<void> {}
+  async withCompensation(_input: unknown): Promise<void> {}
 }

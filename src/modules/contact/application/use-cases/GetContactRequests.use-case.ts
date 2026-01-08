@@ -19,10 +19,12 @@ export interface GetContactRequestsOutput {
 export class GetContactRequestsUseCase {
   constructor(
     @Inject("IContactRequestRepository")
-    private readonly contactRequestRepository: IContactRequestRepository
+    private readonly contactRequestRepository: IContactRequestRepository,
   ) {}
 
-  async execute(input: GetContactRequestsInput): Promise<GetContactRequestsOutput> {
+  async execute(
+    input: GetContactRequestsInput,
+  ): Promise<GetContactRequestsOutput> {
     const limit = input.limit || 20;
     const offset = input.offset || 0;
 
@@ -40,4 +42,3 @@ export class GetContactRequestsUseCase {
     };
   }
 }
-

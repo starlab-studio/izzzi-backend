@@ -6,7 +6,7 @@ import { CreateEmailNotificationUseCase } from "../use-cases/create-email-notifi
 export class SubscriptionUpgradedEventHandler extends BaseEventHandler {
   constructor(
     readonly logger: ILoggerService,
-    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase
+    private readonly createEmailNotificationUseCase: CreateEmailNotificationUseCase,
   ) {
     super(logger);
   }
@@ -36,7 +36,7 @@ export class SubscriptionUpgradedEventHandler extends BaseEventHandler {
 
       const template = GeneralUtils.htmlTemplateReader(
         "subscription-upgraded.html",
-        templateVars
+        templateVars,
       );
       const subject = "Votre abonnement a été mis à jour avec succès";
 
@@ -47,14 +47,14 @@ export class SubscriptionUpgradedEventHandler extends BaseEventHandler {
       });
 
       this.logger.info(
-        `Subscription upgrade notification sent to ${event.payload.userEmail} for organization ${event.payload.organizationId}`
+        `Subscription upgrade notification sent to ${event.payload.userEmail} for organization ${event.payload.organizationId}`,
       );
     } catch (error) {
       this.logger.error(
         `Error handling subscription upgraded event: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        error instanceof Error ? error.stack || "" : ""
+        error instanceof Error ? error.stack || "" : "",
       );
     }
   }

@@ -62,65 +62,65 @@ export class FeedbackFacade {
     private readonly getFeedbackSubjectByIdUseCase: GetFeedbackSubjectByIdUseCase,
     private readonly sendReminderBySubjectUseCase: SendReminderBySubjectUseCase,
     private readonly createAlertUseCase: CreateAlertUseCase,
-    private readonly generateAndSaveSubjectSummaryUseCase: GenerateAndSaveSubjectSummaryUseCase
+    private readonly generateAndSaveSubjectSummaryUseCase: GenerateAndSaveSubjectSummaryUseCase,
   ) {}
 
   async getFeedbackSubjects(
-    data: GetFeedbackSubjectsInput
+    data: GetFeedbackSubjectsInput,
   ): Promise<GetFeedbackSubjectsOutput> {
     return this.getFeedbackSubjectsUseCase.execute(data);
   }
 
   async getFeedbackBySubject(
-    data: GetFeedbackBySubjectInput
+    data: GetFeedbackBySubjectInput,
   ): Promise<GetFeedbackBySubjectOutput> {
     return this.getFeedbackBySubjectUseCase.execute(data);
   }
 
   async getFeedbackSummary(
-    data: GetFeedbackSummaryInput
+    data: GetFeedbackSummaryInput,
   ): Promise<GetFeedbackSummaryOutput> {
     return this.getFeedbackSummaryUseCase.execute(data);
   }
 
   async getSubjectAlerts(
-    data: GetFeedbackAlertsInput
+    data: GetFeedbackAlertsInput,
   ): Promise<GetFeedbackAlertsOutput> {
     return this.getSubjectAlertsUseCase.execute(data);
   }
 
   async commentOnAlert(
-    data: CommentOnAlertInput
+    data: CommentOnAlertInput,
   ): Promise<CommentOnAlertOutput> {
     return this.commentOnAlertUseCase.execute(data);
   }
 
   async getAlertComments(
-    data: GetAlertCommentsInput
+    data: GetAlertCommentsInput,
   ): Promise<GetAlertCommentsOutput> {
     return this.getAlertCommentsUseCase.execute(data);
   }
 
   async sendMessageForAlert(
-    data: SendMessageForAlertInput
+    data: SendMessageForAlertInput,
   ): Promise<SendMessageForAlertOutput> {
     return this.sendMessageForAlertUseCase.execute(data);
   }
 
   async markAlertAsProcessed(
-    data: MarkAlertAsProcessedInput
+    data: MarkAlertAsProcessedInput,
   ): Promise<MarkAlertAsProcessedOutput> {
     return this.markAlertAsProcessedUseCase.execute(data);
   }
 
   async getFeedbackSubjectById(
-    data: GetFeedbackSubjectByIdInput
+    data: GetFeedbackSubjectByIdInput,
   ): Promise<GetFeedbackSubjectByIdOutput> {
     return this.getFeedbackSubjectByIdUseCase.execute(data);
   }
 
   async sendReminderBySubject(
-    data: SendReminderBySubjectInput
+    data: SendReminderBySubjectInput,
   ): Promise<SendReminderBySubjectOutput> {
     return this.sendReminderBySubjectUseCase.execute(data);
   }
@@ -130,7 +130,7 @@ export class FeedbackFacade {
   }
 
   async generateAndSaveSubjectSummary(
-    data: GenerateAndSaveSubjectSummaryInput
+    data: GenerateAndSaveSubjectSummaryInput,
   ): Promise<GenerateAndSaveSubjectSummaryOutput> {
     return this.generateAndSaveSubjectSummaryUseCase.execute(data);
   }

@@ -18,7 +18,7 @@ export class CreateAlertUseCase
     readonly logger: ILoggerService,
     private readonly eventStore: IEventStore,
     private readonly feedbackAlertRepository: IFeedbackAlertRepository,
-    private readonly quizRepository: IQuizRepository
+    private readonly quizRepository: IQuizRepository,
   ) {
     super(logger);
   }
@@ -26,11 +26,11 @@ export class CreateAlertUseCase
   async execute(data: CreateAlertInput): Promise<CreateAlertOutput> {
     try {
       this.logger.info(
-        `Creating ${data.alerts.length} alert(s) for subject ${data.subjectId} in organization ${data.organizationId}`
+        `Creating ${data.alerts.length} alert(s) for subject ${data.subjectId} in organization ${data.organizationId}`,
       );
       data.alerts.forEach((alert, idx) => {
         this.logger.info(
-          `Alert ${idx + 1}: id=${alert.id}, formType=${alert.formType}, type=${alert.type}, priority=${alert.priority}`
+          `Alert ${idx + 1}: id=${alert.id}, formType=${alert.formType}, type=${alert.type}, priority=${alert.priority}`,
         );
       });
 
@@ -42,7 +42,7 @@ export class CreateAlertUseCase
           targetFormTypes = [alert.formType];
         } else {
           const quizzes = await this.quizRepository.findBySubject(
-            data.subjectId
+            data.subjectId,
           );
           const formTypes: ("during_course" | "after_course")[] = [];
 
@@ -92,13 +92,13 @@ export class CreateAlertUseCase
             await this.feedbackAlertRepository.create(alertEntity);
           storedAlerts.push(savedAlert);
           this.logger.info(
-            `Created alert ${savedAlert.alertId} with formType: ${savedAlert.formType} for subject ${data.subjectId}`
+            `Created alert ${savedAlert.alertId} with formType: ${savedAlert.formType} for subject ${data.subjectId}`,
           );
         }
       }
 
       this.logger.info(
-        `Stored ${storedAlerts.length} alert(s) in database for subject ${data.subjectId}`
+        `Stored ${storedAlerts.length} alert(s) in database for subject ${data.subjectId}`,
       );
 
       const event = new AlertGeneratedEvent({
@@ -110,10 +110,10 @@ export class CreateAlertUseCase
         generatedAt: new Date().toISOString(),
       });
 
-      await this.eventStore.publish(event);
+      this.eventStore.publish(event);
 
       this.logger.info(
-        `Alert event published for organization ${data.organizationId}, subject ${data.subjectId}`
+        `Alert event published for organization ${data.organizationId}, subject ${data.subjectId}`,
       );
 
       return {

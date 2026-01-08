@@ -105,7 +105,7 @@ export class InvoiceEntity {
     stripeInvoice: StripeInvoice,
     userId: string,
     organizationId: string,
-    subscriptionId: string | null
+    subscriptionId: string | null,
   ): InvoiceEntity {
     const invoiceNumber = stripeInvoice.id || null;
     const amountCents = stripeInvoice.amount_due;

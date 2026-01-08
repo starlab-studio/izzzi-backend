@@ -1,8 +1,8 @@
-import { DataSource, EntityManager } from "typeorm";
+import { DataSource, EntityManager, QueryRunner } from "typeorm";
 import { IUnitOfWork } from "src/core/application/interfaces/unit_of_work.interface";
 
 export class TypeOrmUnitOfWork implements IUnitOfWork {
-  private queryRunner?: any;
+  private queryRunner?: QueryRunner;
   private entityManager?: EntityManager;
 
   constructor(private readonly dataSource: DataSource) {}

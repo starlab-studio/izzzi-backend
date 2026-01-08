@@ -110,7 +110,7 @@ export class RolesGuard implements CanActivate {
       userProfile = await this.organizationFacade.getUserProfile(userId);
       await this.cacheService.set(cacheKey, userProfile, this.CACHE_TTL);
       return userProfile;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException("Failed to retrieve user profile");
     }
   }
@@ -131,7 +131,7 @@ export class RolesGuard implements CanActivate {
       await this.cacheService.set(cacheKey, userRoles, this.CACHE_TTL);
 
       return userRoles;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException("Failed to retrieve user roles");
     }
   }

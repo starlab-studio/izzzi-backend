@@ -11,11 +11,10 @@ export class InMemoryEventStore implements IEventStore {
 
   publish(event: IDomainEvent): void {
     this.events.push(event);
-    void Promise.allSettled(
-      this.subscribers
-        .filter((s) => s.eventName === event.name || s.eventName === "*")
-        .map((s) => s.handler(event))
-    );
+    const handlers = this.subscribers
+      .filter((s) => s.eventName === event.name || s.eventName === "*")
+      .map((s) => s.handler(event));
+    void Promise.allSettled(handlers);
   }
 
   subscribe(

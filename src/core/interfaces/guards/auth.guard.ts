@@ -39,13 +39,13 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get("auth.jwt.secret"),
+        secret: this.configService.get<string>("auth.jwt.secret"),
       });
 
-      request["user"] = payload;
+      (request as Request & { user?: unknown }).user = payload;
 
       return true;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException("Invalid or expired token");
     }
   }
@@ -70,6 +70,7 @@ export class AuthGuard implements CanActivate {
   }
 
   private extractTokenFromCookie(request: Request): string | undefined {
-    return request.cookies?.["access_token"];
+    const cookies = request.cookies as { access_token?: string } | undefined;
+    return cookies?.["access_token"];
   }
 }

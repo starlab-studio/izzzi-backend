@@ -21,16 +21,13 @@ export class EventStore implements IEventStore {
     });
   }
 
-  async subscribe(
-    eventName: string,
-    handler: (event: IDomainEvent) => void
-  ): Promise<void> {
+  subscribe(eventName: string, handler: (event: IDomainEvent) => void): void {
     if (!this.worker) {
       const connection = this.eventQueue.opts.connection;
       this.worker = new Worker(
         this.eventQueue.name,
         async (job) => {
-          await handler(job.data as IDomainEvent);
+          handler(job.data as IDomainEvent);
         },
         { connection }
       );

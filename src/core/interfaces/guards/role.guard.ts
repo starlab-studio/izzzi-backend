@@ -128,21 +128,27 @@ export class RolesGuard implements CanActivate {
     }
   }
 
-  private extractOrganizationId(request: any): string | null {
+  private extractOrganizationId(request: {
+    params?: { organizationId?: string };
+    query?: { organizationId?: string };
+    body?: { organizationId?: string };
+    headers?: { [key: string]: string | string[] | undefined };
+  }): string | null {
     if (request.params?.organizationId) {
-      return request.params.organizationId;
+      return String(request.params.organizationId);
     }
 
     if (request.query?.organizationId) {
-      return request.query.organizationId;
+      return String(request.query.organizationId);
     }
 
     if (request.body?.organizationId) {
-      return request.body.organizationId;
+      return String(request.body.organizationId);
     }
 
-    if (request.headers["x-organization-id"]) {
-      return request.headers["x-organization-id"];
+    const orgIdHeader = request.headers?.["x-organization-id"];
+    if (orgIdHeader) {
+      return Array.isArray(orgIdHeader) ? orgIdHeader[0] : String(orgIdHeader);
     }
 
     return null;

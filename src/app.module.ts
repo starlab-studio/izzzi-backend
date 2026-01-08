@@ -30,7 +30,17 @@ import { SuperAdminModule } from "./modules/super-admin/super-admin.module";
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const db = configService.get("database");
+        const db = configService.get<{
+          host: string;
+          port: number;
+          dbname: string;
+          username: string;
+          password: string;
+          synchronize: boolean;
+        }>("database");
+        if (!db) {
+          throw new Error("Database configuration is missing");
+        }
         return {
           type: "postgres",
           host: db.host,

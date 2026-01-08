@@ -1,6 +1,8 @@
 export type WebhookEventType =
   | "invoice.paid"
   | "payment_intent.succeeded"
+  | "payment_intent.failed"
+  | "payment_intent.canceled"
   | "customer.subscription.updated"
   | "customer.subscription.deleted"
   | string;

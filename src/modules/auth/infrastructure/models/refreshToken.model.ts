@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn, Index } from "typeorm";
+import { AuthIdentityName } from "../../domain/types";
 
 @Entity("refresh_tokens")
 export class RefreshTokenModel {
@@ -12,6 +13,9 @@ export class RefreshTokenModel {
   @Column("varchar", { length: 255 })
   @Index("idx_refresh_token_user_id")
   userId: string;
+
+  @Column("varchar", { length: 45, nullable: true })
+  provider?: AuthIdentityName;
 
   @Column("text", { nullable: true })
   deviceInfo?: string;

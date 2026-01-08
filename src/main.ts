@@ -10,6 +10,7 @@ import {
   RequestLoggingInterceptor,
   LoggerService,
 } from "./core";
+import { SocketIoAdapter } from "./core/adapters/socket-io.adapter";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -42,6 +43,9 @@ async function bootstrap() {
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   });
+
+  // Configure WebSocket adapter
+  app.useWebSocketAdapter(new SocketIoAdapter(app));
 
   // Configure raw body for Stripe webhook (must be before cookieParser)
   app.use("/api/v1/webhooks/stripe", express.raw({ type: "application/json" }));

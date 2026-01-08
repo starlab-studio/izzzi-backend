@@ -381,6 +381,34 @@ export class FeedbackController extends BaseController {
     return this.success(result);
   }
 
+  @Get(
+    "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/comments"
+  )
+  @ApiOperation({
+    summary: "Récupérer les commentaires d'une alerte",
+    description:
+      "Récupère tous les commentaires associés à une alerte. Nécessite le rôle LEARNING_MANAGER ou ADMIN.",
+  })
+  @Roles(UserRole.LEARNING_MANAGER, UserRole.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: "Liste des commentaires récupérée avec succès",
+  })
+  async getAlertComments(
+    @Param("organizationId") organizationId: string,
+    @Param("subjectId") subjectId: string,
+    @Param("alertId") alertId: string,
+    @CurrentUser() user: JWTPayload
+  ) {
+    const result = await this.feedbackFacade.getAlertComments({
+      organizationId,
+      userId: user.userId,
+      subjectId,
+      alertId,
+    });
+    return this.success(result);
+  }
+
   @Post(
     "organizations/:organizationId/subjects/:subjectId/alerts/:alertId/send-message"
   )

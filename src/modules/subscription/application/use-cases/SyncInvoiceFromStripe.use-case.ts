@@ -92,6 +92,51 @@ export class SyncInvoiceFromStripeUseCase
 
         if (subscription.status === "pending") {
           subscription.activate();
+
+          if (
+            !subscription.currentPeriodStart ||
+            !subscription.currentPeriodEnd
+          ) {
+            this.logger.warn(
+              `Subscription ${subscription.id} missing period dates at activation time; attempting to sync from Stripe`
+            );
+
+            if (subscription.stripeSubscriptionId) {
+              try {
+                const stripeSubscription =
+                  await this.stripeSyncService.getSubscription(
+                    subscription.stripeSubscriptionId
+                  );
+
+                if (
+                  stripeSubscription &&
+                  stripeSubscription.current_period_start &&
+                  stripeSubscription.current_period_end
+                ) {
+                  (subscription as any).props.currentPeriodStart = new Date(
+                    stripeSubscription.current_period_start * 1000
+                  );
+                  (subscription as any).props.currentPeriodEnd = new Date(
+                    stripeSubscription.current_period_end * 1000
+                  );
+                  (subscription as any).props.updatedAt = new Date();
+                  this.logger.info(
+                    `Extracted period dates from Stripe subscription for ${subscription.id}`
+                  );
+                }
+              } catch (stripeError) {
+                this.logger.error(
+                  `Failed to sync period dates from Stripe for subscription ${subscription.id}: ${
+                    stripeError instanceof Error
+                      ? stripeError.message
+                      : String(stripeError)
+                  }`,
+                  stripeError instanceof Error ? stripeError.stack || "" : ""
+                );
+              }
+            }
+          }
+
           await this.subscriptionRepository.save(subscription);
         }
 

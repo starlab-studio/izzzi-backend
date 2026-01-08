@@ -13,6 +13,12 @@ import type {
   StripePrice,
 } from "../../domain/types/stripe.types";
 import { StripeDomainMapper } from "../mappers/stripe-domain.mapper";
+import type {
+  ExpandedInvoice,
+  ExpandedPaymentIntent,
+  ExpandedInvoiceLineItem,
+} from "../types/stripe-extended.types";
+import { isExpandedPaymentIntent } from "../types/stripe-extended.types";
 
 @Injectable()
 export class StripeSyncService implements IStripeSyncService {
@@ -26,7 +32,7 @@ export class StripeSyncService implements IStripeSyncService {
     }
 
     this.stripe = new Stripe(secretKey, {
-      apiVersion: "2024-11-20.acacia",
+      apiVersion: "2025-12-15.clover",
     });
   }
 
@@ -275,13 +281,18 @@ export class StripeSyncService implements IStripeSyncService {
         expand: ["payment_intent"],
       });
 
-      if (invoice.payment_intent) {
-        const paymentIntent =
-          typeof invoice.payment_intent === "string"
-            ? await this.stripe.paymentIntents.retrieve(invoice.payment_intent)
-            : invoice.payment_intent;
+      const paymentIntent = (invoice as ExpandedInvoice).payment_intent;
+      if (paymentIntent) {
+        const resolvedPaymentIntent =
+          typeof paymentIntent === "string"
+            ? await this.stripe.paymentIntents.retrieve(paymentIntent)
+            : isExpandedPaymentIntent(paymentIntent)
+              ? paymentIntent
+              : null;
 
-        clientSecret = paymentIntent.client_secret;
+        if (resolvedPaymentIntent) {
+          clientSecret = resolvedPaymentIntent.client_secret;
+        }
       }
     }
 
@@ -302,6 +313,7 @@ export class StripeSyncService implements IStripeSyncService {
     newPriceId?: string,
     options?: {
       prorationBehavior?: "create_prorations" | "none" | "always_invoice";
+      billingCycleAnchor?: "now" | "unchanged";
     }
   ): Promise<StripeSubscription> {
     const subscription =
@@ -322,6 +334,10 @@ export class StripeSyncService implements IStripeSyncService {
         },
       ],
     };
+
+    if (options?.billingCycleAnchor) {
+      updateParams.billing_cycle_anchor = options.billingCycleAnchor;
+    }
 
     const updated = await this.stripe.subscriptions.update(
       subscriptionId,
@@ -447,7 +463,8 @@ export class StripeSyncService implements IStripeSyncService {
     let prorationAmount = 0;
     if (preview.lines?.data) {
       for (const line of preview.lines.data) {
-        if (line.proration) {
+        const expandedLine = line as ExpandedInvoiceLineItem;
+        if (expandedLine.proration) {
           prorationAmount += line.amount;
         }
       }
@@ -589,30 +606,82 @@ export class StripeSyncService implements IStripeSyncService {
 
       invoiceId = finalizedInvoice.id;
 
-      const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: params.amountCents,
-        currency: params.currency || "eur",
-        customer: params.customerId,
-        metadata: {
-          ...params.metadata,
-          invoiceId: invoiceId,
-        },
-        automatic_payment_methods: {
-          enabled: true,
-        },
-      });
+      let paymentIntentId: string;
+      let clientSecret: string | null = null;
 
-      if (!paymentIntent.client_secret) {
+      const paymentIntent = (finalizedInvoice as ExpandedInvoice)
+        .payment_intent;
+      if (paymentIntent) {
+        const paymentIntentIdStr =
+          typeof paymentIntent === "string"
+            ? paymentIntent
+            : isExpandedPaymentIntent(paymentIntent)
+              ? paymentIntent.id
+              : null;
+
+        if (paymentIntentIdStr) {
+          const resolvedPaymentIntent =
+            await this.stripe.paymentIntents.retrieve(paymentIntentIdStr);
+
+          paymentIntentId = resolvedPaymentIntent.id;
+          clientSecret = resolvedPaymentIntent.client_secret;
+
+          if (params.metadata && Object.keys(params.metadata).length > 0) {
+            await this.stripe.paymentIntents.update(paymentIntentId, {
+              metadata: {
+                ...resolvedPaymentIntent.metadata,
+                ...params.metadata,
+                invoiceId: invoiceId,
+              },
+            });
+          }
+        } else {
+          // If paymentIntent exists but we can't resolve it, create a new one
+          const newPaymentIntent = await this.stripe.paymentIntents.create({
+            amount: params.amountCents,
+            currency: params.currency || "eur",
+            customer: params.customerId,
+            metadata: {
+              ...params.metadata,
+              invoiceId: invoiceId,
+            },
+            automatic_payment_methods: {
+              enabled: true,
+            },
+          });
+
+          paymentIntentId = newPaymentIntent.id;
+          clientSecret = newPaymentIntent.client_secret;
+        }
+      } else {
+        const paymentIntent = await this.stripe.paymentIntents.create({
+          amount: params.amountCents,
+          currency: params.currency || "eur",
+          customer: params.customerId,
+          metadata: {
+            ...params.metadata,
+            invoiceId: invoiceId,
+          },
+          automatic_payment_methods: {
+            enabled: true,
+          },
+        });
+
+        paymentIntentId = paymentIntent.id;
+        clientSecret = paymentIntent.client_secret;
+      }
+
+      if (!clientSecret) {
         throw new Error("PaymentIntent created without client_secret");
       }
 
       this.logger.log(
-        `Created payment intent ${paymentIntent.id} with invoice ${invoiceId} for customer ${params.customerId}, amount: ${params.amountCents} cents`
+        `Created payment intent ${paymentIntentId} with invoice ${invoiceId} for customer ${params.customerId}, amount: ${params.amountCents} cents`
       );
 
       return {
-        paymentIntentId: paymentIntent.id,
-        clientSecret: paymentIntent.client_secret,
+        paymentIntentId,
+        clientSecret,
         invoiceId,
       };
     }

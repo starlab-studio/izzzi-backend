@@ -4,6 +4,7 @@ import { GetFeedbackBySubjectUseCase } from "../use-cases/GetFeedbackBySubject.u
 import { GetFeedbackSummaryUseCase } from "../use-cases/GetFeedbackSummary.use-case";
 import { GetSubjectAlertsUseCase } from "../use-cases/GetSubjectAlerts.use-case";
 import { CommentOnAlertUseCase } from "../use-cases/CommentOnAlert.use-case";
+import { GetAlertCommentsUseCase } from "../use-cases/GetAlertComments.use-case";
 import { SendMessageForAlertUseCase } from "../use-cases/SendMessageForAlert.use-case";
 import { MarkAlertAsProcessedUseCase } from "../use-cases/MarkAlertAsProcessed.use-case";
 import { GetFeedbackSubjectByIdUseCase } from "../use-cases/GetFeedbackSubjectById.use-case";
@@ -31,6 +32,10 @@ import {
   CommentOnAlertOutput,
 } from "../use-cases/CommentOnAlert.use-case";
 import {
+  GetAlertCommentsInput,
+  GetAlertCommentsOutput,
+} from "../use-cases/GetAlertComments.use-case";
+import {
   SendMessageForAlertInput,
   SendMessageForAlertOutput,
 } from "../use-cases/SendMessageForAlert.use-case";
@@ -51,6 +56,7 @@ export class FeedbackFacade {
     private readonly getFeedbackSummaryUseCase: GetFeedbackSummaryUseCase,
     private readonly getSubjectAlertsUseCase: GetSubjectAlertsUseCase,
     private readonly commentOnAlertUseCase: CommentOnAlertUseCase,
+    private readonly getAlertCommentsUseCase: GetAlertCommentsUseCase,
     private readonly sendMessageForAlertUseCase: SendMessageForAlertUseCase,
     private readonly markAlertAsProcessedUseCase: MarkAlertAsProcessedUseCase,
     private readonly getFeedbackSubjectByIdUseCase: GetFeedbackSubjectByIdUseCase,
@@ -87,6 +93,12 @@ export class FeedbackFacade {
     data: CommentOnAlertInput
   ): Promise<CommentOnAlertOutput> {
     return this.commentOnAlertUseCase.execute(data);
+  }
+
+  async getAlertComments(
+    data: GetAlertCommentsInput
+  ): Promise<GetAlertCommentsOutput> {
+    return this.getAlertCommentsUseCase.execute(data);
   }
 
   async sendMessageForAlert(

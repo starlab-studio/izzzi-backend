@@ -61,16 +61,7 @@ import { INotificationGateway } from "./application/gateways/notification-gatewa
         EmailProvider.getInstance(configService),
       inject: [ConfigService],
     },
-    {
-      provide: NotificationGateway,
-      useFactory: (
-        jwtService: JwtService,
-        configService: ConfigService,
-        subjectRepository: ISubjectRepository
-      ) =>
-        new NotificationGateway(jwtService, configService, subjectRepository),
-      inject: [JwtService, ConfigService, "SUBJECT_REPOSITORY"],
-    },
+    NotificationGateway,
     {
       provide: "NOTIFICATION_GATEWAY",
       useExisting: NotificationGateway,

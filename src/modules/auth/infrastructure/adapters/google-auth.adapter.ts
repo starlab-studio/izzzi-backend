@@ -203,6 +203,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       newRefreshTokenHash,
       refreshTokenEntity.userId,
       expiresAt,
+      AuthIdentityName.GOOGLE,
       data.deviceInfo || refreshTokenEntity.deviceInfo,
       data.ipAddress || refreshTokenEntity.ipAddress
     );
@@ -566,6 +567,7 @@ export class GoogleAuthAdapter implements IAuthStrategy {
       refreshTokenHash,
       userId,
       expiresAt,
+      AuthIdentityName.GOOGLE,
       deviceInfo,
       ipAddress
     );

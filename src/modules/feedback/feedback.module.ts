@@ -23,6 +23,7 @@ import { GetFeedbackBySubjectUseCase } from "./application/use-cases/GetFeedback
 import { GetFeedbackSummaryUseCase } from "./application/use-cases/GetFeedbackSummary.use-case";
 import { GetSubjectAlertsUseCase } from "./application/use-cases/GetSubjectAlerts.use-case";
 import { CommentOnAlertUseCase } from "./application/use-cases/CommentOnAlert.use-case";
+import { GetAlertCommentsUseCase } from "./application/use-cases/GetAlertComments.use-case";
 import { SendMessageForAlertUseCase } from "./application/use-cases/SendMessageForAlert.use-case";
 import { MarkAlertAsProcessedUseCase } from "./application/use-cases/MarkAlertAsProcessed.use-case";
 import { GetFeedbackSubjectByIdUseCase } from "./application/use-cases/GetFeedbackSubjectById.use-case";
@@ -248,6 +249,20 @@ import { ISubjectSummaryRepository } from "./domain/repositories/subject-summary
       inject: [LoggerService, "ALERT_COMMENT_REPOSITORY", OrganizationFacade],
     },
     {
+      provide: GetAlertCommentsUseCase,
+      useFactory: (
+        logger: ILoggerService,
+        alertCommentRepository: IAlertCommentRepository,
+        organizationFacade: OrganizationFacade
+      ) =>
+        new GetAlertCommentsUseCase(
+          logger,
+          alertCommentRepository,
+          organizationFacade
+        ),
+      inject: [LoggerService, "ALERT_COMMENT_REPOSITORY", OrganizationFacade],
+    },
+    {
       provide: SendMessageForAlertUseCase,
       useFactory: (logger: ILoggerService) =>
         new SendMessageForAlertUseCase(logger),
@@ -340,6 +355,7 @@ import { ISubjectSummaryRepository } from "./domain/repositories/subject-summary
         getFeedbackSummaryUseCase: GetFeedbackSummaryUseCase,
         getSubjectAlertsUseCase: GetSubjectAlertsUseCase,
         commentOnAlertUseCase: CommentOnAlertUseCase,
+        getAlertCommentsUseCase: GetAlertCommentsUseCase,
         sendMessageForAlertUseCase: SendMessageForAlertUseCase,
         markAlertAsProcessedUseCase: MarkAlertAsProcessedUseCase,
         getFeedbackSubjectByIdUseCase: GetFeedbackSubjectByIdUseCase,
@@ -353,6 +369,7 @@ import { ISubjectSummaryRepository } from "./domain/repositories/subject-summary
           getFeedbackSummaryUseCase,
           getSubjectAlertsUseCase,
           commentOnAlertUseCase,
+          getAlertCommentsUseCase,
           sendMessageForAlertUseCase,
           markAlertAsProcessedUseCase,
           getFeedbackSubjectByIdUseCase,
@@ -366,6 +383,7 @@ import { ISubjectSummaryRepository } from "./domain/repositories/subject-summary
         GetFeedbackSummaryUseCase,
         GetSubjectAlertsUseCase,
         CommentOnAlertUseCase,
+        GetAlertCommentsUseCase,
         SendMessageForAlertUseCase,
         MarkAlertAsProcessedUseCase,
         GetFeedbackSubjectByIdUseCase,

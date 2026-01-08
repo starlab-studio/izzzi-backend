@@ -42,6 +42,7 @@ export interface IStripeSyncService {
     newPriceId?: string,
     options?: {
       prorationBehavior?: StripeProrationBehavior;
+      billingCycleAnchor?: "now" | "unchanged";
     }
   ): Promise<StripeSubscription>;
 

@@ -7,6 +7,9 @@ export interface ISubscriptionRepository
   findByOrganizationId(
     organizationId: string
   ): Promise<SubscriptionEntity | null>;
+  findAllByOrganizationId(
+    organizationId: string
+  ): Promise<SubscriptionEntity[]>;
   findByStripeSubscriptionId(
     stripeSubId: string
   ): Promise<SubscriptionEntity | null>;
@@ -16,6 +19,7 @@ export interface ISubscriptionRepository
   findAllActive(): Promise<SubscriptionEntity[]>;
   findExpiring(beforeDate: Date): Promise<SubscriptionEntity[]>;
   findTrialsEndingIn(days: number): Promise<SubscriptionEntity[]>;
+  findExpiredWithStripeId(beforeDate: Date): Promise<SubscriptionEntity[]>;
 }
 
 export const SUBSCRIPTION_REPOSITORY = Symbol("ISubscriptionRepository");

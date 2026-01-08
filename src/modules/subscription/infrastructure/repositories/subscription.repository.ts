@@ -46,6 +46,18 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     return SubscriptionEntity.reconstitute(ormEntity);
   }
 
+  async findAllByOrganizationId(
+    organizationId: string
+  ): Promise<SubscriptionEntity[]> {
+    const ormEntities = await this.ormRepository.find({
+      where: { organizationId },
+      order: { createdAt: "DESC" },
+    });
+    return ormEntities.map((ormEntity) =>
+      SubscriptionEntity.reconstitute(ormEntity)
+    );
+  }
+
   async findByStripeSubscriptionId(
     stripeSubId: string
   ): Promise<SubscriptionEntity | null> {
@@ -117,6 +129,24 @@ export class SubscriptionRepository implements ISubscriptionRepository {
         endDate: endOfTargetDay,
       })
       .orderBy("subscription.trial_end_date", "ASC")
+      .getMany();
+
+    return ormEntities.map((ormEntity) =>
+      SubscriptionEntity.reconstitute(ormEntity)
+    );
+  }
+
+  async findExpiredWithStripeId(
+    beforeDate: Date
+  ): Promise<SubscriptionEntity[]> {
+    const ormEntities = await this.ormRepository
+      .createQueryBuilder("subscription")
+      .where("subscription.current_period_end <= :beforeDate", { beforeDate })
+      .andWhere("subscription.stripe_subscription_id IS NOT NULL")
+      .andWhere("subscription.status IN (:...statuses)", {
+        statuses: ["active", "past_due", "trial", "cancelled"],
+      })
+      .orderBy("subscription.current_period_end", "ASC")
       .getMany();
 
     return ormEntities.map((ormEntity) =>

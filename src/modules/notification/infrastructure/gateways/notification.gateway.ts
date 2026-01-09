@@ -15,11 +15,6 @@ import { JWTPayload } from "src/core";
 import { type ISubjectRepository } from "src/modules/subject/domain/repositories/subject.repository";
 import { NotificationOutput } from "../../application/use-cases/get-notifications.use-case";
 
-<<<<<<< HEAD
-@WebSocketGateway({
-  cors: {
-    origin: ["http://localhost:3001", "http://www.localhost:3001"],
-=======
 const frontendUrl =
   (process.env.FRONTEND_DOMAIN_URL as string) || "http://localhost:3000";
 const corsOrigins = [
@@ -33,7 +28,6 @@ const corsOrigins = [
 @WebSocketGateway({
   cors: {
     origin: corsOrigins,
->>>>>>> main
     credentials: true,
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -52,11 +46,7 @@ export class NotificationGateway
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     @Inject("SUBJECT_REPOSITORY")
-<<<<<<< HEAD
-    private readonly subjectRepository: ISubjectRepository,
-=======
     private readonly subjectRepository: ISubjectRepository
->>>>>>> main
   ) {}
 
   async handleConnection(@ConnectedSocket() client: Socket) {
@@ -110,11 +100,7 @@ export class NotificationGateway
     const socketIds = this.userSockets.get(userId);
     if (!socketIds || socketIds.size === 0) {
       this.logger.debug(
-<<<<<<< HEAD
-        `User ${userId} is not connected, notification will be retrieved on next fetch`,
-=======
         `User ${userId} is not connected, notification will be retrieved on next fetch`
->>>>>>> main
       );
       return;
     }
@@ -123,11 +109,7 @@ export class NotificationGateway
       await this.transformNotification(notification);
     if (!transformedNotification) {
       this.logger.warn(
-<<<<<<< HEAD
-        `Failed to transform notification ${notification.id}, skipping emission`,
-=======
         `Failed to transform notification ${notification.id}, skipping emission`
->>>>>>> main
       );
       return;
     }
@@ -139,11 +121,7 @@ export class NotificationGateway
   }
 
   private async transformNotification(
-<<<<<<< HEAD
-    notification: INotification,
-=======
     notification: INotification
->>>>>>> main
   ): Promise<NotificationOutput | null> {
     try {
       const metadata = notification.metadata || {};
@@ -152,11 +130,7 @@ export class NotificationGateway
 
       if (!subjectId) {
         this.logger.warn(
-<<<<<<< HEAD
-          `Notification ${notification.id} missing subjectId metadata`,
-=======
           `Notification ${notification.id} missing subjectId metadata`
->>>>>>> main
         );
         return null;
       }
@@ -164,11 +138,7 @@ export class NotificationGateway
       const subject = await this.subjectRepository.findById(subjectId);
       if (!subject) {
         this.logger.warn(
-<<<<<<< HEAD
-          `Subject ${subjectId} not found for notification ${notification.id}`,
-=======
           `Subject ${subjectId} not found for notification ${notification.id}`
->>>>>>> main
         );
         return null;
       }
@@ -190,11 +160,7 @@ export class NotificationGateway
       this.logger.error(
         `Error transforming notification ${notification.id}: ${
           error instanceof Error ? error.message : String(error)
-<<<<<<< HEAD
-        }`,
-=======
         }`
->>>>>>> main
       );
       return null;
     }

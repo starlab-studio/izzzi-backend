@@ -1,6 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { ConsoleLogger, ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { ConfigService } from "@nestjs/config";
 import cookieParser from "cookie-parser";
 import express from "express";
 
@@ -19,12 +20,14 @@ async function bootstrap() {
     }),
   });
 
+  const configService = app.get(ConfigService);
+
   // Custom Exception filter for error handling
   app.useGlobalFilters(new HttpExceptionFilter(app.get(LoggerService)));
 
   // Custom Request logging interceptor
   app.useGlobalInterceptors(
-    new RequestLoggingInterceptor(app.get(LoggerService)),
+    new RequestLoggingInterceptor(app.get(LoggerService))
   );
 
   // Validation pipes for DTOs
@@ -33,12 +36,22 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    }),
+    })
   );
 
   // Enable CORS
+  const frontendUrl =
+    configService.get<string>("frontend.url") || "http://localhost:3000";
+  const corsOrigins = [
+    frontendUrl,
+    frontendUrl.replace(/^https?:\/\//, "https://www."),
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://www.localhost:3001",
+  ].filter((origin, index, self) => self.indexOf(origin) === index); // Remove duplicates
+
   app.enableCors({
-    origin: ["http://localhost:3001", "http://www.localhost:3001"],
+    origin: corsOrigins,
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -72,7 +85,8 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, documentFactory);
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = configService.get<number>("port") || 3000;
+  await app.listen(port);
 }
 void bootstrap().catch((error) => {
   console.error("Failed to start application:", error);

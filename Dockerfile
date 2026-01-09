@@ -1,3 +1,7 @@
+# ==========================================
+# Stage 1: Builder
+# ==========================================
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -59,23 +63,35 @@ ENV GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
 
 
 COPY package*.json ./
+RUN npm ci
 RUN npm install
 
 COPY . .
 
 RUN npm run build
 
+# ==========================================
+# Stage 2: Runner
+# ==========================================
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-ENV PORT=${PORT}
-ENV DATABASE_HOST=${DATABASE_HOST}
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
+COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/package*.json ./
 
-EXPOSE ${PORT}
+COPY --chown=nestjs:nodejs entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-CMD ["node", "dist/main"]
+USER nestjs
+
+ENV PORT=3001
+ENV RUN_MIGRATIONS=false
+
+EXPOSE 3001
+
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -21,8 +21,8 @@ import { OrganizationModule } from "src/modules/organization/organization.module
   imports: [
     BullModule.forRoot({
       connection: {
-        host: "localhost",
-        port: 6379,
+        host: process.env.REDIS_HOST || "localhost",
+        port: parseInt(process.env.REDIS_PORT || "6379", 10),
         keepAlive: 1,
         maxRetriesPerRequest: null,
         enableReadyCheck: true,
@@ -33,12 +33,15 @@ import { OrganizationModule } from "src/modules/organization/organization.module
     }),
     CacheModule.registerAsync({
       useFactory: () => {
+        const redisHost = process.env.REDIS_HOST || "localhost";
+        const redisPort = process.env.REDIS_PORT || "6379";
+        const redisDb = process.env.REDIS_DB || "0";
         return {
           stores: [
             new Keyv({
               store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
             }),
-            new KeyvRedis("redis://localhost:6379"),
+            new KeyvRedis(`redis://${redisHost}:${redisPort}/${redisDb}`),
           ],
         };
       },

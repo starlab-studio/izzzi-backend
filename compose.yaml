@@ -3,9 +3,39 @@ services:
     image: pgvector/pgvector:pg18
     container_name: izzzi-postgres
     restart: unless-stopped
+    image: pgvector/pgvector:pg18
+    container_name: izzzi-postgres
+    restart: unless-stopped
     ports:
       - "${DATABASE_PORT:-5432}:5432"
+      - "${DATABASE_PORT:-5432}:5432"
     environment:
+      POSTGRES_USER: ${DATABASE_USER:-izzzi}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-izzzi_password}
+      POSTGRES_DB: ${DATABASE_NAME:-izzzi_db}
+      PGDATA: /var/lib/postgresql/18/data
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - izzzi-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: izzzi-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy noeviction
       POSTGRES_USER: ${DATABASE_USER:-izzzi}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-izzzi_password}
       POSTGRES_DB: ${DATABASE_NAME:-izzzi_db}
@@ -109,6 +139,13 @@ services:
 volumes:
   postgres_data:
     driver: local
+  redis_data:
+    driver: local
+
+networks:
+  izzzi-network:
+    driver: bridge
+    name: izzzi-network
   redis_data:
     driver: local
 

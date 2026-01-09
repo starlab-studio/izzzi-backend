@@ -1,15 +1,44 @@
 import { IoAdapter } from "@nestjs/platform-socket.io";
 import { ServerOptions } from "socket.io";
 import { INestApplicationContext } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 export class SocketIoAdapter extends IoAdapter {
+  private configService: ConfigService | null = null;
+
   constructor(appOrHttpServer?: INestApplicationContext | object) {
     super(appOrHttpServer);
+    if (
+      appOrHttpServer &&
+      typeof appOrHttpServer === "object" &&
+      "get" in appOrHttpServer
+    ) {
+      try {
+        this.configService = (appOrHttpServer as INestApplicationContext).get(
+          ConfigService,
+          { strict: false }
+        );
+      } catch {
+        // ConfigService not available, will use fallback
+      }
+    }
   }
 
   createIOServer(port: number, options?: ServerOptions): any {
+    const frontendUrl =
+      this.configService?.get<string>("frontend.url") ||
+      process.env.FRONTEND_DOMAIN_URL ||
+      "http://localhost:3000";
+    const corsOrigins = [
+      frontendUrl,
+      frontendUrl.replace(/^https?:\/\//, "https://www."),
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://www.localhost:3001",
+    ].filter((origin, index, self) => self.indexOf(origin) === index);
+
     const corsConfig = {
-      origin: ["http://localhost:3001", "http://www.localhost:3001"],
+      origin: corsOrigins,
       methods: ["GET", "POST"],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],

@@ -16,8 +16,10 @@ import { AuthGuard } from "./interfaces/guards/auth.guard";
 import { RolesGuard } from "./interfaces/guards/role.guard";
 import { CacheStoreAdapter } from "./infrastructure/services/cache-store.adapter";
 import { OrganizationModule } from "src/modules/organization/organization.module";
+import { HealthController } from "./interface/controllers/health.controller";
 
 @Module({
+  controllers: [HealthController],
   imports: [
     BullModule.forRoot({
       connection: {

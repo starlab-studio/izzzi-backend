@@ -90,7 +90,7 @@ RUN chmod +x /app/entrypoint.sh
 USER nestjs
 
 ENV PORT=3001
-ENV RUN_MIGRATIONS=false
+ENV RUN_MIGRATIONS=true
 
 EXPOSE 3001
 

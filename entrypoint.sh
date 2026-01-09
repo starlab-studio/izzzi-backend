@@ -7,5 +7,7 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
   echo "Migrations completed."
 fi
 
-exec "$@"
+# Start the application
+echo "Starting NestJS application..."
+exec node dist/main
 

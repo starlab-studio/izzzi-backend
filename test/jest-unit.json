@@ -1,0 +1,29 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": "test/unit/.*\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^src/(.*)$": "<rootDir>/src/$1"
+  },
+  "collectCoverageFrom": [
+    "src/**/*.(t|j)s",
+    "!src/**/*.spec.ts",
+    "!src/**/*.interface.ts",
+    "!src/main.ts",
+    "!src/data-source.ts",
+    "!src/**/*.module.ts",
+    "!src/migrations/**",
+    "!src/**/controllers/**",
+    "!src/**/repositories/**",
+    "!src/**/*.dto.ts",
+    "!src/**/models/**",
+    "!src/**/index.ts"
+  ],
+  "coverageDirectory": "coverage",
+  "testTimeout": 10000
+}
+
